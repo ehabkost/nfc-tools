@@ -82,7 +82,6 @@ void
 tag_get_uid(dev_info *nfc_device, char **dest)
 {
 	tag_info ti;
-	DBG( "nfc_device: 0x%08x", nfc_device );
 
 	// Poll for a ISO14443A (MIFARE) tag
 	if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
@@ -113,13 +112,12 @@ tag_get_uid(dev_info *nfc_device, char **dest)
 		DBG("ISO14443A (MIFARE) tag not found" );
 		return;
 	}
-	nfc_disconnect(nfc_device);
+	//nfc_disconnect(nfc_device);
 }
 
 int
 nem_execute_event_handler(dev_info* nfc_device, const nem_event_t event)
 {
-DBG ( "Hit" );
 	int onerr;
 	const char *onerrorstr;
 	const nfcconf_list *actionlist;
@@ -127,6 +125,7 @@ DBG ( "Hit" );
 
 	const char* action;
 
+	DBG( "nem_execute_event_handler( nfc_device: 0x%08x", nfc_device );
 	switch (event) {
 		case EVENT_TAG_INSERTED:
 			action = "tag_insert";
@@ -139,7 +138,6 @@ DBG ( "Hit" );
 			action = "tag_remove";
 			break;
 	}
-DBG ( "Hit" );
 
 	blocklist = nfcconf_find_blocks ( _nem_execute_config_context, _nem_execute_config_block, "event", action );
 	if ( !blocklist ) {
@@ -160,7 +158,6 @@ DBG ( "Hit" );
 		onerr = ONERROR_IGNORE;
 		DBG ( "Invalid onerror value: '%s'. Assumed 'ignore'", onerrorstr );
 	}
-DBG ( "Hit" );
 
 	/* search actions */
 	actionlist = nfcconf_find_list ( myblock, "action" );
@@ -170,7 +167,6 @@ DBG ( "Hit" );
 	}
 	DBG ( "Onerror is set to: '%s'", onerrorstr );
 
-DBG ( "Hit" );
 	if ( _tag_uid == NULL ) {
 		ERR( "Enable to read tag UID... This should not happend !" );
 		switch ( onerr ) {
@@ -185,7 +181,6 @@ DBG ( "Hit" );
 				return -1;
 		}
 	} else {
-DBG ( "Hit" );
 		while ( actionlist ) {
 			int res;
 			char *action_cmd_src = actionlist->data;
