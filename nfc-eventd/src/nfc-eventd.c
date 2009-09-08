@@ -246,7 +246,7 @@ nfc_get_tag_state(dev_info* nfc_device)
 
 		DBG( "ISO14443A (MIFARE) tag found: %s", uid );
 		free(uid);
-		nfc_initiator_deselect_tag ( nfc_device );
+		// nfc_initiator_deselect_tag ( nfc_device );
 		sleep ( 1 );
 		rv = TAG_PRESENT;
 	} else {
@@ -303,8 +303,8 @@ init:
 	// Drop the field for a while
 	nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
 
-	// Let the reader only try once to find a tag
-	nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
+	// Let the reader try to find a tag infinitly
+	nfc_configure ( nfc_device, DCO_INFINITE_SELECT, true );
 
 	// Configure the CRC and Parity settings
 	nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );

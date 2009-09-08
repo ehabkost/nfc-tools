@@ -105,7 +105,7 @@ tag_get_uid(dev_info *nfc_device, char **dest)
 		}
 		uid_ptr[0]='\0';
 		DBG( "ISO14443A (MIFARE) tag found: uid=0x%s", *dest );
-		nfc_initiator_deselect_tag ( nfc_device );
+		// nfc_initiator_deselect_tag ( nfc_device );
 	} else {
 		*dest = NULL;
 		DBG("ISO14443A (MIFARE) tag not found" );
@@ -130,7 +130,7 @@ nem_execute_event_handler(dev_info* nfc_device, const nem_event_t event)
 			if( _tag_uid != NULL ) {
 				free(_tag_uid);
 			}
-			//tag_get_uid(nfc_device, &_tag_uid);
+			tag_get_uid(nfc_device, &_tag_uid);
 			break;
 		case EVENT_TAG_REMOVED:
 			action = "tag_remove";
