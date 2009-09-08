@@ -1,0 +1,50 @@
+# Sample nfc-eventd configuration file
+#
+nfc-eventd {
+
+	# Run in background? Implies debug=false if true
+	daemon = false;
+
+	# show debug messages?
+	debug = true;
+	
+	# polling time in seconds
+	polling_time = 1;
+
+	# expire time in seconds
+	# default = 0 ( no expire )
+	expire_time = 0;
+	
+	#
+	# list of events and actions
+
+	module nem_execute {
+		# Tag inserted
+		event tag_insert {
+			# what to do if an action fail?
+			# ignore  : continue to next action
+			# return  : end action sequence
+			# quit    : end program
+			on_error = ignore ;
+	
+			# You can enter several, comma-separated action entries
+			# they will be executed in turn
+			action = "(echo -n 'Tag (uid=$TAG_UID), inserted at: ' && date) >> /tmp/nfc-eventd.log",
+				"dcop kdesktop KScreensaverIface quit";
+		}
+	
+		# Tag has been removed
+		event tag_remove { 
+			on_error = ignore;
+			action = "(echo -n 'Tag (uid=$TAG_UID) removed at: ' && date) >> /tmp/nfc-eventd.log",
+				"dcop kdesktop KScreensaverIface lock";
+		}
+	
+		# Too much time card removed
+		event expire_time { 
+			on_error = ignore;
+			action = "/bin/false";
+		}
+	}
+
+}
