@@ -21,6 +21,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#ifdef DEBUG
 /* current debug level */
 static int debug_level = 0;
 
@@ -64,3 +65,5 @@ void debug_print(int level, const char *file, int line, const char *format, ...)
     }
   }
 }
+
+#endif

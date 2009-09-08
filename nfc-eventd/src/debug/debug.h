@@ -30,12 +30,7 @@
 
 #ifndef DEBUG
 #warning "Debugging is completely disabled!"
-#define DBG
-#define DBG1
-#define DBG2
-#define DBG3
-#define DBG4
-#define DBG5
+#define DBG(...) {}
 #define set_debug_level(l, ...) {}
 #define debug(l, ...) {}
 
@@ -45,19 +40,9 @@
 #define DBG(f, ...) debug_print(1, __FILE__, __LINE__, f, ## __VA_ARGS__)
 */
 /* this syntax is redundant in GCC, just used to avoid warns in -pedantic */
-#define DBG(f) debug_print(1, __FILE__, __LINE__, f )
-#define DBG1(f,a) debug_print(1, __FILE__, __LINE__, f , a )
-#define DBG2(f,a,b) debug_print(1, __FILE__, __LINE__, f , a , b )
-#define DBG3(f,a,b,c) debug_print(1, __FILE__, __LINE__, f , a , b , c )
-#define DBG4(f,a,b,c,d) debug_print(1, __FILE__, __LINE__, f , a , b , c , d )
-#define DBG5(f,a,b,c,d,e) debug_print(1, __FILE__, __LINE__, f , a , b , c , d , e )
+#define DBG(x,...) debug_print(1, __FILE__, __LINE__, f, # __VA_ARGS__ )
 
-#define ERR(f) debug_print(-1, __FILE__, __LINE__, f )
-#define ERR1(f,a) debug_print(-1, __FILE__, __LINE__, f , a )
-#define ERR2(f,a,b) debug_print(-1, __FILE__, __LINE__, f , a , b )
-#define ERR3(f,a,b,c) debug_print(-1, __FILE__, __LINE__, f , a , b , c )
-#define ERR4(f,a,b,c,d) debug_print(-1, __FILE__, __LINE__, f , a , b , c , d )
-#define ERR5(f,a,b,c,d,e) debug_print(-1, __FILE__, __LINE__, f , a , b , c , d , e )
+#define ERR(f,...) debug_print(-1, __FILE__, __LINE__, f, # __VA_ARGS__ )
 
 #ifndef __DEBUG_C_
 #define DEBUG_EXTERN extern

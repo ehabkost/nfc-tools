@@ -72,19 +72,19 @@ static int execute_event ( dev_info *nfc_device, const nem_event_t event )
 		ERR ( "Module item not found." );
 		return -1;
 	}
-	DBG1("Loading module: '%s'...", my_module->name->data);
+	DBG("Loading module: '%s'...", my_module->name->data);
 	char module_path[256]={ '\0', };
 	strcat(module_path, "./build/lib/nfc-eventd/");
 	strcat(module_path, "modules/");
 	strcat(module_path, my_module->name->data);
 	strcat(module_path, ".so");
-	DBG1("Module found at: '%s'...", module_path);
+	DBG("Module found at: '%s'...", module_path);
 
 	void *module_handler;
 	module_handler = dlopen(module_path,RTLD_LAZY);
 DBG ( "Hit" );
 	if ( module_handler == NULL ){
-		ERR1("Unable to open module: %s\n", dlerror());
+		ERR("Unable to open module: %s\n", dlerror());
 		exit(EXIT_FAILURE);
 	}
 
@@ -136,13 +136,13 @@ static int parse_config_file()
 		return -1;
 	}
 	if ( nfcconf_parse ( ctx ) <= 0 ) {
-		DBG1 ( "Error parsing file '%s'", cfgfile );
+		DBG ( "Error parsing file '%s'", cfgfile );
 		return -1;
 	}
 	/* now parse options */
 	root = nfcconf_find_block ( ctx, NULL, "nfc-eventd" );
 	if ( !root ) {
-		DBG1 ( "nfc-eventd block not found in config: '%s'", cfgfile );
+		DBG ( "nfc-eventd block not found in config: '%s'", cfgfile );
 		return -1;
 	}
 	debug = nfcconf_get_bool ( root, "debug", debug );
@@ -255,7 +255,7 @@ nfc_get_tag_state(dev_info* nfc_device)
 		uid_ptr[0]='\0';
 		printf("0x%08x\n", uid_ptr);
 
-		DBG1( "ISO14443A (MIFARE) tag found: %s", uid );
+		DBG( "ISO14443A (MIFARE) tag found: %s", uid );
 		free(uid);
 // 		nfc_initiator_deselect_tag ( nfc_device );
 		rv = TAG_PRESENT;
@@ -283,7 +283,7 @@ main ( int argc, char *argv[] )
 	if ( daemonize ) {
 		DBG ( "Going to be daemon..." );
 		if ( daemon ( 0, debug ) < 0 ) {
-			DBG1 ( "Error in daemon() call: %s", strerror ( errno ) );
+			DBG ( "Error in daemon() call: %s", strerror ( errno ) );
 			return 1;
 		}
 	}
@@ -303,8 +303,8 @@ main ( int argc, char *argv[] )
 	do {
 connect:
 		// Try to open the NFC reader
-		if( nfc_device == NULL ) nfc_device = nfc_connect();
-		DBG1( "nfc_device: 0x%08x", nfc_device );
+		if( nfc_device == NULL ) nfc_device = nfc_connect(NULL);
+		DBG( "nfc_device: 0x%08x", nfc_device );
 init:
 		if ( nfc_device == INVALID_DEVICE_INFO ) {
 			DBG( "NFC reader not found" );
@@ -325,7 +325,7 @@ init:
 		// Enable field so more power consuming cards can power themselves up
 		nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, true );
 	
-		DBG1( "Connected to NFC reader: %s", nfc_device->acName );
+		DBG( "Connected to NFC reader: %s", nfc_device->acName );
 detect:
 		new_state = nfc_get_tag_state(nfc_device);
 
