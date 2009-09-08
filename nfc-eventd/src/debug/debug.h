@@ -36,13 +36,8 @@
 
 #else
 
-/*
-#define DBG(f, ...) debug_print(1, __FILE__, __LINE__, f, ## __VA_ARGS__)
-*/
-/* this syntax is redundant in GCC, just used to avoid warns in -pedantic */
-#define DBG(x,...) debug_print(1, __FILE__, __LINE__, f, # __VA_ARGS__ )
-
-#define ERR(f,...) debug_print(-1, __FILE__, __LINE__, f, # __VA_ARGS__ )
+#define DBG(x,...) debug_print(1, __FILE__, __LINE__, x, # __VA_ARGS__ )
+#define ERR(x,...) debug_print(-1, __FILE__, __LINE__, x, # __VA_ARGS__ )
 
 #ifndef __DEBUG_C_
 #define DEBUG_EXTERN extern
