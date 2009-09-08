@@ -72,7 +72,6 @@ static int my_system ( char *command )
 void
 nem_execute_init( nfcconf_context *module_context, nfcconf_block* module_block )
 {
-	DBG( "nem_execute_init" );
 	set_debug_level ( 1 );
 	_nem_execute_config_context = module_context;
 	_nem_execute_config_block = module_block;
@@ -112,7 +111,6 @@ tag_get_uid(dev_info *nfc_device, char **dest)
 		DBG("ISO14443A (MIFARE) tag not found" );
 		return;
 	}
-	//nfc_disconnect(nfc_device);
 }
 
 int
@@ -125,17 +123,18 @@ nem_execute_event_handler(dev_info* nfc_device, const nem_event_t event)
 
 	const char* action;
 
-	DBG( "nem_execute_event_handler( nfc_device: 0x%08x", nfc_device );
 	switch (event) {
 		case EVENT_TAG_INSERTED:
 			action = "tag_insert";
+			DBG( "nem_execute_event_handler( nfc_device: 0x%08x, event: EVENT_TAG_INSERTED )", nfc_device );
 			if( _tag_uid != NULL ) {
 				free(_tag_uid);
 			}
-			tag_get_uid(nfc_device, &_tag_uid);
+			//tag_get_uid(nfc_device, &_tag_uid);
 			break;
 		case EVENT_TAG_REMOVED:
 			action = "tag_remove";
+			DBG( "nem_execute_event_handler( nfc_device: 0x%08x, event: EVENT_TAG_REMOVED )", nfc_device );
 			break;
 	}
 
@@ -165,7 +164,7 @@ nem_execute_event_handler(dev_info* nfc_device, const nem_event_t event)
 		DBG ( "No action list for event '%s'", action );
 		return 0;
 	}
-	DBG ( "Onerror is set to: '%s'", onerrorstr );
+	// DBG ( "Onerror is set to: '%s'", onerrorstr );
 
 	if ( _tag_uid == NULL ) {
 		ERR( "Enable to read tag UID... This should not happend !" );
@@ -196,7 +195,7 @@ nem_execute_event_handler(dev_info* nfc_device, const nem_event_t event)
 			res = my_system ( action_cmd_dest );
 			actionlist = actionlist->next;
 			/* evaluate return and take care on "onerror" value */
-			DBG2 ( "Action '%s' returns %d", action_cmd_dest, res );
+			DBG ( "Action '%s' returns %d", action_cmd_dest, res );
 			if ( !res ) continue;
 			switch ( onerr ) {
 				case ONERROR_IGNORE:

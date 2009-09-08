@@ -246,7 +246,8 @@ nfc_get_tag_state(dev_info* nfc_device)
 
 		DBG( "ISO14443A (MIFARE) tag found: %s", uid );
 		free(uid);
-// 		nfc_initiator_deselect_tag ( nfc_device );
+		nfc_initiator_deselect_tag ( nfc_device );
+		sleep ( 1 );
 		rv = TAG_PRESENT;
 	} else {
 // 		DBG( "ISO14443A (MIFARE) tag not found." );
@@ -289,42 +290,55 @@ main ( int argc, char *argv[] )
 	 */
 	dev_info* nfc_device = NULL;
 
-	do {
 connect:
-		// Try to open the NFC reader
-		if( nfc_device == NULL ) nfc_device = nfc_connect(NULL);
+	// Try to open the NFC device
+	if( nfc_device == NULL ) nfc_device = nfc_connect(NULL);
 init:
-		if ( nfc_device == INVALID_DEVICE_INFO ) {
-			DBG( "NFC reader not found" );
-			return ( TAG_ERROR );
-		}
-		nfc_initiator_init ( nfc_device );
-	
-		// Drop the field for a while
-		nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
-	
-		// Let the reader only try once to find a tag
-		nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
-	
-		// Configure the CRC and Parity settings
-		nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );
-		nfc_configure ( nfc_device, DCO_HANDLE_PARITY, true );
-	
-		// Enable field so more power consuming cards can power themselves up
-		nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, true );
-	
-		DBG( "Connected to NFC device: %s (0x%08x)", nfc_device->acName, nfc_device );
+	if ( nfc_device == INVALID_DEVICE_INFO ) {
+		DBG( "NFC device not found" );
+		return ( TAG_ERROR );
+	}
+	nfc_initiator_init ( nfc_device );
+
+	// Drop the field for a while
+	nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
+
+	// Let the reader only try once to find a tag
+	nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
+
+	// Configure the CRC and Parity settings
+	nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );
+	nfc_configure ( nfc_device, DCO_HANDLE_PARITY, true );
+
+	// Enable field so more power consuming cards can power themselves up
+	nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, true );
+
+	DBG( "Connected to NFC device: %s (0x%08x)", nfc_device->acName, nfc_device );
+
+	do {
 detect:
+		sleep ( polling_time );
 		new_state = nfc_get_tag_state(nfc_device);
+		switch(new_state) {
+			case TAG_NOT_PRESENT:
+				DBG("new_state == TAG_NOT_PRESENT");
+				break;
+			case TAG_PRESENT:
+				DBG("new_state == TAG_PRESENT");
+				break;
+			case TAG_ERROR:
+				DBG("new_state == TAG_PRESENT");
+				break;
+		}
 
 		if ( new_state == TAG_ERROR ) {
-			DBG ( "Error trying to get a tag" );
+			ERR ( "Error trying to get a tag" );
 			break;
 		}
 		if ( old_state == new_state ) { /* state unchanged */
 			/* on card not present, increase and check expire time */
-			if ( expire_time == 0 ) goto disconnect;
-			if ( new_state == TAG_PRESENT ) goto disconnect;
+			if ( expire_time == 0 ) goto detect;
+			if ( new_state == TAG_PRESENT ) goto detect;
 			expire_count += polling_time;
 			if ( expire_count >= expire_time ) {
 				DBG ( "Timeout on tag removed " );
@@ -344,14 +358,13 @@ detect:
 				execute_event ( nfc_device, EVENT_TAG_INSERTED );
 			}
 		}
-disconnect:
-		if ( nfc_device != NULL ) {
-			nfc_disconnect(nfc_device);
-			DBG ( "NFC device (0x%08x) is disconnected", nfc_device );
-			nfc_device = NULL;
-		}
-		sleep ( polling_time );
 	} while ( 1 );
+disconnect:
+	if ( nfc_device != NULL ) {
+		nfc_disconnect(nfc_device);
+		DBG ( "NFC device (0x%08x) is disconnected", nfc_device );
+		nfc_device = NULL;
+	}
 
 	/* If we get here means that an error or exit status occurred */
 	DBG ( "Exited from main loop" );
