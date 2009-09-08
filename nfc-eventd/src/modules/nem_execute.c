@@ -82,7 +82,7 @@ void
 tag_get_uid(dev_info *nfc_device, char **dest)
 {
 	tag_info ti;
-	DBG1( "nfc_device: 0x%08x", nfc_device );
+	DBG( "nfc_device: 0x%08x", nfc_device );
 
 	// Poll for a ISO14443A (MIFARE) tag
 	if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
@@ -106,7 +106,7 @@ tag_get_uid(dev_info *nfc_device, char **dest)
 			uid_ptr += 2;
 		}
 		uid_ptr[0]='\0';
-		DBG1( "ISO14443A (MIFARE) tag found: uid=0x%s", *dest );
+		DBG( "ISO14443A (MIFARE) tag found: uid=0x%s", *dest );
 		nfc_initiator_deselect_tag ( nfc_device );
 	} else {
 		*dest = NULL;
@@ -149,7 +149,7 @@ DBG ( "Hit" );
 	myblock = blocklist[0];
 	free ( blocklist );
 	if ( !myblock ) {
-		DBG1 ( "Event item not found: '%s'", action );
+		DBG ( "Event item not found: '%s'", action );
 		return -1;
 	}
 	onerrorstr = nfcconf_get_str ( myblock, "on_error", "ignore" );
@@ -158,17 +158,17 @@ DBG ( "Hit" );
 	else if ( !strcmp ( onerrorstr, "quit" ) ) onerr = ONERROR_QUIT;
 	else {
 		onerr = ONERROR_IGNORE;
-		DBG1 ( "Invalid onerror value: '%s'. Assumed 'ignore'", onerrorstr );
+		DBG ( "Invalid onerror value: '%s'. Assumed 'ignore'", onerrorstr );
 	}
 DBG ( "Hit" );
 
 	/* search actions */
 	actionlist = nfcconf_find_list ( myblock, "action" );
 	if ( !actionlist ) {
-		DBG1 ( "No action list for event '%s'", action );
+		DBG ( "No action list for event '%s'", action );
 		return 0;
 	}
-	DBG1 ( "Onerror is set to: '%s'", onerrorstr );
+	DBG ( "Onerror is set to: '%s'", onerrorstr );
 
 DBG ( "Hit" );
 	if ( _tag_uid == NULL ) {
@@ -192,7 +192,7 @@ DBG ( "Hit" );
 			char *action_cmd_dest = malloc((strlen(action_cmd_src) + strlen(_tag_uid))*sizeof(char));
 			strsubst(action_cmd_dest, action_cmd_src, "$TAG_UID", _tag_uid);
 	
-			DBG1 ( "Executing action: '%s'", action_cmd_dest );
+			DBG ( "Executing action: '%s'", action_cmd_dest );
 			/*
 			there are some security issues on using system() in
 			setuid/setgid programs. so we will use an alternate function

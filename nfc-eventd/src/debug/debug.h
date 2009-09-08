@@ -29,21 +29,19 @@
 #endif
 
 #ifndef DEBUG
-#warning "Debugging is completely disabled!"
-#define DBG(...) {}
-#define set_debug_level(l, ...) {}
-#define debug(l, ...) {}
-
+  #warning "Debugging is completely disabled!"
+  #define DBG(...) {}
+  #define set_debug_level(l, ...) {}
+  #define debug(l, ...) {}
 #else
+  #define DBG(x,...) debug_print(1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
+  #define ERR(x,...) debug_print(-1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
 
-#define DBG(x,...) debug_print(1, __FILE__, __LINE__, x, # __VA_ARGS__ )
-#define ERR(x,...) debug_print(-1, __FILE__, __LINE__, x, # __VA_ARGS__ )
-
-#ifndef __DEBUG_C_
-#define DEBUG_EXTERN extern
-#else 
-#define DEBUG_EXTERN
-#endif
+  #ifndef __DEBUG_C_
+    #define DEBUG_EXTERN extern
+  #else 
+    #define DEBUG_EXTERN
+  #endif
 
 /**
  * set_debug_level() Sets the current debug level.
@@ -71,7 +69,7 @@ DEBUG_EXTERN int get_debug_level(void);
  */
 DEBUG_EXTERN void debug_print(int level, const char *file, int line, const char *format, ...);
 
-#undef DEBUG_EXTERN
+  #undef DEBUG_EXTERN
 
 #endif /* DEBUG */
 
