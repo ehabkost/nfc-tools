@@ -234,6 +234,7 @@ nfc_get_tag_state(dev_info* nfc_device)
 			print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
 		}
 */
+#ifdef DEBUG
 		uint32_t uiPos;
 		char *uid = malloc(ti.tia.uiUidLen*sizeof(char));
 		char *uid_ptr = uid;
@@ -244,10 +245,11 @@ nfc_get_tag_state(dev_info* nfc_device)
 		}
 		uid_ptr[0]='\0';
 
-		DBG( "ISO14443A (MIFARE) tag found: %s", uid );
+// 		DBG( "ISO14443A (MIFARE) tag found: %s", uid );
+#endif /* DEBUG */
 		free(uid);
-		// nfc_initiator_deselect_tag ( nfc_device );
-		sleep ( 1 );
+// 		nfc_initiator_deselect_tag ( nfc_device );
+// 		sleep ( 1 );
 		rv = TAG_PRESENT;
 	} else {
 // 		DBG( "ISO14443A (MIFARE) tag not found." );
@@ -284,8 +286,8 @@ main ( int argc, char *argv[] )
 	 *
 	 * COMMENT:
 	 * There are no way in libnfc API to detect if a card is present or no
-	 * so the way we proced is to look for an slot whit available token
-	 * Any ideas will be wellcomed
+	 * so the way we proceed is to look for an tag
+	 * Any ideas will be welcomed
 	 *
 	 */
 	dev_info* nfc_device = NULL;
@@ -319,17 +321,6 @@ init:
 detect:
 		sleep ( polling_time );
 		new_state = nfc_get_tag_state(nfc_device);
-		switch(new_state) {
-			case TAG_NOT_PRESENT:
-				DBG("new_state == TAG_NOT_PRESENT");
-				break;
-			case TAG_PRESENT:
-				DBG("new_state == TAG_PRESENT");
-				break;
-			case TAG_ERROR:
-				DBG("new_state == TAG_PRESENT");
-				break;
-		}
 
 		if ( new_state == TAG_ERROR ) {
 			ERR ( "Error trying to get a tag" );
