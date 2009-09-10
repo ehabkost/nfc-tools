@@ -15,6 +15,12 @@ nfc-eventd {
 	# default = 0 ( no expire )
 	expire_time = 0;
 	
+	device nfc_internal {
+		driver = "ARYGON";
+		port = "/dev/ttyS0";
+	}
+
+	nfc_device = "nfc_internal";
 	#
 	# list of events and actions
 

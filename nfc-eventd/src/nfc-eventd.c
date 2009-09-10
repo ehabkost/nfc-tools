@@ -57,7 +57,14 @@ const nfcconf_block *root;
 
 typedef struct slot_st slot_t;
 
-static int execute_event ( dev_info *nfc_device, const nem_event_t event )
+typedef void (*module_init_fct_t)(nfcconf_context*, nfcconf_block*);
+typedef int (*module_event_handler_fct_t)( dev_info*, const nem_event_t );
+
+static module_init_fct_t module_init_fct_ptr = NULL;
+static module_event_handler_fct_t module_event_handler_fct_ptr = NULL;
+static nfc_device_desc_t* nfc_device_desc = NULL;
+
+static int load_module( void )
 {
 	nfcconf_block **module_list, *my_module;
 
@@ -94,7 +101,6 @@ static int execute_event ( dev_info *nfc_device, const nem_event_t event )
 	strcat(module_fct_name,my_module->name->data);
 	strcat(module_fct_name,"_init");
 
-	void (*module_init_fct_ptr)(nfcconf_context*, nfcconf_block*);
 	module_init_fct_ptr = dlsym(module_handler,module_fct_name);
 
 	if ((error = dlerror()) != NULL) {
@@ -105,7 +111,6 @@ static int execute_event ( dev_info *nfc_device, const nem_event_t event )
 	module_fct_name[0]='\0';
 	strcat(module_fct_name,my_module->name->data);
 	strcat(module_fct_name,"_event_handler");
-	int (*module_event_handler_fct_ptr)( dev_info*, const nem_event_t );
 
 	module_event_handler_fct_ptr = dlsym(module_handler,module_fct_name);
 	if ((error = dlerror()) != NULL) {
@@ -114,6 +119,11 @@ static int execute_event ( dev_info *nfc_device, const nem_event_t event )
 	}
 
 	(*module_init_fct_ptr)( ctx, my_module );
+	return 0;
+}
+
+static int execute_event ( dev_info *nfc_device, const nem_event_t event )
+{
 	(*module_event_handler_fct_ptr)( nfc_device, event );
 
 	return 0;
@@ -142,6 +152,36 @@ static int parse_config_file()
 	expire_time = nfcconf_get_int ( root, "expire_time", expire_time );
 
 	if ( debug ) set_debug_level ( 1 );
+
+	DBG( "Looking for specified NFC device." );
+	nfcconf_block **device_list, *my_device;
+	const char* nfc_device_str = nfcconf_get_str ( root, "nfc_device", "" );
+	if (strcmp( nfc_device_str, "") != 0) {
+		device_list = nfcconf_find_blocks ( ctx, root, "device", NULL );
+		if ( !device_list ) {
+			ERR ( "Device item not found." );
+			return -1;
+		}
+		int i = 0;
+		my_device = device_list[i];
+		while ( my_device != NULL ) {
+			i++;
+			if( strcmp(my_device->name->data, nfc_device_str) == 0 ) {
+				DBG("Specified device %s have been found.", nfc_device_str);
+				nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
+				nfc_device_desc->driver = nfcconf_get_str( my_device, "driver", "" );
+				nfc_device_desc->port = nfcconf_get_str( my_device, "port", "" );
+				break;
+			}
+			my_device = device_list[i];
+		}
+		DBG( "Found %d device configuration block(s).", i );
+		if( nfc_device_desc == NULL ) {
+			ERR("NFC device have been specified in configuration file but there is no device description. Unable to select specified device: %s.", nfc_device_str);
+		}
+		free ( device_list );
+	}
+
 	return 0;
 }
 
@@ -279,6 +319,8 @@ main ( int argc, char *argv[] )
 		}
 	}
 
+	load_module();
+
 	/*
 	 * Wait endlessly for all events in the list of readers
 	 * We only stop in case of an error
@@ -293,7 +335,7 @@ main ( int argc, char *argv[] )
 
 connect:
 	// Try to open the NFC device
-	if( nfc_device == NULL ) nfc_device = nfc_connect(NULL);
+	if( nfc_device == NULL ) nfc_device = nfc_connect( nfc_device_desc );
 init:
 	if ( nfc_device == INVALID_DEVICE_INFO ) {
 		DBG( "NFC device not found" );
@@ -340,11 +382,11 @@ detect:
 			expire_count = 0;
 // 			if ( !first_loop++ ) continue; /*skip first pass */
 			if ( new_state == TAG_NOT_PRESENT ) {
-				DBG ( "Tag removed" );
+				DBG ( "Event detected: tag removed" );
 				execute_event ( nfc_device, EVENT_TAG_REMOVED );
 			}
 			if ( new_state == TAG_PRESENT ) {
-				DBG ( "Tag inserted " );
+				DBG ( "Event detected: tag inserted " );
 				execute_event ( nfc_device, EVENT_TAG_INSERTED );
 			}
 		}

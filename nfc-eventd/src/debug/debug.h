@@ -35,12 +35,13 @@
   #define DBG(...) {}
 #else
   #define DBG(x,...) debug_print(1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
+#endif /* DEBUG */
 
-  #ifndef __DEBUG_C_
-    #define DEBUG_EXTERN extern
-  #else 
-    #define DEBUG_EXTERN
-  #endif
+#ifndef __DEBUG_C_
+  #define DEBUG_EXTERN extern
+#else 
+  #define DEBUG_EXTERN
+#endif /* __DEBUG_C_ */
 
 /**
  * set_debug_level() Sets the current debug level.
@@ -68,8 +69,7 @@ DEBUG_EXTERN int get_debug_level(void);
  */
 DEBUG_EXTERN void debug_print(int level, const char *file, int line, const char *format, ...);
 
-  #undef DEBUG_EXTERN
+#undef DEBUG_EXTERN
 
-#endif /* DEBUG */
 
 #endif /* __DEBUG_H_ */
