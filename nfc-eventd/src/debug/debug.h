@@ -28,14 +28,13 @@
 #include <config.h>
 #endif
 
+#define ERR(x,...) debug_print(-1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
+
 #ifndef DEBUG
   #warning "Debugging is completely disabled!"
   #define DBG(...) {}
-  #define set_debug_level(l, ...) {}
-  #define debug(l, ...) {}
 #else
   #define DBG(x,...) debug_print(1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
-  #define ERR(x,...) debug_print(-1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
 
   #ifndef __DEBUG_C_
     #define DEBUG_EXTERN extern

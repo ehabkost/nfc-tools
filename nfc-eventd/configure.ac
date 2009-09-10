@@ -15,6 +15,20 @@ AC_PATH_PROG(PKG_CONFIG, pkg-config)
 AC_HEADER_STDC
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([stdio.h stdlib.h stdint.h stddef.h stdbool.h usb.h])
+AC_CHECK_FUNCS([memset])
+AC_CHECK_FUNCS([strcasecmp])
+AC_CHECK_FUNCS([strchr])
+AC_CHECK_FUNCS([strdup])
+AC_CHECK_FUNCS([strerror])
+AC_CHECK_FUNCS([strstr])
+AC_CHECK_FUNCS([strtol])
+AC_CHECK_HEADERS([syslog.h])
+AC_C_CONST
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_FUNC_VPRINTF
+AC_HEADER_SYS_WAIT
 
 # Checks for types
 AC_TYPE_SIZE_T

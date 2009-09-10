@@ -246,10 +246,9 @@ nfc_get_tag_state(dev_info* nfc_device)
 		uid_ptr[0]='\0';
 
 // 		DBG( "ISO14443A (MIFARE) tag found: %s", uid );
-#endif /* DEBUG */
 		free(uid);
 // 		nfc_initiator_deselect_tag ( nfc_device );
-// 		sleep ( 1 );
+#endif /* DEBUG */
 		rv = TAG_PRESENT;
 	} else {
 // 		DBG( "ISO14443A (MIFARE) tag not found." );
