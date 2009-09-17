@@ -171,6 +171,7 @@ static int parse_config_file()
 				nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
 				nfc_device_desc->driver = nfcconf_get_str( my_device, "driver", "" );
 				nfc_device_desc->port = nfcconf_get_str( my_device, "port", "" );
+				nfc_device_desc->speed = nfcconf_get_int( my_device, "speed", 9600 );
 				break;
 			}
 			my_device = device_list[i];
