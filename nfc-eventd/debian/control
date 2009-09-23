@@ -1,0 +1,14 @@
+Source: nfc-eventd
+Section: devel
+Priority: optional
+Maintainer: Romuald Conty <rconty@il4p.fr>
+Build-Depends: debhelper (>= 5.0.37.2), cdbs (>= 0.4.43), libnfc-dev
+Standards-Version: 3.7.3
+Homepage: http://code.google.com/p/nfc-tools/
+
+Package: nfc-eventd
+Architecture: any
+Depends: ${shlibs:Depends}, libnfc0 (>= 1.2.1)
+Description: NFC event daemon
+ nfc-eventd is a daemon that looks for tags insertions/removes from NFC device.
+

@@ -18,6 +18,7 @@ nfc-eventd {
 	device nfc_internal {
 		driver = "ARYGON";
 		port = "/dev/ttyS0";
+		speed = 115200;
 	}
 
 	nfc_device = "nfc_internal";

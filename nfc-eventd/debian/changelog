@@ -1,0 +1,6 @@
+nfc-eventd (0.1.0-0) unstable; urgency=low
+
+  * Initial debian package.
+
+ -- Romuald Conty <rconty@il4p.fr>  Wed, 23 Sep 2009 21:42:42 +0100
+
