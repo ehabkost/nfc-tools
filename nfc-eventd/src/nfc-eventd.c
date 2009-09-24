@@ -40,11 +40,10 @@
 #define DEF_EXPIRE 0    /* no expire */
 #define DEF_CONFIG_FILE "/etc/nfc-eventd.conf"
 
-typedef enum {
-	TAG_ERROR = -1,
-	TAG_NOT_PRESENT = 0,
-	TAG_PRESENT = 1,
-} tag_state_t;
+typedef struct {
+  init_modulation im;
+  tag_info ti;
+} tag_t;
 
 int polling_time;
 int expire_time;
@@ -124,9 +123,7 @@ static int load_module( void )
 
 static int execute_event ( dev_info *nfc_device, const nem_event_t event )
 {
-	(*module_event_handler_fct_ptr)( nfc_device, event );
-
-	return 0;
+	return (*module_event_handler_fct_ptr)( nfc_device, event );
 }
 
 static int parse_config_file()
@@ -252,51 +249,71 @@ static int parse_args ( int argc, char *argv[] )
 	return 0;
 }
 
+#ifdef DEBUG
+debug_print_tag(tag_t* tag) {
+  switch(tag->im) {
+    case IM_ISO14443A_106: {
+/*
+      printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
+      printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
+      printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.uiUidLen );
+      printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
+      if ( ti.tia.uiAtsLen )
+    {
+      printf ( "          ATS (ATR): " );
+      print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
+  }
+*/
+      uint32_t uiPos;
+      char *uid = malloc(tag->ti.tia.uiUidLen*sizeof(char));
+      char *uid_ptr = uid;
+      for (uiPos=0; uiPos < tag->ti.tia.uiUidLen; uiPos++)
+      {
+        sprintf(uid_ptr, "%02x",tag->ti.tia.abtUid[uiPos]);
+        uid_ptr += 2;
+      }
+      uid_ptr[0]='\0';
+
+      DBG( "ISO14443A (MIFARE) tag found: %s", uid );
+      free(uid);
+    }
+      break;
+  }
+}
+#endif /* DEBUG */
+
 /*
 * try to find a valid tag
-* returns TAG_PRESENT, TAG_NOT_PRESENT or TAG_ERROR
+* return pointer on a valid tag or NULL.
 */
-tag_state_t
-nfc_get_tag_state(dev_info* nfc_device)
+tag_t*
+ned_get_tag(dev_info* nfc_device, tag_t* tag)
 {
-	tag_state_t rv;
+  tag_info ti;
+  tag_t* rv = NULL;
 
-	tag_info ti;
+  if( tag == NULL ) {
+    // We are looking for any tag.
+    // Poll for a ISO14443A (MIFARE) tag
+    if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
+      rv = malloc(sizeof(tag_t));
+      rv->ti = ti;
+      rv->im = IM_ISO14443A_106;
+    }
+  } else {
+    // tag is not NULL, we are looking for specific tag
+    if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.uiUidLen, &ti ) ) {
+      rv = tag;
+    } else {
+      free(tag);
+    }
+  }
 
-	// Poll for a ISO14443A (MIFARE) tag
-	if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
-/*
-		printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
-		printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
-		printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.uiUidLen );
-		printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
-		if ( ti.tia.uiAtsLen )
-		{
-			printf ( "          ATS (ATR): " );
-			print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
-		}
-*/
-#ifdef DEBUG
-		uint32_t uiPos;
-		char *uid = malloc(ti.tia.uiUidLen*sizeof(char));
-		char *uid_ptr = uid;
-		for (uiPos=0; uiPos < ti.tia.uiUidLen; uiPos++)
-		{
-			sprintf(uid_ptr, "%02x",ti.tia.abtUid[uiPos]);
-			uid_ptr += 2;
-		}
-		uid_ptr[0]='\0';
+  if(rv != NULL) {
+    nfc_initiator_deselect_tag ( nfc_device );
+  }
 
-// 		DBG( "ISO14443A (MIFARE) tag found: %s", uid );
-		free(uid);
-// 		nfc_initiator_deselect_tag ( nfc_device );
-#endif /* DEBUG */
-		rv = TAG_PRESENT;
-	} else {
-// 		DBG( "ISO14443A (MIFARE) tag not found." );
-		rv = TAG_NOT_PRESENT;
-	}
-	return rv;
+  return rv;
 }
 
 int
@@ -304,9 +321,10 @@ main ( int argc, char *argv[] )
 {
 	int rv;
 
-	int first_loop   = 0;
-	int old_state    = TAG_NOT_PRESENT;
-	int new_state    = TAG_NOT_PRESENT;
+        tag_t* old_tag = NULL;
+        tag_t* new_tag;
+
+        int first_loop   = 0;
 	int expire_count = 0;
 
 	/* parse args and configuration file */
@@ -341,7 +359,7 @@ connect:
 init:
 	if ( nfc_device == INVALID_DEVICE_INFO ) {
 		DBG( "NFC device not found" );
-		return ( TAG_ERROR );
+		exit(1);
 	}
 	nfc_initiator_init ( nfc_device );
 
@@ -349,7 +367,7 @@ init:
 	nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
 
 	// Let the reader try to find a tag infinitly
-	nfc_configure ( nfc_device, DCO_INFINITE_SELECT, true );
+	nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
 
 	// Configure the CRC and Parity settings
 	nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );
@@ -360,19 +378,15 @@ init:
 
 	DBG( "Connected to NFC device: %s (0x%08x)", nfc_device->acName, nfc_device );
 
-	do {
+        do {
 detect:
 		sleep ( polling_time );
-		new_state = nfc_get_tag_state(nfc_device);
+		new_tag = ned_get_tag(nfc_device, old_tag);
 
-		if ( new_state == TAG_ERROR ) {
-			ERR ( "Error trying to get a tag" );
-			break;
-		}
-		if ( old_state == new_state ) { /* state unchanged */
+		if ( old_tag == new_tag ) { /* state unchanged */
 			/* on card not present, increase and check expire time */
 			if ( expire_time == 0 ) goto detect;
-			if ( new_state == TAG_PRESENT ) goto detect;
+			if ( new_tag != NULL ) goto detect;
 			expire_count += polling_time;
 			if ( expire_count >= expire_time ) {
 				DBG ( "Timeout on tag removed " );
@@ -380,14 +394,13 @@ detect:
 				expire_count = 0; /*restart timer */
 			}
 		} else { /* state changed; parse event */
-			old_state = new_state;
+			old_tag = new_tag;
 			expire_count = 0;
 // 			if ( !first_loop++ ) continue; /*skip first pass */
-			if ( new_state == TAG_NOT_PRESENT ) {
+			if ( new_tag == NULL ) {
 				DBG ( "Event detected: tag removed" );
 				execute_event ( nfc_device, EVENT_TAG_REMOVED );
-			}
-			if ( new_state == TAG_PRESENT ) {
+			} else {
 				DBG ( "Event detected: tag inserted " );
 				execute_event ( nfc_device, EVENT_TAG_INSERTED );
 			}
