@@ -41,8 +41,8 @@
 #define DEF_CONFIG_FILE "/etc/nfc-eventd.conf"
 
 typedef struct {
-  init_modulation im;
-  tag_info ti;
+    init_modulation im;
+    tag_info ti;
 } tag_t;
 
 int polling_time;
@@ -63,222 +63,217 @@ static module_init_fct_t module_init_fct_ptr = NULL;
 static module_event_handler_fct_t module_event_handler_fct_ptr = NULL;
 static nfc_device_desc_t* nfc_device_desc = NULL;
 
-static int load_module( void )
-{
-	nfcconf_block **module_list, *my_module;
+static int load_module( void ) {
+    nfcconf_block **module_list, *my_module;
 
-	module_list = nfcconf_find_blocks ( ctx, root, "module", NULL );
-	if ( !module_list ) {
-		ERR ( "Module item not found." );
-		return -1;
-	}
-	my_module = module_list[0];
-	free ( module_list );
-	if ( !my_module ) {
-		ERR ( "Module item not found." );
-		return -1;
-	}
-	DBG("Loading module: '%s'...", my_module->name->data);
-	char module_path[256]={ '\0', };
-	strcat(module_path, "/usr/lib/nfc-eventd/");
-	strcat(module_path, "modules/");
-	strcat(module_path, my_module->name->data);
-	strcat(module_path, ".so");
-	DBG("Module found at: '%s'...", module_path);
+    module_list = nfcconf_find_blocks ( ctx, root, "module", NULL );
+    if ( !module_list ) {
+        ERR ( "Module item not found." );
+        return -1;
+    }
+    my_module = module_list[0];
+    free ( module_list );
+    if ( !my_module ) {
+        ERR ( "Module item not found." );
+        return -1;
+    }
+    DBG("Loading module: '%s'...", my_module->name->data);
+    char module_path[256]={ '\0', };
+    strcat(module_path, "/usr/lib/nfc-eventd/");
+    strcat(module_path, "modules/");
+    strcat(module_path, my_module->name->data);
+    strcat(module_path, ".so");
+    DBG("Module found at: '%s'...", module_path);
 
-	void *module_handler;
-	module_handler = dlopen(module_path,RTLD_LAZY);
-	if ( module_handler == NULL ){
-		ERR("Unable to open module: %s\n", dlerror());
-		exit(EXIT_FAILURE);
-	}
+    void *module_handler;
+    module_handler = dlopen(module_path,RTLD_LAZY);
+    if ( module_handler == NULL ) {
+        ERR("Unable to open module: %s\n", dlerror());
+        exit(EXIT_FAILURE);
+    }
 
-	char module_fct_name[256];
-	char *error;
+    char module_fct_name[256];
+    char *error;
 
-	module_fct_name[0]='\0';
-	strcat(module_fct_name,my_module->name->data);
-	strcat(module_fct_name,"_init");
+    module_fct_name[0]='\0';
+    strcat(module_fct_name,my_module->name->data);
+    strcat(module_fct_name,"_init");
 
-	module_init_fct_ptr = dlsym(module_handler,module_fct_name);
+    module_init_fct_ptr = dlsym(module_handler,module_fct_name);
 
-	if ((error = dlerror()) != NULL) {
-		fprintf (stderr, "%s\n", error);
-		exit(EXIT_FAILURE);
-	}
+    if ((error = dlerror()) != NULL) {
+        fprintf (stderr, "%s\n", error);
+        exit(EXIT_FAILURE);
+    }
 
-	module_fct_name[0]='\0';
-	strcat(module_fct_name,my_module->name->data);
-	strcat(module_fct_name,"_event_handler");
+    module_fct_name[0]='\0';
+    strcat(module_fct_name,my_module->name->data);
+    strcat(module_fct_name,"_event_handler");
 
-	module_event_handler_fct_ptr = dlsym(module_handler,module_fct_name);
-	if ((error = dlerror()) != NULL) {
-		fprintf (stderr, "%s\n", error);
-		exit(EXIT_FAILURE);
-	}
+    module_event_handler_fct_ptr = dlsym(module_handler,module_fct_name);
+    if ((error = dlerror()) != NULL) {
+        fprintf (stderr, "%s\n", error);
+        exit(EXIT_FAILURE);
+    }
 
-	(*module_init_fct_ptr)( ctx, my_module );
-	return 0;
+    (*module_init_fct_ptr)( ctx, my_module );
+    return 0;
 }
 
-static int execute_event ( dev_info *nfc_device, const nem_event_t event )
-{
-	return (*module_event_handler_fct_ptr)( nfc_device, event );
+static int execute_event ( dev_info *nfc_device, const nem_event_t event ) {
+    return (*module_event_handler_fct_ptr)( nfc_device, event );
 }
 
-static int parse_config_file()
-{
-	ctx = nfcconf_new ( cfgfile );
-	if ( !ctx ) {
-		DBG ( "Error creating conf context" );
-		return -1;
-	}
-	if ( nfcconf_parse ( ctx ) <= 0 ) {
-		DBG ( "Error parsing file '%s'", cfgfile );
-		return -1;
-	}
-	/* now parse options */
-	root = nfcconf_find_block ( ctx, NULL, "nfc-eventd" );
-	if ( !root ) {
-		DBG ( "nfc-eventd block not found in config: '%s'", cfgfile );
-		return -1;
-	}
-	debug = nfcconf_get_bool ( root, "debug", debug );
-	daemonize = nfcconf_get_bool ( root, "daemon", daemonize );
-	polling_time = nfcconf_get_int ( root, "polling_time", polling_time );
-	expire_time = nfcconf_get_int ( root, "expire_time", expire_time );
+static int parse_config_file() {
+    ctx = nfcconf_new ( cfgfile );
+    if ( !ctx ) {
+        DBG ( "Error creating conf context" );
+        return -1;
+    }
+    if ( nfcconf_parse ( ctx ) <= 0 ) {
+        DBG ( "Error parsing file '%s'", cfgfile );
+        return -1;
+    }
+    /* now parse options */
+    root = nfcconf_find_block ( ctx, NULL, "nfc-eventd" );
+    if ( !root ) {
+        DBG ( "nfc-eventd block not found in config: '%s'", cfgfile );
+        return -1;
+    }
+    debug = nfcconf_get_bool ( root, "debug", debug );
+    daemonize = nfcconf_get_bool ( root, "daemon", daemonize );
+    polling_time = nfcconf_get_int ( root, "polling_time", polling_time );
+    expire_time = nfcconf_get_int ( root, "expire_time", expire_time );
 
-	if ( debug ) set_debug_level ( 1 );
+    if ( debug ) set_debug_level ( 1 );
 
-	DBG( "Looking for specified NFC device." );
-	nfcconf_block **device_list, *my_device;
-	const char* nfc_device_str = nfcconf_get_str ( root, "nfc_device", "" );
-	if (strcmp( nfc_device_str, "") != 0) {
-		device_list = nfcconf_find_blocks ( ctx, root, "device", NULL );
-		if ( !device_list ) {
-			ERR ( "Device item not found." );
-			return -1;
-		}
-		int i = 0;
-		my_device = device_list[i];
-		while ( my_device != NULL ) {
-			i++;
-			if( strcmp(my_device->name->data, nfc_device_str) == 0 ) {
-				DBG("Specified device %s have been found.", nfc_device_str);
-				nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
-				nfc_device_desc->driver = nfcconf_get_str( my_device, "driver", "" );
-				nfc_device_desc->port = nfcconf_get_str( my_device, "port", "" );
-				nfc_device_desc->speed = nfcconf_get_int( my_device, "speed", 9600 );
-				nfc_device_desc->index = nfcconf_get_int( my_device, "index", 0 );
-				break;
-			}
-			my_device = device_list[i];
-		}
-		DBG( "Found %d device configuration block(s).", i );
-		if( nfc_device_desc == NULL ) {
-			ERR("NFC device have been specified in configuration file but there is no device description. Unable to select specified device: %s.", nfc_device_str);
-		}
-		free ( device_list );
-	}
+    DBG( "Looking for specified NFC device." );
+    nfcconf_block **device_list, *my_device;
+    const char* nfc_device_str = nfcconf_get_str ( root, "nfc_device", "" );
+    if (strcmp( nfc_device_str, "") != 0) {
+        device_list = nfcconf_find_blocks ( ctx, root, "device", NULL );
+        if ( !device_list ) {
+            ERR ( "Device item not found." );
+            return -1;
+        }
+        int i = 0;
+        my_device = device_list[i];
+        while ( my_device != NULL ) {
+            i++;
+            if ( strcmp(my_device->name->data, nfc_device_str) == 0 ) {
+                DBG("Specified device %s have been found.", nfc_device_str);
+                nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
+                nfc_device_desc->driver = nfcconf_get_str( my_device, "driver", "" );
+                nfc_device_desc->port = nfcconf_get_str( my_device, "port", "" );
+                nfc_device_desc->speed = nfcconf_get_int( my_device, "speed", 9600 );
+                nfc_device_desc->index = nfcconf_get_int( my_device, "index", 0 );
+                break;
+            }
+            my_device = device_list[i];
+        }
+        DBG( "Found %d device configuration block(s).", i );
+        if ( nfc_device_desc == NULL ) {
+            ERR("NFC device have been specified in configuration file but there is no device description. Unable to select specified device: %s.", nfc_device_str);
+        }
+        free ( device_list );
+    }
 
-	return 0;
+    return 0;
 }
 
-static int parse_args ( int argc, char *argv[] )
-{
-	int i;
-	int res;
-	polling_time = DEF_POLLING;
-	expire_time = DEF_EXPIRE;
-	debug   = 0;
-	daemonize  = 0;
-	cfgfile = DEF_CONFIG_FILE;
-	/* first of all check whether debugging should be enabled */
-	for ( i = 0; i < argc; i++ ) {
-		if ( ! strcmp ( "debug", argv[i] ) ) set_debug_level ( 1 );
-	}
-	/* try to find a configuration file entry */
-	for ( i = 0; i < argc; i++ ) {
-		if ( strstr ( argv[i], "config_file=" ) ) {
-			cfgfile = 1 + strchr ( argv[i], '=' );
-			break;
-		}
-	}
-	/* parse configuration file */
-	if ( parse_config_file() < 0 ) {
-		fprintf ( stderr, "Error parsing configuration file %s\n", cfgfile );
-		exit ( -1 );
-	}
+static int parse_args ( int argc, char *argv[] ) {
+    int i;
+    int res;
+    polling_time = DEF_POLLING;
+    expire_time = DEF_EXPIRE;
+    debug   = 0;
+    daemonize  = 0;
+    cfgfile = DEF_CONFIG_FILE;
+    /* first of all check whether debugging should be enabled */
+    for ( i = 0; i < argc; i++ ) {
+        if ( ! strcmp ( "debug", argv[i] ) ) set_debug_level ( 1 );
+    }
+    /* try to find a configuration file entry */
+    for ( i = 0; i < argc; i++ ) {
+        if ( strstr ( argv[i], "config_file=" ) ) {
+            cfgfile = 1 + strchr ( argv[i], '=' );
+            break;
+        }
+    }
+    /* parse configuration file */
+    if ( parse_config_file() < 0 ) {
+        fprintf ( stderr, "Error parsing configuration file %s\n", cfgfile );
+        exit ( -1 );
+    }
 
-	/* and now re-parse command line to take precedence over cfgfile */
-	for ( i = 1; i < argc; i++ ) {
-		if ( strcmp ( "daemon", argv[i] ) == 0 ) {
-			daemonize = 1;
-			continue;
-		}
-		if ( strcmp ( "nodaemon", argv[i] ) == 0 ) {
-			daemonize = 0;
-			continue;
-		}
-		if ( strstr ( argv[i], "polling_time=" ) ) {
-			res = sscanf ( argv[i], "polling_time=%d", &polling_time );
-			continue;
-		}
-		if ( strstr ( argv[i], "expire_time=" ) ) {
-			res = sscanf ( argv[i], "expire_time=%d", &expire_time );
-			continue;
-		}
-		if ( strstr ( argv[i], "debug" ) ) {
-			continue;  /* already parsed: skip */
-		}
-		if ( strstr ( argv[i], "nodebug" ) ) {
-			set_debug_level ( 0 );
-			continue;  /* already parsed: skip */
-		}
-		if ( strstr ( argv[i], "config_file=" ) ) {
-			continue; /* already parsed: skip */
-		}
-		fprintf ( stderr, "unknown option %s\n", argv[i] );
-		/* arriving here means syntax error */
-		fprintf ( stderr, "NFC Event Daemon\n\n" );
-		fprintf ( stderr, "Usage %s [[no]debug] [[no]daemon] [polling_time=<time>] [expire_time=<limit>] [config_file=<file>]\n", argv[0] );
-		fprintf ( stderr, "\n\nDefaults: debug=0 daemon=0 polltime=%d (ms) expiretime=0 (none) config_file=%s\n", DEF_POLLING, DEF_CONFIG_FILE );
-		exit ( 1 );
-	} /* for */
-	/* end of config: return */
-	return 0;
+    /* and now re-parse command line to take precedence over cfgfile */
+    for ( i = 1; i < argc; i++ ) {
+        if ( strcmp ( "daemon", argv[i] ) == 0 ) {
+            daemonize = 1;
+            continue;
+        }
+        if ( strcmp ( "nodaemon", argv[i] ) == 0 ) {
+            daemonize = 0;
+            continue;
+        }
+        if ( strstr ( argv[i], "polling_time=" ) ) {
+            res = sscanf ( argv[i], "polling_time=%d", &polling_time );
+            continue;
+        }
+        if ( strstr ( argv[i], "expire_time=" ) ) {
+            res = sscanf ( argv[i], "expire_time=%d", &expire_time );
+            continue;
+        }
+        if ( strstr ( argv[i], "debug" ) ) {
+            continue;  /* already parsed: skip */
+        }
+        if ( strstr ( argv[i], "nodebug" ) ) {
+            set_debug_level ( 0 );
+            continue;  /* already parsed: skip */
+        }
+        if ( strstr ( argv[i], "config_file=" ) ) {
+            continue; /* already parsed: skip */
+        }
+        fprintf ( stderr, "unknown option %s\n", argv[i] );
+        /* arriving here means syntax error */
+        fprintf ( stderr, "NFC Event Daemon\n\n" );
+        fprintf ( stderr, "Usage %s [[no]debug] [[no]daemon] [polling_time=<time>] [expire_time=<limit>] [config_file=<file>]\n", argv[0] );
+        fprintf ( stderr, "\n\nDefaults: debug=0 daemon=0 polltime=%d (ms) expiretime=0 (none) config_file=%s\n", DEF_POLLING, DEF_CONFIG_FILE );
+        exit ( 1 );
+    } /* for */
+    /* end of config: return */
+    return 0;
 }
 
 #ifdef DEBUG
 debug_print_tag(tag_t* tag) {
-  switch(tag->im) {
+    switch (tag->im) {
     case IM_ISO14443A_106: {
-/*
-      printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
-      printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
-      printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.uiUidLen );
-      printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
-      if ( ti.tia.uiAtsLen )
-    {
-      printf ( "          ATS (ATR): " );
-      print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
-  }
-*/
-      uint32_t uiPos;
-      char *uid = malloc(tag->ti.tia.uiUidLen*sizeof(char));
-      char *uid_ptr = uid;
-      for (uiPos=0; uiPos < tag->ti.tia.uiUidLen; uiPos++)
-      {
-        sprintf(uid_ptr, "%02x",tag->ti.tia.abtUid[uiPos]);
-        uid_ptr += 2;
-      }
-      uid_ptr[0]='\0';
+        /*
+              printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
+              printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
+              printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.uiUidLen );
+              printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
+              if ( ti.tia.uiAtsLen )
+            {
+              printf ( "          ATS (ATR): " );
+              print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
+          }
+        */
+        uint32_t uiPos;
+        char *uid = malloc(tag->ti.tia.uiUidLen*sizeof(char));
+        char *uid_ptr = uid;
+        for (uiPos=0; uiPos < tag->ti.tia.uiUidLen; uiPos++) {
+            sprintf(uid_ptr, "%02x",tag->ti.tia.abtUid[uiPos]);
+            uid_ptr += 2;
+        }
+        uid_ptr[0]='\0';
 
-      DBG( "ISO14443A (MIFARE) tag found: %s", uid );
-      free(uid);
+        DBG( "ISO14443A (MIFARE) tag found: %s", uid );
+        free(uid);
     }
-      break;
-  }
+    break;
+    }
 }
 #endif /* DEBUG */
 
@@ -287,134 +282,132 @@ debug_print_tag(tag_t* tag) {
 * return pointer on a valid tag or NULL.
 */
 tag_t*
-ned_get_tag(dev_info* nfc_device, tag_t* tag)
-{
-  tag_info ti;
-  tag_t* rv = NULL;
+ned_get_tag(dev_info* nfc_device, tag_t* tag) {
+    tag_info ti;
+    tag_t* rv = NULL;
 
-  if( tag == NULL ) {
-    // We are looking for any tag.
-    // Poll for a ISO14443A (MIFARE) tag
-    if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
-      rv = malloc(sizeof(tag_t));
-      rv->ti = ti;
-      rv->im = IM_ISO14443A_106;
-    }
-  } else {
-    // tag is not NULL, we are looking for specific tag
-    if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.uiUidLen, &ti ) ) {
-      rv = tag;
+    if ( tag == NULL ) {
+        // We are looking for any tag.
+        // Poll for a ISO14443A (MIFARE) tag
+        if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
+            rv = malloc(sizeof(tag_t));
+            rv->ti = ti;
+            rv->im = IM_ISO14443A_106;
+        }
     } else {
-      free(tag);
+        // tag is not NULL, we are looking for specific tag
+        if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.uiUidLen, &ti ) ) {
+            rv = tag;
+        } else {
+            free(tag);
+        }
     }
-  }
 
-  if(rv != NULL) {
-    nfc_initiator_deselect_tag ( nfc_device );
-  }
+    if (rv != NULL) {
+        nfc_initiator_deselect_tag ( nfc_device );
+    }
 
-  return rv;
+    return rv;
 }
 
 int
-main ( int argc, char *argv[] )
-{
-	int rv;
+main ( int argc, char *argv[] ) {
+    int rv;
 
-        tag_t* old_tag = NULL;
-        tag_t* new_tag;
+    tag_t* old_tag = NULL;
+    tag_t* new_tag;
 
-        int first_loop   = 0;
-	int expire_count = 0;
+    int first_loop   = 0;
+    int expire_count = 0;
 
-	/* parse args and configuration file */
-	parse_args ( argc, argv );
+    /* parse args and configuration file */
+    parse_args ( argc, argv );
 
-	/* put my self into background if flag is set */
-	if ( daemonize ) {
-		DBG ( "Going to be daemon..." );
-		if ( daemon ( 0, debug ) < 0 ) {
-			DBG ( "Error in daemon() call: %s", strerror ( errno ) );
-			return 1;
-		}
-	}
+    /* put my self into background if flag is set */
+    if ( daemonize ) {
+        DBG ( "Going to be daemon..." );
+        if ( daemon ( 0, debug ) < 0 ) {
+            DBG ( "Error in daemon() call: %s", strerror ( errno ) );
+            return 1;
+        }
+    }
 
-	load_module();
+    load_module();
 
-	/*
-	 * Wait endlessly for all events in the list of readers
-	 * We only stop in case of an error
-	 *
-	 * COMMENT:
-	 * There are no way in libnfc API to detect if a card is present or no
-	 * so the way we proceed is to look for an tag
-	 * Any ideas will be welcomed
-	 *
-	 */
-	dev_info* nfc_device = NULL;
+    /*
+     * Wait endlessly for all events in the list of readers
+     * We only stop in case of an error
+     *
+     * COMMENT:
+     * There are no way in libnfc API to detect if a card is present or no
+     * so the way we proceed is to look for an tag
+     * Any ideas will be welcomed
+     *
+     */
+    dev_info* nfc_device = NULL;
 
 connect:
-	// Try to open the NFC device
-	if( nfc_device == NULL ) nfc_device = nfc_connect( nfc_device_desc );
+    // Try to open the NFC device
+    if ( nfc_device == NULL ) nfc_device = nfc_connect( nfc_device_desc );
 init:
-	if ( nfc_device == INVALID_DEVICE_INFO ) {
-		DBG( "NFC device not found" );
-		exit(1);
-	}
-	nfc_initiator_init ( nfc_device );
+    if ( nfc_device == INVALID_DEVICE_INFO ) {
+        DBG( "NFC device not found" );
+        exit(1);
+    }
+    nfc_initiator_init ( nfc_device );
 
-	// Drop the field for a while
-	nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
+    // Drop the field for a while
+    nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
 
-	// Let the reader try to find a tag infinitly
-	nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
+    // Let the reader try to find a tag infinitly
+    nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
 
-	// Configure the CRC and Parity settings
-	nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );
-	nfc_configure ( nfc_device, DCO_HANDLE_PARITY, true );
+    // Configure the CRC and Parity settings
+    nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );
+    nfc_configure ( nfc_device, DCO_HANDLE_PARITY, true );
 
-	// Enable field so more power consuming cards can power themselves up
-	nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, true );
+    // Enable field so more power consuming cards can power themselves up
+    nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, true );
 
-	DBG( "Connected to NFC device: %s (0x%08x)", nfc_device->acName, nfc_device );
+    DBG( "Connected to NFC device: %s (0x%08x)", nfc_device->acName, nfc_device );
 
-        do {
+    do {
 detect:
-		sleep ( polling_time );
-		new_tag = ned_get_tag(nfc_device, old_tag);
+        sleep ( polling_time );
+        new_tag = ned_get_tag(nfc_device, old_tag);
 
-		if ( old_tag == new_tag ) { /* state unchanged */
-			/* on card not present, increase and check expire time */
-			if ( expire_time == 0 ) goto detect;
-			if ( new_tag != NULL ) goto detect;
-			expire_count += polling_time;
-			if ( expire_count >= expire_time ) {
-				DBG ( "Timeout on tag removed " );
-				execute_event ( nfc_device, EVENT_EXPIRE_TIME );
-				expire_count = 0; /*restart timer */
-			}
-		} else { /* state changed; parse event */
-			old_tag = new_tag;
-			expire_count = 0;
+        if ( old_tag == new_tag ) { /* state unchanged */
+            /* on card not present, increase and check expire time */
+            if ( expire_time == 0 ) goto detect;
+            if ( new_tag != NULL ) goto detect;
+            expire_count += polling_time;
+            if ( expire_count >= expire_time ) {
+                DBG ( "Timeout on tag removed " );
+                execute_event ( nfc_device, EVENT_EXPIRE_TIME );
+                expire_count = 0; /*restart timer */
+            }
+        } else { /* state changed; parse event */
+            old_tag = new_tag;
+            expire_count = 0;
 // 			if ( !first_loop++ ) continue; /*skip first pass */
-			if ( new_tag == NULL ) {
-				DBG ( "Event detected: tag removed" );
-				execute_event ( nfc_device, EVENT_TAG_REMOVED );
-			} else {
-				DBG ( "Event detected: tag inserted " );
-				execute_event ( nfc_device, EVENT_TAG_INSERTED );
-			}
-		}
-	} while ( 1 );
+            if ( new_tag == NULL ) {
+                DBG ( "Event detected: tag removed" );
+                execute_event ( nfc_device, EVENT_TAG_REMOVED );
+            } else {
+                DBG ( "Event detected: tag inserted " );
+                execute_event ( nfc_device, EVENT_TAG_INSERTED );
+            }
+        }
+    } while ( 1 );
 disconnect:
-	if ( nfc_device != NULL ) {
-		nfc_disconnect(nfc_device);
-		DBG ( "NFC device (0x%08x) is disconnected", nfc_device );
-		nfc_device = NULL;
-	}
+    if ( nfc_device != NULL ) {
+        nfc_disconnect(nfc_device);
+        DBG ( "NFC device (0x%08x) is disconnected", nfc_device );
+        nfc_device = NULL;
+    }
 
-	/* If we get here means that an error or exit status occurred */
-	DBG ( "Exited from main loop" );
-	exit ( EXIT_FAILURE );
+    /* If we get here means that an error or exit status occurred */
+    DBG ( "Exited from main loop" );
+    exit ( EXIT_FAILURE );
 } /* main */
 

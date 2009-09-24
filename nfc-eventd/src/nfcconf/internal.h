@@ -31,28 +31,30 @@ extern "C" {
 #define TOKEN_TYPE_STRING	2
 #define TOKEN_TYPE_PUNCT	3
 
-typedef struct _nfcconf_parser {
-	nfcconf_context *config;
+    typedef struct _nfcconf_parser {
+        nfcconf_context *config;
 
-	nfcconf_block *block;
-	nfcconf_item *last_item, *current_item;
+        nfcconf_block *block;
+        nfcconf_item *last_item, *current_item;
 
-	char *key;
-	nfcconf_list *name;
+        char *key;
+        nfcconf_list *name;
 
-	int state;
-	int last_token_type;
-	int line;
+        int state;
+        int last_token_type;
+        int line;
 
-	unsigned int error:1;
-	unsigned int warnings:1;
-	char emesg[256];
-} nfcconf_parser;
+unsigned int error:
+        1;
+unsigned int warnings:
+        1;
+        char emesg[256];
+    } nfcconf_parser;
 
-extern int nfcconf_lex_parse(nfcconf_parser * parser, const char *filename);
-extern int nfcconf_lex_parse_string(nfcconf_parser * parser,
-				   const char *config_string);
-extern void nfcconf_parse_token(nfcconf_parser * parser, int token_type, const char *token);
+    extern int nfcconf_lex_parse(nfcconf_parser * parser, const char *filename);
+    extern int nfcconf_lex_parse_string(nfcconf_parser * parser,
+                                            const char *config_string);
+    extern void nfcconf_parse_token(nfcconf_parser * parser, int token_type, const char *token);
 
 #ifdef __cplusplus
 }

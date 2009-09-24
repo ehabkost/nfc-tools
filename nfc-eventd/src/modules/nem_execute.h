@@ -1,7 +1,7 @@
 //
 // C header: execute
 //
-// Description: 
+// Description:
 //
 //
 // Author: Romuald Conty <rconty@il4p.fr>, (C) 2009

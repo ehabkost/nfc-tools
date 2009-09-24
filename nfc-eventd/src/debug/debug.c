@@ -1,4 +1,4 @@
-/* 
+/*
  * PKCS #11 PAM Login Module
  * Copyright (C) 2003 Mario Strasser <mast@gmx.net>,
  *
@@ -25,43 +25,42 @@
 static int debug_level = 0;
 
 void set_debug_level(int level) {
-  debug_level = level;
+    debug_level = level;
 }
 
 int get_debug_level() {
-	return debug_level;
+    return debug_level;
 }
 
 void debug_print(int level, const char *file, int line, const char *format, ...) {
-  va_list ap;
-  if (debug_level >= level) {
-    /* is stdout is a tty */
-    if (isatty(1)) {
-      const char *t = "\033[34mDEBUG"; /* blue */
+    va_list ap;
+    if (debug_level >= level) {
+        /* is stdout is a tty */
+        if (isatty(1)) {
+            const char *t = "\033[34mDEBUG"; /* blue */
 
-      if (-1 == level)
-        t = "\033[31mERROR"; /* red */
+            if (-1 == level)
+                t = "\033[31mERROR"; /* red */
 
-      /* print preamble */
-      printf("%s:%s:%d: ", t, file, line);
-      /* print message */
-      va_start(ap, format);
-      vprintf(format, ap);
-      va_end(ap);
-      /* print postamble */
-      printf("\033[0m\n");
+            /* print preamble */
+            printf("%s:%s:%d: ", t, file, line);
+            /* print message */
+            va_start(ap, format);
+            vprintf(format, ap);
+            va_end(ap);
+            /* print postamble */
+            printf("\033[0m\n");
+        } else {
+            /* else we use syslog(3) */
+            char buf[100];
+
+            /* print message */
+            va_start(ap, format);
+            vsnprintf(buf, sizeof(buf), format, ap);
+            va_end(ap);
+
+            syslog(LOG_INFO, buf);
+        }
     }
-    else {
-	  /* else we use syslog(3) */
-      char buf[100];
-
-      /* print message */
-      va_start(ap, format);
-      vsnprintf(buf, sizeof(buf), format, ap);
-      va_end(ap);
-      
-      syslog(LOG_INFO, buf);
-    }
-  }
 }
 
