@@ -40,11 +40,6 @@
 #define DEF_EXPIRE 0    /* no expire */
 #define DEF_CONFIG_FILE "/etc/nfc-eventd.conf"
 
-typedef struct {
-    init_modulation im;
-    tag_info ti;
-} tag_t;
-
 int polling_time;
 int expire_time;
 int daemonize;
@@ -55,9 +50,6 @@ nfcconf_context *ctx;
 const nfcconf_block *root;
 
 typedef struct slot_st slot_t;
-
-typedef void (*module_init_fct_t)(nfcconf_context*, nfcconf_block*);
-typedef int (*module_event_handler_fct_t)( dev_info*, const nem_event_t );
 
 static module_init_fct_t module_init_fct_ptr = NULL;
 static module_event_handler_fct_t module_event_handler_fct_ptr = NULL;
@@ -120,8 +112,8 @@ static int load_module( void ) {
     return 0;
 }
 
-static int execute_event ( dev_info *nfc_device, const nem_event_t event ) {
-    return (*module_event_handler_fct_ptr)( nfc_device, event );
+static int execute_event ( const dev_info *nfc_device, const tag_t* tag, const nem_event_t event ) {
+    return (*module_event_handler_fct_ptr)( nfc_device, tag, event );
 }
 
 static int parse_config_file() {
@@ -246,7 +238,7 @@ static int parse_args ( int argc, char *argv[] ) {
 }
 
 #ifdef DEBUG
-debug_print_tag(tag_t* tag) {
+void debug_print_tag(tag_t* tag) {
     switch (tag->im) {
     case IM_ISO14443A_106: {
         /*
@@ -298,8 +290,6 @@ ned_get_tag(dev_info* nfc_device, tag_t* tag) {
         // tag is not NULL, we are looking for specific tag
         if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.uiUidLen, &ti ) ) {
             rv = tag;
-        } else {
-            free(tag);
         }
     }
 
@@ -383,20 +373,20 @@ detect:
             expire_count += polling_time;
             if ( expire_count >= expire_time ) {
                 DBG ( "Timeout on tag removed " );
-                execute_event ( nfc_device, EVENT_EXPIRE_TIME );
+                execute_event ( nfc_device, new_tag,EVENT_EXPIRE_TIME );
                 expire_count = 0; /*restart timer */
             }
         } else { /* state changed; parse event */
-            old_tag = new_tag;
             expire_count = 0;
-// 			if ( !first_loop++ ) continue; /*skip first pass */
             if ( new_tag == NULL ) {
                 DBG ( "Event detected: tag removed" );
-                execute_event ( nfc_device, EVENT_TAG_REMOVED );
+                execute_event ( nfc_device, old_tag, EVENT_TAG_REMOVED );
+                free(old_tag);
             } else {
                 DBG ( "Event detected: tag inserted " );
-                execute_event ( nfc_device, EVENT_TAG_INSERTED );
+                execute_event ( nfc_device, new_tag, EVENT_TAG_INSERTED );
             }
+            old_tag = new_tag;
         }
     } while ( 1 );
 disconnect:

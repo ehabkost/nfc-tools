@@ -14,4 +14,4 @@
 #include "nem_common.h"
 
 void nem_execute_init(nfcconf_context *module_context, nfcconf_block* module_block);
-int nem_execute_event_handler(dev_info* nfc_device, const nem_event_t event);
+int nem_execute_event_handler(const dev_info* nfc_device, const tag_t* tag, const nem_event_t event);

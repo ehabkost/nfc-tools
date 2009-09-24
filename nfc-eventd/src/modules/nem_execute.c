@@ -76,11 +76,12 @@ nem_execute_init( nfcconf_context *module_context, nfcconf_block* module_block )
 }
 
 void
-tag_get_uid(dev_info *nfc_device, char **dest) {
+tag_get_uid(const dev_info* nfc_device, const tag_t* tag, char **dest) {
     tag_info ti;
 
+    /// @TODO We don't need to reselect tag to get his UID: tag_t contains this data.
     // Poll for a ISO14443A (MIFARE) tag
-    if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
+    if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.uiUidLen, &ti ) ) {
         /*
                         printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
                         printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
@@ -101,7 +102,7 @@ tag_get_uid(dev_info *nfc_device, char **dest) {
         }
         uid_ptr[0]='\0';
         DBG( "ISO14443A (MIFARE) tag found: uid=0x%s", *dest );
-        // nfc_initiator_deselect_tag ( nfc_device );
+        nfc_initiator_deselect_tag ( nfc_device );
     } else {
         *dest = NULL;
         DBG("ISO14443A (MIFARE) tag not found" );
@@ -110,7 +111,7 @@ tag_get_uid(dev_info *nfc_device, char **dest) {
 }
 
 int
-nem_execute_event_handler(dev_info* nfc_device, const nem_event_t event) {
+    nem_execute_event_handler(const dev_info* nfc_device, const tag_t* tag, const nem_event_t event) {
     int onerr;
     const char *onerrorstr;
     const nfcconf_list *actionlist;
@@ -121,15 +122,13 @@ nem_execute_event_handler(dev_info* nfc_device, const nem_event_t event) {
     switch (event) {
     case EVENT_TAG_INSERTED:
         action = "tag_insert";
-        DBG( "nem_execute_event_handler( nfc_device: 0x%08x, event: EVENT_TAG_INSERTED )", nfc_device );
         if ( _tag_uid != NULL ) {
             free(_tag_uid);
         }
-        tag_get_uid(nfc_device, &_tag_uid);
+        tag_get_uid(nfc_device, tag, &_tag_uid);
         break;
     case EVENT_TAG_REMOVED:
         action = "tag_remove";
-        DBG( "nem_execute_event_handler( nfc_device: 0x%08x, event: EVENT_TAG_REMOVED )", nfc_device );
         break;
     }
 
