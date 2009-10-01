@@ -1,7 +1,7 @@
 INCLUDES = $(all_includes)
 METASOURCES = AUTO
 moduledir=$(pkglibdir)/modules
-nem_execute_la_LDFLAGS = -module -no-undefined
+nem_execute_la_LDFLAGS = -module -no-undefined -lnfc
 noinst_HEADERS = nem_common.h nem_execute.h
 module_LTLIBRARIES = nem_execute.la
 nem_execute_la_SOURCES = nem_execute.c
