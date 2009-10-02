@@ -155,10 +155,10 @@ static int parse_config_file() {
             if ( strcmp(my_device->name->data, nfc_device_str) == 0 ) {
                 DBG("Specified device %s have been found.", nfc_device_str);
                 nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
-                nfc_device_desc->driver = nfcconf_get_str( my_device, "driver", "" );
-                nfc_device_desc->port = nfcconf_get_str( my_device, "port", "" );
-                nfc_device_desc->speed = nfcconf_get_int( my_device, "speed", 9600 );
-                nfc_device_desc->index = nfcconf_get_int( my_device, "index", 0 );
+                nfc_device_desc->pcDriver = nfcconf_get_str( my_device, "driver", "" );
+                nfc_device_desc->pcPort = nfcconf_get_str( my_device, "port", "" );
+                nfc_device_desc->uiSpeed = nfcconf_get_int( my_device, "speed", 9600 );
+                nfc_device_desc->uiIndex = nfcconf_get_int( my_device, "index", 0 );
                 break;
             }
             my_device = device_list[i];
@@ -244,7 +244,7 @@ void debug_print_tag(tag_t* tag) {
         /*
               printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
               printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
-              printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.uiUidLen );
+              printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.szUidLen );
               printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
               if ( ti.tia.uiAtsLen )
             {
@@ -253,9 +253,9 @@ void debug_print_tag(tag_t* tag) {
           }
         */
         uint32_t uiPos;
-        char *uid = malloc(tag->ti.tia.uiUidLen*sizeof(char));
+        char *uid = malloc(tag->ti.tia.szUidLen*sizeof(char));
         char *uid_ptr = uid;
-        for (uiPos=0; uiPos < tag->ti.tia.uiUidLen; uiPos++) {
+        for (uiPos=0; uiPos < tag->ti.tia.szUidLen; uiPos++) {
             sprintf(uid_ptr, "%02x",tag->ti.tia.abtUid[uiPos]);
             uid_ptr += 2;
         }
@@ -288,7 +288,7 @@ ned_get_tag(dev_info* nfc_device, tag_t* tag) {
         }
     } else {
         // tag is not NULL, we are looking for specific tag
-        if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.uiUidLen, &ti ) ) {
+        if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.szUidLen, &ti ) ) {
             rv = tag;
         }
     }

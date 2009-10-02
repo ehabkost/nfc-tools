@@ -81,11 +81,11 @@ tag_get_uid(const dev_info* nfc_device, const tag_t* tag, char **dest) {
 
     /// @TODO We don't need to reselect tag to get his UID: tag_t contains this data.
     // Poll for a ISO14443A (MIFARE) tag
-    if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.uiUidLen, &ti ) ) {
+    if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.szUidLen, &ti ) ) {
         /*
                         printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
                         printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
-                        printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.uiUidLen );
+                        printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.szUidLen );
                         printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
                         if ( ti.tia.uiAtsLen )
                         {
@@ -94,9 +94,9 @@ tag_get_uid(const dev_info* nfc_device, const tag_t* tag, char **dest) {
                         }
         */
         uint32_t uiPos;
-        *dest = malloc(ti.tia.uiUidLen*sizeof(char));
+        *dest = malloc(ti.tia.szUidLen*sizeof(char));
         char *uid_ptr = *dest;
-        for (uiPos=0; uiPos < ti.tia.uiUidLen; uiPos++) {
+        for (uiPos=0; uiPos < ti.tia.szUidLen; uiPos++) {
             sprintf(uid_ptr, "%02x",ti.tia.abtUid[uiPos]);
             uid_ptr += 2;
         }
