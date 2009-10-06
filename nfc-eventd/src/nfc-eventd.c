@@ -38,6 +38,8 @@
 
 #include "types.h"
 
+#include "config.h"
+
 #define DEF_POLLING 1    /* 1 second timeout */
 #define DEF_EXPIRE 0    /* no expire */
 #define DEF_CONFIG_FILE "/etc/nfc-eventd.conf"
@@ -280,6 +282,8 @@ main ( int argc, char *argv[] ) {
 
     int first_loop   = 0;
     int expire_count = 0;
+
+    printf("%s\n", PACKAGE_STRING);
 
     /* parse args and configuration file */
     parse_args ( argc, argv );
