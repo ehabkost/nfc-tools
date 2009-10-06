@@ -324,7 +324,7 @@ init:
     // Drop the field for a while
     nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
 
-    nfc_configure ( nfc_device, DCO_INFINITE_SELECT, true );
+    nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
 
     // Configure the CRC and Parity settings
     nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );
