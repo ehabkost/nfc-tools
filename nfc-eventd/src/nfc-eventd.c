@@ -36,6 +36,8 @@
 /* Module common defines */
 #include "modules/nem_common.h"
 
+#include "types.h"
+
 #define DEF_POLLING 1    /* 1 second timeout */
 #define DEF_EXPIRE 0    /* no expire */
 #define DEF_CONFIG_FILE "/etc/nfc-eventd.conf"
@@ -237,38 +239,6 @@ static int parse_args ( int argc, char *argv[] ) {
     return 0;
 }
 
-#ifdef DEBUG
-void debug_print_tag(tag_t* tag) {
-    switch (tag->im) {
-    case IM_ISO14443A_106: {
-        /*
-              printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
-              printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
-              printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.szUidLen );
-              printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
-              if ( ti.tia.uiAtsLen )
-            {
-              printf ( "          ATS (ATR): " );
-              print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
-          }
-        */
-        uint32_t uiPos;
-        char *uid = malloc(tag->ti.tia.szUidLen*sizeof(char));
-        char *uid_ptr = uid;
-        for (uiPos=0; uiPos < tag->ti.tia.szUidLen; uiPos++) {
-            sprintf(uid_ptr, "%02x",tag->ti.tia.abtUid[uiPos]);
-            uid_ptr += 2;
-        }
-        uid_ptr[0]='\0';
-
-        DBG( "ISO14443A (MIFARE) tag found: %s", uid );
-        free(uid);
-    }
-    break;
-    }
-}
-#endif /* DEBUG */
-
 /*
 * try to find a valid tag
 * return pointer on a valid tag or NULL.
@@ -288,6 +258,7 @@ ned_get_tag(dev_info* nfc_device, tag_t* tag) {
         }
     } else {
         // tag is not NULL, we are looking for specific tag
+        debug_print_tag(tag);
         if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.szUidLen, &ti ) ) {
             rv = tag;
         }
@@ -349,8 +320,7 @@ init:
     // Drop the field for a while
     nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
 
-    // Let the reader try to find a tag infinitly
-    nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
+    nfc_configure ( nfc_device, DCO_INFINITE_SELECT, true );
 
     // Configure the CRC and Parity settings
     nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );

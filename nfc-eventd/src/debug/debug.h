@@ -71,5 +71,15 @@ DEBUG_EXTERN void debug_print(int level, const char *file, int line, const char 
 
 #undef DEBUG_EXTERN
 
+#ifdef DEBUG
+#include "../types.h"
+  void _debug_print_tag(const tag_t* tag);
+#define debug_print_tag( X ) \
+         printf("%s:%s:%d: ", "\033[34mDEBUG", __FILE__, __LINE__); \
+         _debug_print_tag( X ); \
+         printf("\033[0m\n")
+#else
+  #define debug_print_tag( X )
+#endif /* DEBUG */
 
 #endif /* __DEBUG_H_ */

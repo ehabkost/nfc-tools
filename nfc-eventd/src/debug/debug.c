@@ -64,3 +64,33 @@ void debug_print(int level, const char *file, int line, const char *format, ...)
     }
 }
 
+void _debug_print_tag(const tag_t* tag)
+{
+  switch (tag->im) {
+    case IM_ISO14443A_106: {
+        /*
+      printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
+      printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
+      printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.szUidLen );
+      printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
+      if ( ti.tia.uiAtsLen )
+      {
+      printf ( "          ATS (ATR): " );
+      print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
+    }
+        */
+      uint32_t uiPos;
+      char *uid = malloc(tag->ti.tia.szUidLen*sizeof(char));
+      char *uid_ptr = uid;
+      for (uiPos=0; uiPos < tag->ti.tia.szUidLen; uiPos++) {
+        sprintf(uid_ptr, "%02x",tag->ti.tia.abtUid[uiPos]);
+        uid_ptr += 2;
+      }
+      uid_ptr[0]='\0';
+
+      printf( "ISO14443A (MIFARE) tag with uid=%s", uid );
+      free(uid);
+    }
+    break;
+  }
+}
