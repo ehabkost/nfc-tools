@@ -51,6 +51,14 @@ then
 fi
 AC_SUBST([DEBUG_CFLAGS])
 
+# --enable-dbus support (default:no)
+AC_ARG_ENABLE([dbus],AS_HELP_STRING([--enable-dbus],[D-Bus support]),[enable_dbus=$enableval],[enable_dbus="no"])
+ 
+AC_MSG_CHECKING(for dbus support)
+AC_MSG_RESULT($enable_dbus)
+ 
+# checking dependencies
+## libnfc
 PKG_CHECK_MODULES(LIBNFC, libnfc, [WITH_NFC=1], [WITH_NFC=0])
 
 if test x"$WITH_NFC" = "x0"; then
@@ -59,6 +67,19 @@ fi
 AC_SUBST(LIBNFC_LIBS)
 AC_SUBST(LIBNFC_CFLAGS)
 
+## dbus
+if test x"$enable_dbus" = "xyes"
+then
+  PKG_CHECK_MODULES(DBUS, dbus-1 dbus-glib-1, [WITH_DBUS=1], [WITH_DBUS=0])
+  if test x"$WITH_DBUS" = "x0"; then
+    AC_MSG_ERROR([dbus and dbus-glib are mandatory if you enable D-Bus support..])
+  fi
+  AC_SUBST(DBUS_LIBS)
+  AC_SUBST(DBUS_CFLAGS)
+fi
+AM_CONDITIONAL(DBUS_ENABLED, [test x"$enable_dbus" = xyes])
+
+# additionnals flags
 AC_SUBST(LIBNFCCONF)
 LIBNFCCONF="\${top_builddir}/src/nfcconf/libnfcconf.la"
 
