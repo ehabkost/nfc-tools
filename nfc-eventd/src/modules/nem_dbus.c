@@ -214,7 +214,7 @@ nem_dbus_init( nfcconf_context *module_context, nfcconf_block* module_block ) {
   GThread *dbus_service_thread = g_thread_create(dbus_service, NULL, false, &error);
   if(dbus_service_thread == NULL) lose_gerror ("Failed to create thread: ", error);
 */
-  
+  dbus_service(NULL);
 }
 
 int
