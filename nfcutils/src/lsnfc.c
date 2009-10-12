@@ -12,7 +12,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
+You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
@@ -38,6 +38,7 @@ void print_hex(byte_t* pbtData, size_t szDate)
 int main(int argc, const char* argv[])
 {
   tag_info ti;
+  uint8_t tag_count = 0;
 
   // Try to open the NFC device
   pdi = nfc_connect(NULL);
@@ -81,10 +82,16 @@ int main(int argc, const char* argv[])
       if ((ti.tia.abtAtqa[0] == 0x00) && (ti.tia.abtAtqa[1] == 0x44)) {
         printf("MIFARE Ultralight ");
         printf("(UID="); print_hex(ti.tia.abtUid,ti.tia.szUidLen); printf(")\n");
+      } else if ((ti.tia.abtAtqa[0] == 0x03) && (ti.tia.abtAtqa[1] == 0x44)) {
+        printf("MIFARE DESFire 4k");
+        printf("(UID="); print_hex(ti.tia.abtUid,ti.tia.szUidLen); printf(")\n");
       } else if (ti.tia.btSak & 0x08) {
         printf("MIFARE Classic ");
-        if ((ti.tia.abtAtqa[0] == 0x00) && (ti.tia.abtAtqa[1] == 0x04)) printf("1k ");
-        if ((ti.tia.abtAtqa[0] == 0x03) && (ti.tia.abtAtqa[1] == 0x44)) printf("4k ");
+        if (ti.tia.abtAtqa[1] != 0x02) {
+          printf("1k ");
+        } else {
+          printf("4k ");
+        }
         printf("(UID="); print_hex(ti.tia.abtUid,ti.tia.szUidLen); printf(")\n");
       } else {
         printf("Unknown tag type: ");
@@ -100,6 +107,7 @@ int main(int argc, const char* argv[])
         printf("\n");
       }
       nfc_initiator_deselect_tag(pdi);
+      tag_count++;
     } else if (nfc_initiator_select_tag(pdi,IM_FELICA_212,abtFelica,5,&ti) || nfc_initiator_select_tag(pdi,IM_FELICA_424,abtFelica,5,&ti))  // Poll for a Felica tag
     {
       printf("The following (NFC) Felica tag was found:\n\n");
@@ -122,9 +130,9 @@ int main(int argc, const char* argv[])
       printf("Jewel\n");
     } else {
       no_more_tag = true;
-      printf("No more tag.\n");
     }
   } while (no_more_tag != true);
+  printf("%d tag(s) have been found.\n", tag_count);
 
   nfc_disconnect(pdi);
   return 1;
