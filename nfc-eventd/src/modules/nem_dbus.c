@@ -175,7 +175,7 @@ dbus_service(gpointer data)
   
 //  mainloop = g_main_loop_new (NULL, FALSE);
 
-  bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+  bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
   if (!bus)
     lose_gerror ("Couldn't connect to session bus", error);
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node name="/">
+  <interface name="org.freedevice.NFC">
+
+    <method name="emitHelloSignal">
+    </method>
+    
+    <!-- Mark the signal as exported -->
+    <signal name="TagInserted"/>
+    <signal name="TagRemoved"/>
+
+  </interface>
+</node>

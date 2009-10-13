@@ -88,6 +88,7 @@ CFLAGS="$CFLAGS -std=c99"
 
 AC_CONFIG_FILES([
 		Makefile
+		conf/Makefile
 		src/Makefile
 		src/nfcconf/Makefile
 		src/debug/Makefile
