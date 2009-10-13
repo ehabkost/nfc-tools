@@ -1,10 +1,16 @@
-nfc-eventd (0.0.1-1) unstable; urgency=low
+nfc-eventd (0.0.0-2) unstable; urgency=low
+
+  * Add NEM (Nfc Eventd Module) D-Bus.
+
+ -- Romuald Conty <rconty@il4p.fr>  Thu, 13 Oct 2009 11:42:42 +0100
+
+nfc-eventd (0.0.0-1) unstable; urgency=low
 
   * Don't use CDBS anymore, should now cross compile.
 
  -- Romuald Conty <rconty@il4p.fr>  Wed, 01 Oct 2009 15:42:42 +0100
 
-nfc-eventd (0.0.1-0) unstable; urgency=low
+nfc-eventd (0.0.0-0) unstable; urgency=low
 
   * Initial debian package.
 
