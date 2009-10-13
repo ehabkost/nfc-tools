@@ -10,10 +10,10 @@ nem_execute_la_CFLAGS = @LIBNFC_CFLAGS@
 nem_execute_la_LIBADD = $(top_builddir)/src/debug/libdebug.la \
 	$(top_builddir)/src/nfcconf/libnfcconf.la
 
-if DBUS_ENABLED
 nfc-dbus-object.h: nfc-dbus-object.xml
 	dbus-binding-tool --prefix=nfc_object --mode=glib-server --output=nfc-dbus-object.h $(srcdir)/nfc-dbus-object.xml
 
+if DBUS_ENABLED
 BUILT_SOURCES = nfc-dbus-object.h
 
 noinst_HEADERS += nem_dbus.h nfc-dbus-object.h
@@ -25,5 +25,6 @@ nem_dbus_la_LIBADD = $(top_builddir)/src/debug/libdebug.la \
 	$(top_builddir)/src/nfcconf/libnfcconf.la
 
 CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = nfc-dbus-object.xml
 
 endif
