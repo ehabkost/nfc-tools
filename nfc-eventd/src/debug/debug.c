@@ -21,6 +21,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#include "../types.h"
+
 /* current debug level */
 static int debug_level = 0;
 
