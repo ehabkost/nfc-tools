@@ -29,6 +29,7 @@
 #endif
 
 #define ERR(x,...) debug_print(-1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
+#define INFO(x,...) debug_print(0, __FILE__, __LINE__, x, ## __VA_ARGS__ )
 
 #ifndef DEBUG
   #warning "Debugging is completely disabled!"
@@ -56,16 +57,16 @@ DEBUG_EXTERN void set_debug_level(int level);
 DEBUG_EXTERN int get_debug_level(void);
 
 /**
- * debug_print() prints the given message 
-
- * if the current debug-level 
- * is greater or equal to the defined level. The format string as well as all
- * further arguments are interpreted as by the printf() function. 
- *@param level Debug level of message
- *@param file Name of the file where message is generated
- *@param line Line number where message is generated
- *@param format Message format
- *@param .... Optional arguments
+ * @fn void debug_print(int level, const char *file, int line, const char *format, ...)
+ * @brief prints the given message 
+ *  if the current debug-level is greater or equal to the defined level. The
+ *  format string as well as all further arguments are interpreted as by the
+ *  printf() function. 
+ * @param level Debug level of message
+ * @param file Name of the file where message is generated
+ * @param line Line number where message is generated
+ * @param format Message format
+ * @param ... Optional arguments
  */
 DEBUG_EXTERN void debug_print(int level, const char *file, int line, const char *format, ...);
 

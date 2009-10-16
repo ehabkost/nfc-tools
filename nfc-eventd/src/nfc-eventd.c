@@ -1,19 +1,19 @@
-/*
-    Generate events on tag status change
-    Copyrigt (C) 2009 Romuald Conty <rconty@il4p.fr>
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+/**
+ * Generate events on tag status change
+ * Copyrigt (C) 2009 Romuald Conty <rconty@il4p.fr>
+ * 
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA  02111-1307 USA
 */
 
 #include <libnfc/libnfc.h>
@@ -84,7 +84,7 @@ static int load_module( void ) {
     void *module_handler;
     module_handler = dlopen(module_path,RTLD_LAZY);
     if ( module_handler == NULL ) {
-        ERR("Unable to open module: %s\n", dlerror());
+        ERR("Unable to open module: %s", dlerror());
         exit(EXIT_FAILURE);
     }
 
@@ -98,7 +98,7 @@ static int load_module( void ) {
     module_init_fct_ptr = dlsym(module_handler,module_fct_name);
 
     if ((error = dlerror()) != NULL) {
-        fprintf (stderr, "%s\n", error);
+        ERR ("%s", error);
         exit(EXIT_FAILURE);
     }
 
@@ -108,7 +108,7 @@ static int load_module( void ) {
 
     module_event_handler_fct_ptr = dlsym(module_handler,module_fct_name);
     if ((error = dlerror()) != NULL) {
-        fprintf (stderr, "%s\n", error);
+        ERR ( "%s", error);
         exit(EXIT_FAILURE);
     }
 
@@ -123,17 +123,17 @@ static int execute_event ( const dev_info *nfc_device, const tag_t* tag, const n
 static int parse_config_file() {
     ctx = nfcconf_new ( cfgfile );
     if ( !ctx ) {
-        DBG ( "Error creating conf context" );
+        ERR ( "Error creating conf context" );
         return -1;
     }
     if ( nfcconf_parse ( ctx ) <= 0 ) {
-        DBG ( "Error parsing file '%s'", cfgfile );
+        ERR ( "Error parsing file '%s'", cfgfile );
         return -1;
     }
     /* now parse options */
     root = nfcconf_find_block ( ctx, NULL, "nfc-eventd" );
     if ( !root ) {
-        DBG ( "nfc-eventd block not found in config: '%s'", cfgfile );
+        ERR ( "nfc-eventd block not found in config: '%s'", cfgfile );
         return -1;
     }
     debug = nfcconf_get_bool ( root, "debug", debug );
@@ -157,7 +157,7 @@ static int parse_config_file() {
         while ( my_device != NULL ) {
             i++;
             if ( strcmp(my_device->name->data, nfc_device_str) == 0 ) {
-                DBG("Specified device %s have been found.", nfc_device_str);
+                INFO("Specified device %s have been found.", nfc_device_str);
                 nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
                 nfc_device_desc->pcDriver = nfcconf_get_str( my_device, "driver", "" );
                 nfc_device_desc->pcPort = nfcconf_get_str( my_device, "port", "" );
@@ -230,20 +230,21 @@ static int parse_args ( int argc, char *argv[] ) {
         if ( strstr ( argv[i], "config_file=" ) ) {
             continue; /* already parsed: skip */
         }
-        fprintf ( stderr, "unknown option %s\n", argv[i] );
+        ERR ( "unknown option %s", argv[i] );
         /* arriving here means syntax error */
-        fprintf ( stderr, "NFC Event Daemon\n\n" );
-        fprintf ( stderr, "Usage %s [[no]debug] [[no]daemon] [polling_time=<time>] [expire_time=<limit>] [config_file=<file>]\n", argv[0] );
-        fprintf ( stderr, "\n\nDefaults: debug=0 daemon=0 polltime=%d (ms) expiretime=0 (none) config_file=%s\n", DEF_POLLING, DEF_CONFIG_FILE );
+        ERR( "NFC Event Daemon\n" );
+        ERR ( "Usage %s [[no]debug] [[no]daemon] [polling_time=<time>] [expire_time=<limit>] [config_file=<file>]", argv[0] );
+        ERR ( "\nDefaults: debug=0 daemon=0 polltime=%d (ms) expiretime=0 (none) config_file=%s", DEF_POLLING, DEF_CONFIG_FILE );
         exit ( 1 );
     } /* for */
     /* end of config: return */
     return 0;
 }
 
-/*
-* try to find a valid tag
-* return pointer on a valid tag or NULL.
+/**
+* @fn ned_get_tag(dev_info* nfc_device, tag_t* tag)
+* @brief try to find a valid tag
+* @return pointer on a valid tag or NULL.
 */
 tag_t*
 ned_get_tag(dev_info* nfc_device, tag_t* tag) {
@@ -283,7 +284,7 @@ main ( int argc, char *argv[] ) {
     int first_loop   = 0;
     int expire_count = 0;
 
-    printf("%s\n", PACKAGE_STRING);
+    INFO ("%s", PACKAGE_STRING);
 
     /* parse args and configuration file */
     parse_args ( argc, argv );
@@ -292,7 +293,7 @@ main ( int argc, char *argv[] ) {
     if ( daemonize ) {
         DBG ( "Going to be daemon..." );
         if ( daemon ( 0, debug ) < 0 ) {
-            DBG ( "Error in daemon() call: %s", strerror ( errno ) );
+            ERR ( "Error in daemon() call: %s", strerror ( errno ) );
             return 1;
         }
     }
@@ -307,7 +308,6 @@ main ( int argc, char *argv[] ) {
      * There are no way in libnfc API to detect if a card is present or no
      * so the way we proceed is to look for an tag
      * Any ideas will be welcomed
-     *
      */
     dev_info* nfc_device = NULL;
 
@@ -316,7 +316,7 @@ connect:
     if ( nfc_device == NULL ) nfc_device = nfc_connect( nfc_device_desc );
 init:
     if ( nfc_device == INVALID_DEVICE_INFO ) {
-        DBG( "NFC device not found" );
+        ERR( "NFC device not found" );
         exit(1);
     }
     nfc_initiator_init ( nfc_device );
@@ -333,7 +333,7 @@ init:
     // Enable field so more power consuming cards can power themselves up
     nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, true );
 
-    DBG( "Connected to NFC device: %s (0x%08x)", nfc_device->acName, nfc_device );
+    INFO( "Connected to NFC device: %s", nfc_device->acName, nfc_device );
 
     do {
 detect:
