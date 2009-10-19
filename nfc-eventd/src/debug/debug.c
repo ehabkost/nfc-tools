@@ -45,8 +45,11 @@ void debug_print(int level, const char *file, int line, const char *format, ...)
                 t = "\033[31mERROR"; /* red */
             else if (0 == level)
                 t = ""; /* standard color */
+
             /* print preamble */
-            if ( level < 0 ) printf("%s:%s:%d: ", t, file, line);
+            if ( level > 0 ) printf("%s:%s:%d: ", t, file, line);
+            else printf("%s", t);
+
             /* print message */
             va_start(ap, format);
             vprintf(format, ap);
