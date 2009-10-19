@@ -86,6 +86,9 @@ LIBNFCCONF="\${top_builddir}/src/nfcconf/libnfcconf.la"
 # Set C standard to C99
 CFLAGS="$CFLAGS -std=c99"
 
+nemdir="\${pkglibdir}/modules"
+AC_SUBST(nemdir)
+
 AC_CONFIG_FILES([
 		Makefile
 		conf/Makefile
@@ -96,3 +99,10 @@ AC_CONFIG_FILES([
 		])
 
 AC_OUTPUT
+
+cat <<EOS > configure.summary
+sysconfdir: ${sysconfdir}
+nemdir: ${nemdir}
+EOS
+
+cat configure.summary

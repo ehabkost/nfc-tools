@@ -1,8 +1,8 @@
 INCLUDES = $(all_includes)
 METASOURCES = AUTO
-moduledir=$(pkglibdir)/modules
+nemdir=@nemdir@
 noinst_HEADERS = nem_common.h nem_execute.h
-module_LTLIBRARIES = nem_execute.la
+nem_LTLIBRARIES = nem_execute.la
 
 nem_execute_la_SOURCES = nem_execute.c
 nem_execute_la_LDFLAGS = -module -no-undefined @LIBNFC_LIBS@
@@ -15,7 +15,7 @@ BUILT_SOURCES = nfc-dbus-object.h
 
 noinst_HEADERS += nem_dbus.h nfc-dbus-object.h
 
-module_LTLIBRARIES += nem_dbus.la
+nem_LTLIBRARIES += nem_dbus.la
 nem_dbus_la_SOURCES = nem_dbus.c
 nem_dbus_la_LDFLAGS = -module -no-undefined @LIBNFC_LIBS@ @DBUS_LIBS@
 nem_dbus_la_CFLAGS = @LIBNFC_CFLAGS@ @DBUS_CFLAGS@
