@@ -42,7 +42,8 @@
 
 #define DEF_POLLING 1    /* 1 second timeout */
 #define DEF_EXPIRE 0    /* no expire */
-#define DEF_CONFIG_FILE "/etc/nfc-eventd.conf"
+
+#define DEF_CONFIG_FILE SYSCONFDIR"/nfc-eventd.conf"
 
 int polling_time;
 int expire_time;

@@ -1,8 +1,10 @@
+sysconfdir=@sysconfdir@
+
 SUBDIRS = debug nfcconf modules
 
 INCLUDES = $(all_includes)
 
-AM_CFLAGS = @LIBNFC_CFLAGS@
+AM_CFLAGS = -DSYSCONFDIR=\"${sysconfdir}\" @LIBNFC_CFLAGS@
 AM_LDFLAGS = @LIBNFC_LIBS@
 
 bin_PROGRAMS = nfc-eventd
