@@ -108,6 +108,8 @@ Innovision R&T 	Jewel 			0C 00
         printf("NXP MIFARE Classic 1K (UID="); print_hex(ti.tia.abtUid,ti.tia.szUidLen); printf(")\n");
       } else if ((ti.tia.abtAtqa[0] == 0x00) && (ti.tia.abtAtqa[1] == 0x02) && (ti.tia.btSak == 0x18)) {
         printf("NXP MIFARE Classic 4K (UID="); print_hex(ti.tia.abtUid,ti.tia.szUidLen); printf(")\n");
+      } else if ((ti.tia.abtAtqa[0] == 0x00) && (ti.tia.abtAtqa[1] == 0x02) && (ti.tia.btSak == 0x38)) {
+        printf("Nokia MIFARE Classic 4K - emulated - (UID="); print_hex(ti.tia.abtUid,ti.tia.szUidLen); printf(")\n");
       } else if ((ti.tia.abtAtqa[0] == 0x00) && (ti.tia.abtAtqa[1] == 0x44) && (ti.tia.btSak == 0x00)) {
         printf("NXP MIFARE Ultralight (UID="); print_hex(ti.tia.abtUid,ti.tia.szUidLen); printf(")\n");
       } else if ((ti.tia.abtAtqa[0] == 0x03) && (ti.tia.abtAtqa[1] == 0x44) && (ti.tia.btSak == 0x20)) {
@@ -128,13 +130,12 @@ Innovision R&T 	Jewel 			0C 00
         printf("Innovision R&T Jewel (UID="); print_hex(ti.tia.abtUid,ti.tia.szUidLen); printf(")\n");
       } else {
         printf("Unknown tag type: ");
-
-        printf(" ATQA (SENS_RES): "); print_hex(ti.tia.abtAtqa,2);
-        printf(" UID (NFCID%c): ",(ti.tia.abtUid[0]==0x08?'3':'1')); print_hex(ti.tia.abtUid,ti.tia.szUidLen);
-        printf(" SAK (SEL_RES): "); print_hex(&ti.tia.btSak,1);
+        printf("ATQA (SENS_RES): "); print_hex(ti.tia.abtAtqa,2);
+        printf(", UID (NFCID%c): ",(ti.tia.abtUid[0]==0x08?'3':'1')); print_hex(ti.tia.abtUid,ti.tia.szUidLen);
+        printf(", SAK (SEL_RES): "); print_hex(&ti.tia.btSak,1);
         if (ti.tia.szAtsLen)
         {
-          printf(" ATS (ATR): ");
+          printf(", ATS (ATR): ");
           print_hex(ti.tia.abtAts,ti.tia.szAtsLen);
         }
         printf("\n");
@@ -143,29 +144,39 @@ Innovision R&T 	Jewel 			0C 00
       tag_count++;
     } else if (nfc_initiator_select_tag(pdi,IM_FELICA_212,abtFelica,5,&ti) || nfc_initiator_select_tag(pdi,IM_FELICA_424,abtFelica,5,&ti))  // Poll for a Felica tag
     {
-      printf("The following (NFC) Felica tag was found:\n\n");
-      printf("%18s","ID (NFCID2): "); print_hex(ti.tif.abtId,8);
-      printf("%18s","Parameter (PAD): "); print_hex(ti.tif.abtPad,8);
+      printf("  Felica: ");
+      printf("ID (NFCID2): "); print_hex(ti.tif.abtId,8);
+      printf(", Parameter (PAD): "); print_hex(ti.tif.abtPad,8);
+      printf("\n");
+      nfc_initiator_deselect_tag(pdi);
+      tag_count++;
     } else if (nfc_initiator_select_tag(pdi,IM_ISO14443B_106,(byte_t*)"\x00",1,&ti))  // Poll for a ISO14443B tag
     {
-      printf("The following (NFC) ISO14443-B tag was found:\n\n");
-      printf("  ATQB: "); print_hex(ti.tib.abtAtqb,12);
-      printf("    ID: "); print_hex(ti.tib.abtId,4);
-      printf("   CID: %02x\n",ti.tib.btCid);
+      printf("  ISO14443B: ");
+      printf("ATQB: "); print_hex(ti.tib.abtAtqb,12);
+      printf(", ID: "); print_hex(ti.tib.abtId,4);
+      printf(", CID: %02x\n",ti.tib.btCid);
       if (ti.tib.szInfLen>0)
       {
-        printf("   INF: "); print_hex(ti.tib.abtInf,ti.tib.szInfLen);
+        printf(", INF: "); print_hex(ti.tib.abtInf,ti.tib.szInfLen);
       }
-      printf("PARAMS: %02x %02x %02x %02x\n",ti.tib.btParam1,ti.tib.btParam2,ti.tib.btParam3,ti.tib.btParam4);
+      printf(", PARAMS: %02x %02x %02x %02x\n",ti.tib.btParam1,ti.tib.btParam2,ti.tib.btParam3,ti.tib.btParam4);
+      printf("\n");
+      nfc_initiator_deselect_tag(pdi);
+      tag_count++;
     } else if (nfc_initiator_select_tag(pdi,IM_JEWEL_106,NULL,0,&ti))  // Poll for a Jewel tag
     {
-      // No test results yet
-      printf("Jewel\n");
+      printf("  Jewel: No test results yet");
+      nfc_initiator_deselect_tag(pdi);
+      tag_count++;
     } else {
       no_more_tag = true;
     }
   } while (no_more_tag != true);
   printf("%d tag(s) have been found.\n", tag_count);
+
+  // Disable field 
+  nfc_configure(pdi,DCO_ACTIVATE_FIELD,false);
 
   nfc_disconnect(pdi);
   return 1;
