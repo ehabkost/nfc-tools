@@ -198,7 +198,7 @@ static int parse_args ( int argc, char *argv[] ) {
     }
     /* parse configuration file */
     if ( parse_config_file() < 0 ) {
-        fprintf ( stderr, "Error parsing configuration file %s\n", cfgfile );
+        ERR ( "Error parsing configuration file %s", cfgfile );
         exit ( -1 );
     }
 
@@ -248,30 +248,32 @@ static int parse_args ( int argc, char *argv[] ) {
 */
 tag_t*
 ned_get_tag(dev_info* nfc_device, tag_t* tag) {
-    tag_info ti;
-    tag_t* rv = NULL;
+  tag_info ti;
+  tag_t* rv = NULL;
 
-    if ( tag == NULL ) {
-        // We are looking for any tag.
-        // Poll for a ISO14443A (MIFARE) tag
-        if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
-            rv = malloc(sizeof(tag_t));
-            rv->ti = ti;
-            rv->im = IM_ISO14443A_106;
-        }
-    } else {
-        // tag is not NULL, we are looking for specific tag
-        debug_print_tag(tag);
-        if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.szUidLen, &ti ) ) {
-            rv = tag;
-        }
-    }
+  DBG("sizeof(tag_info)=%d, sizeof(ti)=%d\n", sizeof(tag_info), sizeof(ti));
 
-    if (rv != NULL) {
-        nfc_initiator_deselect_tag ( nfc_device );
-    }
+  if ( tag == NULL ) {
+      // We are looking for any tag.
+      // Poll for a ISO14443A (MIFARE) tag
+      if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
+          rv = malloc(sizeof(tag_t));
+          rv->ti = ti;
+          rv->im = IM_ISO14443A_106;
+      }
+  } else {
+      // tag is not NULL, we are looking for specific tag
+      // debug_print_tag(tag);
+      if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.szUidLen, &ti ) ) {
+          rv = tag;
+      }
+  }
 
-    return rv;
+  if (rv != NULL) {
+      nfc_initiator_deselect_tag ( nfc_device );
+  }
+
+  return rv;
 }
 
 int
