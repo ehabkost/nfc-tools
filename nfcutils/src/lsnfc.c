@@ -179,5 +179,5 @@ Innovision R&T 	Jewel 			0C 00
   nfc_configure(pnd,NDO_ACTIVATE_FIELD,false);
 
   nfc_disconnect(pnd);
-  return 1;
+  return 0;
 }
