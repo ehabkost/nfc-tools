@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node name="/org/nfc_tools/nfcd">
+  <interface name="org.nfc_tools.nfcd">
+
+    <method name="GetDeviceList">
+      <arg type="as" name="devices" direction="out" />
+    </method>
+
+    <!-- Mark the signal as exported -->
+    <signal name="DevicePlugged">
+      <arg type="s" name="device" direction="out"/>
+    </signal>
+    <signal name="DeviceUnplugged">
+      <arg type="s" name="device" direction="out"/>
+    </signal>
+  </interface>
+</node>
