@@ -39,7 +39,7 @@
 
 #include <crypt.h>
 
-#include "nfc.h"
+#include "nfc-access.h"
 
 /*
  * here, we make a definition for the externally accessible function

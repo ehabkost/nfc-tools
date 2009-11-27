@@ -30,7 +30,7 @@
 
 #include <crypt.h>
 
-#include "nfc.h"
+#include "nfc-access.h"
 
 int main ( int argc, char *argv[] )
 {
