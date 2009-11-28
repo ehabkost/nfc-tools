@@ -56,6 +56,7 @@ int nfc_get_uid(char* uid)
 		}
 	} else {
 		fprintf(stderr, "No ISO14443A (MIFARE) tag found.");
+		nfc_disconnect ( device );
 		return 1;
 	}
 
