@@ -28,7 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(HAVE_CRYPT_H)
 #include <crypt.h>
+#endif /* HAVE_CRYPT_H */
 
 #include "nfc-access.h"
 

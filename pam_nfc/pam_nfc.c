@@ -35,9 +35,13 @@
 #include <pwd.h>
 
 #include <string.h>
+#if defined(HAVE_SYS_PERM_H)
 #include <sys/perm.h>
+#endif /* HAVE_SYS_PERM_H */
 
+#if defined(HAVE_CRYPT_H)
 #include <crypt.h>
+#endif /* HAVE_CRYPT_H */
 
 #include "nfc-access.h"
 
@@ -50,8 +54,21 @@
 
 #define PAM_SM_AUTH
 
+#if defined(HAVE_SECURITY_PAM_MODULES_H)
 #include <security/pam_modules.h>
+#endif /* HAVE_SECURITY_PAM_MODULES_H */
+
+#if defined(HAVE_SECURITY_PAM__MACROS_H)
 #include <security/_pam_macros.h>
+#endif /* HAVE_SECURITY_PAM__MACROS_H */
+
+#if defined(HAVE_SECURITY_OPENPAM_H)
+#  include <security/openpam.h>
+#endif /* HAVE_SECURITY_OPENPAM_H */
+
+#if defined(HAVE_SECURITY_PAM_APPL_H)
+#  include <security/pam_appl.h>
+#endif /* HAVE_SECURITY_PAM_APPL_H */
 
 /* some syslogging */
 static void _pam_log ( int err, const char *format, ... )
