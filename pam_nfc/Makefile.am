@@ -1,3 +1,4 @@
+AM_CFLAGS = -DSYSCONFDIR="\"${sysconfdir}\""
 
 noinst_LTLIBRARIES = libnfc-access.la
 libnfc_access_la_SOURCES = \

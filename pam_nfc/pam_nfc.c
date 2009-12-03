@@ -23,7 +23,9 @@
  *
  */
 
-#define PAM_NFC_FILE "/etc/pam_nfc.conf"
+#if !defined(PAM_NFC_FILE)
+#define PAM_NFC_FILE SYSCONFDIR "/pam_nfc.conf"
+#endif /* !PAM_NFC_FILE */
 
 #include <stdio.h>
 #include <stdlib.h>

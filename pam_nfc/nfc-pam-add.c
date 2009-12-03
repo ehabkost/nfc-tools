@@ -42,7 +42,7 @@ int main ( int argc, char *argv[] )
 
 	if ( argc<2 )
 	{
-		printf ( "Usage : nfc-pam-add [USER] >> /etc/pam_nfc.conf\n" );
+		printf ( "Usage : nfc-pam-add [USER] >> ${sysconfdir}/pam_nfc.conf\n" );
 		exit ( 0 );
 	}
 	if ( ( strcmp ( argv[1], "--help" ) ) ==0 )
@@ -51,7 +51,7 @@ int main ( int argc, char *argv[] )
 		    "nfc-pam-add - Entry adder for pam_nfc module\n"
 		    "Copyright(c)2009 Romuald Conty - Redistribute under the terme of GNU GPL"
 		    "\n\n"
-		    "    Usage : nfc-pam-add [USER] >> /etc/pam_nfc.conf\n" );
+		    "    Usage : nfc-pam-add [USER] >> ${sysconfdir}/pam_nfc.conf\n" );
 		exit ( 0 );
 	}
 
