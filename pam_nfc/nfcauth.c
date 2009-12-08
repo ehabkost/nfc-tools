@@ -38,6 +38,11 @@ nfcauth_authorize (char *user)
 	}
     }
 
+    for (i = 0; i < target_count; i++) {
+	free (targets[i]);
+    }
+    free (targets);
+
     return grant_access;
 }
 
