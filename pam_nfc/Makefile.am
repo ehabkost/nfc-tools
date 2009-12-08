@@ -1,8 +1,15 @@
+
+#noinst_LTLIBRARIES = libnfc-access.la
+#libnfc_access_la_SOURCES = \
+#	nfc-access.c
+
 AM_CFLAGS = -DSYSCONFDIR="\"${sysconfdir}\""
 
-noinst_LTLIBRARIES = libnfc-access.la
-libnfc_access_la_SOURCES = \
-	nfc-access.c
+libnfcauthdir = ${libdir}
+libnfcauth_LTLIBRARIES = libnfcauth.la
+libnfcauth_la_SOURCES = \
+	nfcauth.c \
+	nfcauth_backend_config.c
 
 pamlibdir = $(PAM_DEST_DIR)
 pamlib_LTLIBRARIES = pam_nfc.la
@@ -14,7 +21,7 @@ pam_nfc_la_LDFLAGS = \
 	-module -avoid-version
 
 pam_nfc_la_LIBADD = \
-	libnfc-access.la
+	-lnfcauth
 	-lpam
 
 bin_PROGRAMS = nfc-pam-add
@@ -23,6 +30,6 @@ nfc_pam_add_SOURCES = \
 	nfc-pam-add.c
 
 nfc_pam_add_LDADD = \
-	libnfc-access.la
+	-lnfcauth
 
-EXTRA_DIST = nfc-access.h
+EXTRA_DIST = nfcauth.h

@@ -23,57 +23,41 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <unistd.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-#if defined(HAVE_CRYPT_H)
-#include <crypt.h>
-#endif /* HAVE_CRYPT_H */
+#include "nfcauth.h"
 
-#include "nfc-access.h"
+void	 usage (char *progname);
 
-int main ( int argc, char *argv[] )
+void
+usage (char *progname)
 {
-	char *user;
-	char nfc_uid[128];
-	char output[256];
+	fprintf (stderr, "usage: %s username\n", progname);
+	exit (EXIT_FAILURE);
+}
 
-	if ( argc<2 )
-	{
-		printf ( "Usage : nfc-pam-add [USER] >> ${sysconfdir}/pam_nfc.conf\n" );
-		exit ( 0 );
-	}
-	if ( ( strcmp ( argv[1], "--help" ) ) ==0 )
-	{
-		printf (
-		    "nfc-pam-add - Entry adder for pam_nfc module\n"
-		    "Copyright(c)2009 Romuald Conty - Redistribute under the terme of GNU GPL"
-		    "\n\n"
-		    "    Usage : nfc-pam-add [USER] >> ${sysconfdir}/pam_nfc.conf\n" );
-		exit ( 0 );
+int
+main (int argc, char *argv[])
+{
+	if (argc != 2)
+		usage (argv[0]);
+
+	char **targets;
+	int n;
+	if (1 != (n = nfcauth_get_targets (&targets))) {
+		errx (EXIT_FAILURE, "%d targets detected.", n);
 	}
 
-	if ( ( strcmp ( argv[1], "--version" ) ) ==0 )
-	{
-		printf (
-		    "nfc-pam-add - Entry adder for pam_nfc module\n"
-		    "Copyright(c)2009 Romuald Conty - Redistribute under the terme of GNU GPL"
-		    "\n"
-		    "Version 0.1 (what a ugly code, isn't it ?)\n" );
-		exit ( 0 );
+	if (!(nfcauth_add_authorization (argv[1], targets[0]))) {
+		err (EXIT_FAILURE, "Error adding authorisation for user");
 	}
+	
+	free (targets[0]);
+	free (targets);
 
-	user=argv[1]; /* first argument should be a username */
-
-	/* DO NFC STUFF HERE */
-	if ( 0 == nfc_get_uid(nfc_uid) ) {
-	// 	sprintf(output, "%s %s", user, nfc_uid);
-		sprintf(output, "%s %s", user, crypt(nfc_uid,"RC"));
-		printf("%s\n", output);
-	} else {
-		exit ( 1 );
-	}
-	return ( 0 );
+	exit (EXIT_SUCCESS);
 }

@@ -23,20 +23,17 @@
  *
  */
 
-#if !defined(PAM_NFC_FILE)
-#define PAM_NFC_FILE SYSCONFDIR "/pam_nfc.conf"
-#endif /* !PAM_NFC_FILE */
+#include <sys/stat.h>
+#include <sys/types.h>
 
+#include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <stdarg.h>
-#include <pwd.h>
-
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
 #if defined(HAVE_SYS_PERM_H)
 #include <sys/perm.h>
 #endif /* HAVE_SYS_PERM_H */
@@ -45,7 +42,7 @@
 #include <crypt.h>
 #endif /* HAVE_CRYPT_H */
 
-#include "nfc-access.h"
+#include "nfcauth.h"
 
 /*
  * here, we make a definition for the externally accessible function
@@ -90,12 +87,10 @@ int pam_sm_authenticate ( pam_handle_t *pamh,int flags,int argc
                           ,const char **argv )
 {
 	int retval = PAM_AUTH_ERR;
-	struct stat conffile_fileinfo;
 
-	FILE *conffile;
 	char confline[256];
 
-	const char *user=NULL;
+	char *user = NULL;
 
 	retval = pam_get_user ( pamh, &user, NULL );
 	if ( retval != PAM_SUCCESS )
@@ -107,62 +102,12 @@ int pam_sm_authenticate ( pam_handle_t *pamh,int flags,int argc
 	if ( user == NULL || *user == '\0' )
 	{
 		_pam_log ( LOG_ERR, "username not known" );
+		return retval;
 	}
 
-	if ( stat ( PAM_NFC_FILE, &conffile_fileinfo ) )
-	{
-		_pam_log ( LOG_NOTICE, "Couldn't open " PAM_NFC_FILE );
-		return PAM_SERVICE_ERR;
-	}
+	if (!(nfcauth_check ())) return PAM_SERVICE_ERR;
 
-	if ( ( conffile_fileinfo.st_mode & S_IWOTH )
-	        || !S_ISREG ( conffile_fileinfo.st_mode ) )
-	{
-		/* If the file is world writable or is not a normal file, return error */
-		_pam_log ( LOG_ERR, PAM_NFC_FILE
-		           " is either world writable or not a normal file" );
-		return PAM_AUTH_ERR;
-	}
-
-	conffile = fopen ( PAM_NFC_FILE, "r" );
-	if ( conffile == NULL )   /* Check that we opened it successfully */
-	{
-		_pam_log ( LOG_ERR,
-		           "Error opening " PAM_NFC_FILE );
-		return PAM_SERVICE_ERR;
-	}
-
-	/* DO NFC STUFF HERE */
-	char uid[128];
-	char output[256];
-
-	if(0 == nfc_get_uid(uid)) {
-		sprintf(output, "%s %s", user, crypt(uid,"RC"));
-		_pam_log ( LOG_ERR, "NFC uid fetched: %s", uid );
-	} else {
-		_pam_log ( LOG_ERR,
-		           "Unable to read NFC card." );
-		return PAM_AUTH_ERR;
-	}
-
-	/* There should be no more errors from here */
-	retval=PAM_AUTH_ERR;
-	/* This loop assumes that PAM_SUCCESS == 0
-	   and PAM_AUTH_ERR != 0 */
-	while ( ( fgets ( confline,sizeof ( confline )-1, conffile ) != NULL )
-	        && retval )
-	{
-		if ( confline[strlen ( confline ) - 1] == '\n' )
-			confline[strlen ( confline ) - 1] = '\0';
-
-		/* compare uid with confline in conffile */
-		if ( ( strcmp ( output, confline ) ) ==0 ) retval=PAM_SUCCESS;
-	}
-	fclose ( conffile ); /* close file */
-
-	if ( retval == PAM_SUCCESS )
-		_pam_log ( LOG_DEBUG, "access allowed for '%s'", user );
-	return retval;
+	return (nfcauth_authorize (user)) ? PAM_SUCCESS : PAM_AUTH_ERR;
 }
 
 PAM_EXTERN

@@ -67,4 +67,18 @@ AC_CHECK_LIB(crypt, crypt)
 
 AC_CHECK_HEADERS(sys/perm.h, AC_DEFINE(HAVE_SYS_PERM_H))
 
+#----------------------------------------------------------------------
+# Backend
+AC_ARG_WITH([backend], [AC_HELP_STRING([--with-backend=BACKEND],
+	    [Backend to use for authorization storage])], [],
+	    [with_backend='config'])
+case "$with_backend" in
+config)
+	AC_DEFINE(PAM_NFC_BACKEND_CONFIG)
+	;;
+*)
+	AC_ERROR(Unknown backend '$with_backend'.)
+	;;
+esac
+
 AC_OUTPUT(Makefile)
