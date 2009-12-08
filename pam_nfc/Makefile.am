@@ -24,12 +24,12 @@ pam_nfc_la_LIBADD = \
 	-lnfcauth
 	-lpam
 
-bin_PROGRAMS = nfc-pam-add
+bin_PROGRAMS = pam-nfc-add
 
-nfc_pam_add_SOURCES = \
-	nfc-pam-add.c
-
-nfc_pam_add_LDADD = \
+pam_nfc_add_SOURCES = \
+        pam-nfc-add.c
+    
+pam_nfc_add_LDADD = \
 	-lnfcauth
 
 EXTRA_DIST = nfcauth.h
