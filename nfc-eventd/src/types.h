@@ -1,7 +1,7 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
-#include <libnfc/libnfc.h>
+#include <nfc/nfc.h>
 
 typedef enum {
   EVENT_TAG_INSERTED,
@@ -10,8 +10,8 @@ typedef enum {
 } nem_event_t;
 
 typedef struct {
-  init_modulation im;
-  tag_info ti;
+  nfc_modulation_t modulation;
+  nfc_target_info_t ti;
 } tag_t;
 
 #endif

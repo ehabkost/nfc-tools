@@ -1,6 +1,6 @@
 /*
- * PKCS #11 PAM Login Module
- * Copyright (C) 2003 Mario Strasser <mast@gmx.net>,
+ * NFC Event daemon
+ * Copyright (C) 2009 Romuald Conty <rconty@il4p.fr>,
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -12,12 +12,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * $Id: debug.c 251 2007-04-12 13:09:52Z ludovic.rousseau $
  */
 
 #include "debug.h"
-#include <stdarg.h>
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
 #include <syslog.h>
 #include <unistd.h>
 
@@ -72,24 +74,24 @@ void debug_print(int level, const char *file, int line, const char *format, ...)
 
 void _debug_print_tag(const tag_t* tag)
 {
-  switch (tag->im) {
-    case IM_ISO14443A_106: {
+  switch (tag->modulation) {
+    case NM_ISO14443A_106: {
         /*
       printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
-      printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
-      printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.szUidLen );
-      printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
-      if ( ti.tia.uiAtsLen )
+      printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.nai.abtAtqa,2 );
+      printf ( "       UID (NFCID%c): ", ( ti.nai.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.nai.abtUid,ti.nai.szUidLen );
+      printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.nai.btSak,1 );
+      if ( ti.nai.uiAtsLen )
       {
       printf ( "          ATS (ATR): " );
-      print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
+      print_hex ( ti.nai.abtAts,ti.nai.uiAtsLen );
     }
         */
       uint32_t uiPos;
-      char *uid = malloc(tag->ti.tia.szUidLen*sizeof(char));
+      char *uid = malloc(tag->ti.nai.szUidLen*sizeof(char));
       char *uid_ptr = uid;
-      for (uiPos=0; uiPos < tag->ti.tia.szUidLen; uiPos++) {
-        sprintf(uid_ptr, "%02x",tag->ti.tia.abtUid[uiPos]);
+      for (uiPos=0; uiPos < tag->ti.nai.szUidLen; uiPos++) {
+        sprintf(uid_ptr, "%02x",tag->ti.nai.abtUid[uiPos]);
         uid_ptr += 2;
       }
       uid_ptr[0]='\0';
@@ -98,5 +100,8 @@ void _debug_print_tag(const tag_t* tag)
       free(uid);
     }
     break;
+    default:
+      DBG( "%s", "Debug this kind of modulation is not yet supported." );
+      
   }
 }

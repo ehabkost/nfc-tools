@@ -23,30 +23,30 @@ static nfcconf_block* _nem_dbus_config_block;
 static char * _tag_uid = NULL;
 
 void
-tag_get_uid(const dev_info* nfc_device, const tag_t* tag, char **dest) {
+tag_get_uid(const nfc_device_t* nfc_device, const tag_t* tag, char **dest) {
   DBG("tag_get_uid(%08x, %08x, %08x)", nfc_device, tag, dest);
 
-    tag_info ti;
+    nfc_target_info_t ti;
     debug_print_tag(tag);
     /// @TODO We don't need to reselect tag to get his UID: tag_t contains this data.
     // Poll for a ISO14443A (MIFARE) tag
-    if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.szUidLen, &ti ) ) {
+    if ( nfc_initiator_select_tag ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
         /*
                         printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
-                        printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.tia.abtAtqa,2 );
-                        printf ( "       UID (NFCID%c): ", ( ti.tia.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.tia.abtUid,ti.tia.szUidLen );
-                        printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.tia.btSak,1 );
-                        if ( ti.tia.uiAtsLen )
+                        printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.nai.abtAtqa,2 );
+                        printf ( "       UID (NFCID%c): ", ( ti.nai.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.nai.abtUid,ti.nai.szUidLen );
+                        printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.nai.btSak,1 );
+                        if ( ti.nai.uiAtsLen )
                         {
                                 printf ( "          ATS (ATR): " );
-                                print_hex ( ti.tia.abtAts,ti.tia.uiAtsLen );
+                                print_hex ( ti.nai.abtAts,ti.nai.uiAtsLen );
                         }
         */
-        *dest = malloc(ti.tia.szUidLen*sizeof(char));
+        *dest = malloc(ti.nai.szUidLen*sizeof(char));
         size_t szPos;
         char *pcUid = *dest;
-        for (szPos=0; szPos < ti.tia.szUidLen; szPos++) {
-            sprintf(pcUid, "%02x",ti.tia.abtUid[szPos]);
+        for (szPos=0; szPos < ti.nai.szUidLen; szPos++) {
+            sprintf(pcUid, "%02x",ti.nai.abtUid[szPos]);
             pcUid += 2;
         }
         pcUid[0]='\0';
@@ -54,7 +54,7 @@ tag_get_uid(const dev_info* nfc_device, const tag_t* tag, char **dest) {
         nfc_initiator_deselect_tag ( nfc_device );
     } else {
         *dest = NULL;
-        DBG("ISO14443A (MIFARE) tag not found" );
+        DBG("%s", "ISO14443A (MIFARE) tag not found" );
         return;
     }
 }
@@ -218,7 +218,7 @@ nem_dbus_init( nfcconf_context *module_context, nfcconf_block* module_block ) {
 }
 
 int
-nem_dbus_event_handler(const dev_info* nfc_device, const tag_t* tag, const nem_event_t event) {
+nem_dbus_event_handler(const nfc_device_t* nfc_device, const tag_t* tag, const nem_event_t event) {
     switch (event) {
     case EVENT_TAG_INSERTED:
         // action = "tag_insert";

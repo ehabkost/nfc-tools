@@ -1,4 +1,5 @@
 /**
+ * NFC Event Daemon
  * Generate events on tag status change
  * Copyrigt (C) 2009 Romuald Conty <rconty@il4p.fr>
  * 
@@ -15,8 +16,10 @@
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA  02111-1307 USA
 */
+// Needed by daemon(3)
+#define _XOPEN_SOURCE 499
 
-#include <libnfc/libnfc.h>
+#include <nfc/nfc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +27,7 @@
 #include <string.h>
 
 #include <unistd.h>
+
 #include <errno.h>
 #include <signal.h>
 
@@ -39,6 +43,7 @@
 #include "types.h"
 
 #include "config.h"
+
 
 #define DEF_POLLING 1    /* 1 second timeout */
 #define DEF_EXPIRE 0    /* no expire */
@@ -116,7 +121,7 @@ static int load_module( void ) {
     return 0;
 }
 
-static int execute_event ( const dev_info *nfc_device, const tag_t* tag, const nem_event_t event ) {
+static int execute_event ( const nfc_device_t *nfc_device, const tag_t* tag, const nem_event_t event ) {
     return (*module_event_handler_fct_ptr)( nfc_device, tag, event );
 }
 
@@ -159,10 +164,10 @@ static int parse_config_file() {
             if ( strcmp(my_device->name->data, nfc_device_str) == 0 ) {
                 INFO("Specified device %s have been found.", nfc_device_str);
                 nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
-                nfc_device_desc->pcDriver = nfcconf_get_str( my_device, "driver", "" );
-                nfc_device_desc->pcPort = nfcconf_get_str( my_device, "port", "" );
-                nfc_device_desc->uiSpeed = nfcconf_get_int( my_device, "speed", 9600 );
-                nfc_device_desc->uiIndex = nfcconf_get_int( my_device, "index", 0 );
+                nfc_device_desc->pcDriver = (char*)nfcconf_get_str( my_device, "driver", "" );
+                nfc_device_desc->pcPort   = (char*)nfcconf_get_str( my_device, "port", "" );
+                nfc_device_desc->uiSpeed  = nfcconf_get_int( my_device, "speed", 9600 );
+                nfc_device_desc->uiBusIndex  = nfcconf_get_int( my_device, "index", 0 );
                 break;
             }
             my_device = device_list[i];
@@ -242,29 +247,29 @@ static int parse_args ( int argc, char *argv[] ) {
 }
 
 /**
-* @fn ned_get_tag(dev_info* nfc_device, tag_t* tag)
+* @fn ned_get_tag(nfc_device_t* nfc_device, tag_t* tag)
 * @brief try to find a valid tag
 * @return pointer on a valid tag or NULL.
 */
 tag_t*
-ned_get_tag(dev_info* nfc_device, tag_t* tag) {
-  tag_info ti;
+ned_get_tag(nfc_device_t* nfc_device, tag_t* tag) {
+  nfc_target_info_t ti;
   tag_t* rv = NULL;
 
-  DBG("sizeof(tag_info)=%d, sizeof(ti)=%d\n", sizeof(tag_info), sizeof(ti));
+  DBG("sizeof(nfc_target_info_t)=%d, sizeof(ti)=%d\n", sizeof(nfc_target_info_t), sizeof(ti));
 
   if ( tag == NULL ) {
       // We are looking for any tag.
       // Poll for a ISO14443A (MIFARE) tag
-      if ( nfc_initiator_select_tag ( nfc_device, IM_ISO14443A_106, NULL, 0, &ti ) ) {
+      if ( nfc_initiator_select_tag ( nfc_device, NM_ISO14443A_106, NULL, 0, &ti ) ) {
           rv = malloc(sizeof(tag_t));
           rv->ti = ti;
-          rv->im = IM_ISO14443A_106;
+          rv->modulation = NM_ISO14443A_106;
       }
   } else {
       // tag is not NULL, we are looking for specific tag
       // debug_print_tag(tag);
-      if ( nfc_initiator_select_tag ( nfc_device, tag->im, tag->ti.tia.abtUid, tag->ti.tia.szUidLen, &ti ) ) {
+      if ( nfc_initiator_select_tag ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
           rv = tag;
       }
   }
@@ -311,29 +316,29 @@ main ( int argc, char *argv[] ) {
      * so the way we proceed is to look for an tag
      * Any ideas will be welcomed
      */
-    dev_info* nfc_device = NULL;
+    nfc_device_t* nfc_device = NULL;
 
 connect:
     // Try to open the NFC device
     if ( nfc_device == NULL ) nfc_device = nfc_connect( nfc_device_desc );
 init:
-    if ( nfc_device == INVALID_DEVICE_INFO ) {
+    if ( nfc_device == NULL ) {
         ERR( "NFC device not found" );
         exit(1);
     }
     nfc_initiator_init ( nfc_device );
 
     // Drop the field for a while
-    nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, false );
+    nfc_configure ( nfc_device, NDO_ACTIVATE_FIELD, false );
 
-    nfc_configure ( nfc_device, DCO_INFINITE_SELECT, false );
+    nfc_configure ( nfc_device, NDO_INFINITE_SELECT, false );
 
     // Configure the CRC and Parity settings
-    nfc_configure ( nfc_device, DCO_HANDLE_CRC, true );
-    nfc_configure ( nfc_device, DCO_HANDLE_PARITY, true );
+    nfc_configure ( nfc_device, NDO_HANDLE_CRC, true );
+    nfc_configure ( nfc_device, NDO_HANDLE_PARITY, true );
 
     // Enable field so more power consuming cards can power themselves up
-    nfc_configure ( nfc_device, DCO_ACTIVATE_FIELD, true );
+    nfc_configure ( nfc_device, NDO_ACTIVATE_FIELD, true );
 
     INFO( "Connected to NFC device: %s", nfc_device->acName, nfc_device );
 
