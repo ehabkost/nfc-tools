@@ -30,7 +30,7 @@
 # define CRYPT_SALT "RC"
 #endif
 
-int	 nfcauth_is_authorized (char *user, char *target);
+int	 nfcauth_is_authorized (const char *user, char *target);
 
 int
 nfcauth_check (void)
@@ -84,7 +84,7 @@ nfcauth_add_authorization (char *user, char *target)
 }
 
 int
-nfcauth_is_authorized (char *user, char *target)
+nfcauth_is_authorized (const char *user, char *target)
 {
     int found = 0;
     FILE *config;

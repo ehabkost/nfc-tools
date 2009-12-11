@@ -19,11 +19,11 @@
 #define MAX_DEVICES 8
 #define MAX_TARGET 32
 
-extern int	 nfcauth_is_authorized (char *user, char *target);
+extern int	 nfcauth_is_authorized (const char *user, char *target);
 extern int	 nfcauth_get_targets (char **targets[]);
 
 int
-nfcauth_authorize (char *user)
+nfcauth_authorize (const char *user)
 {
     int grant_access = 0;
 

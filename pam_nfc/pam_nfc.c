@@ -90,7 +90,7 @@ int pam_sm_authenticate ( pam_handle_t *pamh,int flags,int argc
 
 	char confline[256];
 
-	char *user = NULL;
+	const char *user = NULL;
 
 	retval = pam_get_user ( pamh, &user, NULL );
 	if ( retval != PAM_SUCCESS )

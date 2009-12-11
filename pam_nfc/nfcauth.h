@@ -2,7 +2,7 @@
 #define _NFCAUTH_H
 
 /* Common public functions */
-int	 nfcauth_authorize (char *user);
+int	 nfcauth_authorize (const char *user);
 int	 nfcauth_get_targets (char **targets[]);
 
 /* Backend specific public functions */
