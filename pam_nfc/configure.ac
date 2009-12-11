@@ -2,6 +2,8 @@ AC_INIT(pam_nfc.c)
 
 AM_INIT_AUTOMAKE(pam_nfc, 0.0)
 
+AC_CONFIG_MACRO_DIR([m4])
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
@@ -81,4 +83,6 @@ config)
 	;;
 esac
 
+SHAVE_INIT([], [enable])
+AC_CONFIG_FILES([shave shave-libtool])
 AC_OUTPUT(Makefile)

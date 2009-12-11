@@ -4,6 +4,7 @@
 #	nfc-access.c
 
 AM_CFLAGS = -DSYSCONFDIR="\"${sysconfdir}\""
+ACLOCAL_AMFLAGS = -I m4
 
 libnfcauthdir = ${libdir}
 libnfcauth_LTLIBRARIES = libnfcauth.la
