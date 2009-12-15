@@ -12,8 +12,6 @@
 #include <crypt.h>
 #endif /* HAVE_CRYPT_H */
 
-#include <nfc/nfc.h>
-
 #include "nfcauth.h"
 
 #if !defined(SYSCONFDIR)
