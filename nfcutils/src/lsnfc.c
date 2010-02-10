@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-#include <nfc.h>
+#include <nfc/nfc.h>
 
 static nfc_device_t* pnd;
 static byte_t abtFelica[5] = { 0x00, 0xff, 0xff, 0x00, 0x00 };
