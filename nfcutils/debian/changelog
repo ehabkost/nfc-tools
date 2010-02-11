@@ -1,3 +1,9 @@
+nfcutils (0.1.1-0) unstable; urgency=low
+  
+  * New upstream release.
+
+ -- Romuald Conty <rconty@il4p.fr>  Thu, 11 Feb 2010 17:42:42 +0100
+
 nfcutils (0.1.0-0) unstable; urgency=low
   
   * First release.
