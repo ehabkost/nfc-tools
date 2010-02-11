@@ -2,6 +2,8 @@ AC_INIT(nfcutils, 0.1.1, rconty@il4p.fr)
 
 AC_CONFIG_HEADER(config.h)
 
+AC_CONFIG_MACRO_DIR([m4])
+
 # SVN Revision
 define([svn_revision], esyscmd([sh -c "svnversion -n"]))
 SVN_REVISION=svn_revision
