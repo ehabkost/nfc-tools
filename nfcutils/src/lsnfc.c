@@ -55,10 +55,9 @@ int main(int argc, const char* argv[])
   pnd = nfc_connect(&ndd);
   */
 
-  if (pnd == NULL)
-  {
-    ERR("Unable to connect to NFC device.");
-    return 1;
+  if (pnd == NULL) {
+    ERR("%s", "Unable to connect to NFC device.");
+    return EXIT_FAILURE;
   }
   nfc_initiator_init(pnd);
 
@@ -179,5 +178,5 @@ Innovision R&T 	Jewel 			0C 00
   nfc_configure(pnd,NDO_ACTIVATE_FIELD,false);
 
   nfc_disconnect(pnd);
-  return 0;
+  return EXIT_SUCCESS;
 }
