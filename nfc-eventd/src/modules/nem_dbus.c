@@ -9,6 +9,10 @@
 * Copyright: See COPYING file that comes with this distribution
 *
 */
+#ifdef HAVE_CONFIG_H
+  #include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include "nem_dbus.h"
 
 #include <stdlib.h>
