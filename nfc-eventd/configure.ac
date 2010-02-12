@@ -13,6 +13,8 @@ AC_DEFINE_UNQUOTED([SVN_REVISION], ["$SVN_REVISION"], [SVN revision])
 AM_INIT_AUTOMAKE
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
+AC_DEFINE([_BSD_SOURCE], 1, [BSD Functions])
+
 AC_LANG_C
 AC_PROG_CC
 AC_PROG_MAKE_SET
@@ -27,7 +29,7 @@ AC_CHECK_HEADERS([stdio.h stdlib.h stdint.h stddef.h stdbool.h usb.h])
 AC_CHECK_FUNCS([memset])
 AC_CHECK_FUNCS([strcasecmp])
 AC_CHECK_FUNCS([strchr])
-AC_CHECK_FUNCS([strdup])
+AC_CHECK_FUNCS([strdup], [AC_DEFINE([_XOPEN_SOURCE], [600], [Enable POSIX extensions if present])])
 AC_CHECK_FUNCS([strerror])
 AC_CHECK_FUNCS([strstr])
 AC_CHECK_FUNCS([strtol])
@@ -114,3 +116,4 @@ nemdir: ${nemdir}
 EOS
 
 cat configure.summary
+rm configure.summary
