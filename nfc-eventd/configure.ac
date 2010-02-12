@@ -1,6 +1,13 @@
 AC_INIT(nfc-eventd, 0.1.0, rconty@il4p.fr)
 
 AC_CONFIG_HEADER(config.h)
+
+# SVN Revision
+define([svn_revision], esyscmd([sh -c "svnversion -n"]))
+SVN_REVISION=svn_revision
+AC_DEFINE_UNQUOTED([SVN_REVISION], ["$SVN_REVISION"], [SVN revision])
+
+# Automake
 AM_INIT_AUTOMAKE
 
 AC_LANG_C
