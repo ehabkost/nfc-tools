@@ -1,5 +1,4 @@
-define([rev], esyscmd([sh -c "echo -n 'r' && svnversion -n"]))dnl
-AC_INIT(nfc-eventd, 0.0.0+rev, rconty@il4p.fr)
+AC_INIT(nfc-eventd, 0.1.0, rconty@il4p.fr)
 
 AC_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE
