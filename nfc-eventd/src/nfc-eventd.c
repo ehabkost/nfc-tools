@@ -16,9 +16,6 @@
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA  02111-1307 USA
 */
-// Needed by daemon(3)
-#define _XOPEN_SOURCE 499
-
 #include <nfc/nfc.h>
 
 #include <stdio.h>
@@ -41,8 +38,6 @@
 #include "modules/nem_common.h"
 
 #include "types.h"
-
-#include "config.h"
 
 
 #define DEF_POLLING 1    /* 1 second timeout */
@@ -70,13 +65,13 @@ static int load_module( void ) {
 
     module_list = nfcconf_find_blocks ( ctx, root, "module", NULL );
     if ( !module_list ) {
-        ERR ( "Module item not found." );
+        ERR ( "%s", "Module item not found." );
         return -1;
     }
     my_module = module_list[0];
     free ( module_list );
     if ( !my_module ) {
-        ERR ( "Module item not found." );
+        ERR ( "%s", "Module item not found." );
         return -1;
     }
     DBG("Loading module: '%s'...", my_module->name->data);
@@ -128,7 +123,7 @@ static int execute_event ( const nfc_device_t *nfc_device, const tag_t* tag, con
 static int parse_config_file() {
     ctx = nfcconf_new ( cfgfile );
     if ( !ctx ) {
-        ERR ( "Error creating conf context" );
+        ERR ( "%s", "Error creating conf context" );
         return -1;
     }
     if ( nfcconf_parse ( ctx ) <= 0 ) {
@@ -148,13 +143,13 @@ static int parse_config_file() {
 
     if ( debug ) set_debug_level ( 1 );
 
-    DBG( "Looking for specified NFC device." );
+    DBG( "%s", "Looking for specified NFC device." );
     nfcconf_block **device_list, *my_device;
     const char* nfc_device_str = nfcconf_get_str ( root, "nfc_device", "" );
     if (strcmp( nfc_device_str, "") != 0) {
         device_list = nfcconf_find_blocks ( ctx, root, "device", NULL );
         if ( !device_list ) {
-            ERR ( "Device item not found." );
+            ERR ( "%s", "Device item not found." );
             return -1;
         }
         int i = 0;
@@ -204,7 +199,7 @@ static int parse_args ( int argc, char *argv[] ) {
     /* parse configuration file */
     if ( parse_config_file() < 0 ) {
         ERR ( "Error parsing configuration file %s", cfgfile );
-        exit ( -1 );
+        exit ( EXIT_FAILURE );
     }
 
     /* and now re-parse command line to take precedence over cfgfile */
@@ -236,11 +231,12 @@ static int parse_args ( int argc, char *argv[] ) {
             continue; /* already parsed: skip */
         }
         ERR ( "unknown option %s", argv[i] );
+
         /* arriving here means syntax error */
-        ERR( "NFC Event Daemon\n" );
-        ERR ( "Usage %s [[no]debug] [[no]daemon] [polling_time=<time>] [expire_time=<limit>] [config_file=<file>]", argv[0] );
-        ERR ( "\nDefaults: debug=0 daemon=0 polltime=%d (ms) expiretime=0 (none) config_file=%s", DEF_POLLING, DEF_CONFIG_FILE );
-        exit ( 1 );
+        printf( "NFC Event Daemon\n" );
+        printf( "Usage %s [[no]debug] [[no]daemon] [polling_time=<time>] [expire_time=<limit>] [config_file=<file>]", argv[0] );
+        printf( "\nDefaults: debug=0 daemon=0 polltime=%d (ms) expiretime=0 (none) config_file=%s", DEF_POLLING, DEF_CONFIG_FILE );
+        exit ( EXIT_FAILURE );
     } /* for */
     /* end of config: return */
     return 0;
@@ -283,12 +279,9 @@ ned_get_tag(nfc_device_t* nfc_device, tag_t* tag) {
 
 int
 main ( int argc, char *argv[] ) {
-    int rv;
-
     tag_t* old_tag = NULL;
     tag_t* new_tag;
 
-    int first_loop   = 0;
     int expire_count = 0;
 
     INFO ("%s", PACKAGE_STRING);
@@ -298,7 +291,7 @@ main ( int argc, char *argv[] ) {
 
     /* put my self into background if flag is set */
     if ( daemonize ) {
-        DBG ( "Going to be daemon..." );
+        DBG ( "%s", "Going to be daemon..." );
         if ( daemon ( 0, debug ) < 0 ) {
             ERR ( "Error in daemon() call: %s", strerror ( errno ) );
             return 1;
@@ -318,13 +311,13 @@ main ( int argc, char *argv[] ) {
      */
     nfc_device_t* nfc_device = NULL;
 
-connect:
+//connect:
     // Try to open the NFC device
     if ( nfc_device == NULL ) nfc_device = nfc_connect( nfc_device_desc );
-init:
+//init:
     if ( nfc_device == NULL ) {
-        ERR( "NFC device not found" );
-        exit(1);
+        ERR( "%s", "NFC device not found" );
+        exit(EXIT_FAILURE);
     }
     nfc_initiator_init ( nfc_device );
 
@@ -353,24 +346,24 @@ detect:
             if ( new_tag != NULL ) goto detect;
             expire_count += polling_time;
             if ( expire_count >= expire_time ) {
-                DBG ( "Timeout on tag removed " );
+                DBG ( "%s", "Timeout on tag removed " );
                 execute_event ( nfc_device, new_tag,EVENT_EXPIRE_TIME );
                 expire_count = 0; /*restart timer */
             }
         } else { /* state changed; parse event */
             expire_count = 0;
             if ( new_tag == NULL ) {
-                DBG ( "Event detected: tag removed" );
+                DBG ( "%s", "Event detected: tag removed" );
                 execute_event ( nfc_device, old_tag, EVENT_TAG_REMOVED );
                 free(old_tag);
             } else {
-                DBG ( "Event detected: tag inserted " );
+                DBG ( "%s", "Event detected: tag inserted " );
                 execute_event ( nfc_device, new_tag, EVENT_TAG_INSERTED );
             }
             old_tag = new_tag;
         }
     } while ( 1 );
-disconnect:
+//disconnect:
     if ( nfc_device != NULL ) {
         nfc_disconnect(nfc_device);
         DBG ( "NFC device (0x%08x) is disconnected", nfc_device );
@@ -378,7 +371,7 @@ disconnect:
     }
 
     /* If we get here means that an error or exit status occurred */
-    DBG ( "Exited from main loop" );
+    DBG ( "%s", "Exited from main loop" );
     exit ( EXIT_FAILURE );
 } /* main */
 

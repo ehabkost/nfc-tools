@@ -107,7 +107,7 @@ tag_get_uid(const nfc_device_t* nfc_device, const tag_t* tag, char **dest) {
       nfc_initiator_deselect_tag ( nfc_device );
   } else {
       *dest = NULL;
-      DBG("ISO14443A (MIFARE) tag not found" );
+      DBG("%s", "ISO14443A (MIFARE) tag not found" );
       return;
   }
 }
@@ -132,11 +132,14 @@ int
     case EVENT_TAG_REMOVED:
         action = "tag_remove";
         break;
+    default:
+	return -1;
+	break;
     }
 
     blocklist = nfcconf_find_blocks ( _nem_execute_config_context, _nem_execute_config_block, "event", action );
     if ( !blocklist ) {
-        DBG ( "Event block list not found" );
+        DBG ( "%s", "Event block list not found" );
         return -1;
     }
     myblock = blocklist[0];
@@ -163,7 +166,7 @@ int
     // DBG ( "Onerror is set to: '%s'", onerrorstr );
 
     if ( _tag_uid == NULL ) {
-        ERR( "Enable to read tag UID... This should not happend !" );
+        ERR( "%s", "Enable to read tag UID... This should not happend !" );
         switch ( onerr ) {
         case ONERROR_IGNORE:
             break;
@@ -172,7 +175,7 @@ int
         case ONERROR_QUIT:
             exit ( EXIT_FAILURE );
         default:
-            DBG ( "Invalid onerror value" );
+            DBG ( "%s", "Invalid onerror value" );
             return -1;
         }
     } else {
@@ -201,7 +204,7 @@ int
             case ONERROR_QUIT:
                 exit ( EXIT_FAILURE );
             default:
-                DBG ( "Invalid onerror value" );
+                DBG ( "%s", "Invalid onerror value" );
                 return -1;
             }
         }
