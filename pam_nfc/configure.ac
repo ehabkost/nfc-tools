@@ -1,8 +1,9 @@
-AC_INIT(pam_nfc.c)
-
-AM_INIT_AUTOMAKE(pam_nfc, 0.0)
+AC_INIT(pam_nfc, 0.1.0)
 
 AC_CONFIG_MACRO_DIR([m4])
+
+AM_INIT_AUTOMAKE
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_PROG_CC
 AC_PROG_CPP
@@ -12,7 +13,7 @@ AM_PROG_LIBTOOL
 AC_CHECK_LIB(dl, main)
 
 #----------------------------------------------------------------------
-# libnfc Cheks
+# libnfc Checks
 AC_CHECK_HEADER(nfc/nfc.h, [], have_nfc=no)
 if test "$have_nfc" = "no"; then
 	AC_MSG_ERROR("The libnfc headers are missing")
@@ -83,6 +84,4 @@ config)
 	;;
 esac
 
-SHAVE_INIT([], [enable])
-AC_CONFIG_FILES([shave shave-libtool])
 AC_OUTPUT(Makefile)
