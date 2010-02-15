@@ -84,4 +84,16 @@ config)
 	;;
 esac
 
+# --enable-debug support (default:no)
+AC_ARG_ENABLE([debug],AS_HELP_STRING([--enable-debug],[Debug flags]),[enable_debug=$enableval],[enable_debug="no"])
+ 
+AC_MSG_CHECKING(for debug flag)
+AC_MSG_RESULT($enable_debug)
+ 
+if test x"$enable_debug" = "xyes"
+then
+  CFLAGS="$CFLAGS -g3 -Wall -DDEBUG -pedantic"
+fi
+AC_SUBST([DEBUG_CFLAGS])
+
 AC_OUTPUT(Makefile)
