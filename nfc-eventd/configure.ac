@@ -68,6 +68,8 @@ AC_MSG_CHECKING(for dbus support)
 AC_MSG_RESULT($enable_dbus)
  
 # checking dependencies
+AC_PATH_PROG(PKG_CONFIG, pkg-config, [AC_MSG_ERROR([pkg-config not found.])])
+
 ## libnfc
 PKG_CHECK_MODULES(LIBNFC, libnfc, [WITH_NFC=1], [WITH_NFC=0])
 
