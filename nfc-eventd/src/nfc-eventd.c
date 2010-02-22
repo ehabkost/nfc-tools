@@ -164,6 +164,8 @@ static int parse_config_file() {
                 INFO("Specified device %s have been found.", nfc_device_str);
                 nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
                 nfc_device_desc->pcDriver = (char*)nfcconf_get_str( my_device, "driver", "" );
+		char* device_name = (char*)nfcconf_get_str( my_device, "name", "" );
+		strncpy(nfc_device_desc->acDevice, device_name, sizeof(nfc_device_desc->acDevice));
                 nfc_device_desc->pcPort   = (char*)nfcconf_get_str( my_device, "port", "" );
                 nfc_device_desc->uiSpeed  = nfcconf_get_int( my_device, "speed", 9600 );
                 nfc_device_desc->uiBusIndex  = nfcconf_get_int( my_device, "index", 0 );
@@ -255,8 +257,6 @@ tag_t*
 ned_get_tag(nfc_device_t* nfc_device, tag_t* tag) {
   nfc_target_info_t ti;
   tag_t* rv = NULL;
-
-  DBG("sizeof(nfc_target_info_t)=%d, sizeof(ti)=%d\n", sizeof(nfc_target_info_t), sizeof(ti));
 
   if ( tag == NULL ) {
       // We are looking for any tag.
