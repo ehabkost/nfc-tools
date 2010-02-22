@@ -45,15 +45,15 @@ void debug_print(int level, const char *file, int line, const char *format, ...)
     if (debug_level >= level) {
         /* is stdout is a tty */
         if (isatty(1)) {
-            const char *t = "\033[34mDEBUG"; /* blue */
+            const char *t = "\033[34mDBG:"; /* blue */
 
             if (-1 == level)
-                t = "\033[31mERROR"; /* red */
+                t = "\033[31mERR:"; /* red */
             else if (0 == level)
                 t = ""; /* standard color */
 
             /* print preamble */
-            if ( level > 0 ) printf("%s:%s:%d: ", t, file, line);
+            if ( level > 0 ) printf("%s%s:%d: ", t, file, line);
             else printf("%s", t);
 
             /* print message */
