@@ -1,4 +1,4 @@
-AC_INIT(nfc-eventd, 0.1.0, rconty@il4p.fr)
+AC_INIT(nfc-eventd, 0.1.1, rconty@il4p.fr)
 
 AC_CONFIG_HEADER(config.h)
 
@@ -25,7 +25,7 @@ AC_PATH_PROG(PKG_CONFIG, pkg-config, [AC_MSG_ERROR([pkg-config not found.])])
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([stdio.h stdlib.h stdint.h stddef.h stdbool.h usb.h])
+AC_CHECK_HEADERS([stdio.h stdlib.h stdint.h stddef.h stdbool.h])
 AC_CHECK_FUNCS([memset])
 AC_CHECK_FUNCS([strcasecmp])
 AC_CHECK_FUNCS([strchr])
