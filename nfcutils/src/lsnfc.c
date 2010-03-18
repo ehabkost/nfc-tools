@@ -25,21 +25,23 @@
 
 #include <nfc/nfc.h>
 
-static nfc_device_t* pnd;
+static nfc_device_t *pnd;
 static byte_t abtFelica[5] = { 0x00, 0xff, 0xff, 0x00, 0x00 };
 
 #define ERR(x, ...) printf("ERROR: " x "\n", ## __VA_ARGS__ )
 
 #define MAX_DEVICE_COUNT 16
 
-void print_hex(byte_t* pbtData, size_t szDate)
+void
+print_hex (byte_t * pbtData, size_t szDate)
 {
-  for(size_t i=0; i<szDate; i++) {
-    printf("%02x",pbtData[i]);
+  for (size_t i = 0; i < szDate; i++) {
+    printf ("%02x", pbtData[i]);
   }
 }
 
-int main(int argc, const char* argv[])
+int
+main (int argc, const char *argv[])
 {
   nfc_target_info_t nti;
   uint8_t tag_count = 0;
@@ -48,48 +50,44 @@ int main(int argc, const char* argv[])
   size_t szFound;
 
   // Try to open the NFC device
-  if (!(pnddDevices = malloc (MAX_DEVICE_COUNT * sizeof (*pnddDevices))))
-  {
+  if (!(pnddDevices = malloc (MAX_DEVICE_COUNT * sizeof (*pnddDevices)))) {
     fprintf (stderr, "malloc() failed\n");
     return EXIT_FAILURE;
   }
 
   nfc_list_devices (pnddDevices, MAX_DEVICE_COUNT, &szFound);
 
-  if (szFound == 0)
-  {
-    ERR("%s", "No device found.");
+  if (szFound == 0) {
+    ERR ("%s", "No device found.");
   }
 
-  for (size_t i = 0; i < szFound; i++)
-  {
-    pnd = nfc_connect(&(pnddDevices[i]));
+  for (size_t i = 0; i < szFound; i++) {
+    pnd = nfc_connect (&(pnddDevices[i]));
 
-  if (pnd == NULL) {
-    ERR("%s", "Unable to connect to NFC device.");
-    return EXIT_FAILURE;
-  }
-  nfc_initiator_init(pnd);
+    if (pnd == NULL) {
+      ERR ("%s", "Unable to connect to NFC device.");
+      return EXIT_FAILURE;
+    }
+    nfc_initiator_init (pnd);
 
-  // Drop the field for a while
-  nfc_configure(pnd,NDO_ACTIVATE_FIELD,false);
+    // Drop the field for a while
+    nfc_configure (pnd, NDO_ACTIVATE_FIELD, false);
 
-  // Let the reader only try once to find a tag
-  nfc_configure(pnd,NDO_INFINITE_SELECT,false);
+    // Let the reader only try once to find a tag
+    nfc_configure (pnd, NDO_INFINITE_SELECT, false);
 
-  // Configure the CRC and Parity settings
-  nfc_configure(pnd,NDO_HANDLE_CRC,true);
-  nfc_configure(pnd,NDO_HANDLE_PARITY,true);
+    // Configure the CRC and Parity settings
+    nfc_configure (pnd, NDO_HANDLE_CRC, true);
+    nfc_configure (pnd, NDO_HANDLE_PARITY, true);
 
-  // Enable field so more power consuming cards can power themselves up
-  nfc_configure(pnd,NDO_ACTIVATE_FIELD,true);
+    // Enable field so more power consuming cards can power themselves up
+    nfc_configure (pnd, NDO_ACTIVATE_FIELD, true);
 
-  bool no_more_tag = false;
-  printf("device = %s\n",pnd->acName);
-  do {
-    if (nfc_initiator_select_tag(pnd,NM_ISO14443A_106,NULL,0,&nti))
-    {
-      printf("  ISO14443A: ");
+    bool no_more_tag = false;
+    printf ("device = %s\n", pnd->acName);
+    do {
+      if (nfc_initiator_select_tag (pnd, NM_ISO14443A_106, NULL, 0, &nti)) {
+        printf ("  ISO14443A: ");
 
 /*
 Theses values comes from http://www.libnfc.org/documentation/hardware/tags/iso14443
@@ -111,83 +109,112 @@ Gemplus 	MPCOS 			00 02 	98
 Innovision R&T 	Jewel 			0C 00
 */
 
-      if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x09)) {
-        printf("NXP MIFARE Mini (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x08)) {
-        printf("NXP MIFARE Classic 1K (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x18)) {
-        printf("NXP MIFARE Classic 4K (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x38)) {
-        printf("Nokia MIFARE Classic 4K - emulated - (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x44) && (nti.nai.btSak == 0x00)) {
-        printf("NXP MIFARE Ultralight (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x03) && (nti.nai.abtAtqa[1] == 0x44) && (nti.nai.btSak == 0x20)) {
-        printf("NXP MIFARE DESFire (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x03) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x28)) {
-        printf("NXP JCOP31 (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x48) && (nti.nai.btSak == 0x20)) {
-        /* @todo handle ATS to be able to know which one is it. */
-        printf("NXP JCOP31 or JCOP41 (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x28)) {
-        printf("NXP JCOP41 (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x88)) {
-        printf("Infineon MIFARE Classic 1K (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x98)) {
-        printf("Gemplus MPCOS (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else if ((nti.nai.abtAtqa[0] == 0x0C) && (nti.nai.abtAtqa[1] == 0x00)) {
-        /* @note I'm not sure that Jewel can be detected using this modultation and I haven't Jewel tags to test. */
-        printf("Innovision R&T Jewel (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
-      } else {
-        printf("Unknown ISO14443A tag type: ");
-        printf("ATQA (SENS_RES): "); print_hex(nti.nai.abtAtqa,2);
-        printf(", UID (NFCID%c): ",(nti.nai.abtUid[0]==0x08?'3':'1')); print_hex(nti.nai.abtUid,nti.nai.szUidLen);
-        printf(", SAK (SEL_RES): "); print_hex(&nti.nai.btSak,1);
-        if (nti.nai.szAtsLen)
-        {
-          printf(", ATS (ATR): ");
-          print_hex(nti.nai.abtAts,nti.nai.szAtsLen);
+        if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x09)) {
+          printf ("NXP MIFARE Mini (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x08)) {
+          printf ("NXP MIFARE Classic 1K (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x18)) {
+          printf ("NXP MIFARE Classic 4K (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x38)) {
+          printf ("Nokia MIFARE Classic 4K - emulated - (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x44) && (nti.nai.btSak == 0x00)) {
+          printf ("NXP MIFARE Ultralight (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x03) && (nti.nai.abtAtqa[1] == 0x44) && (nti.nai.btSak == 0x20)) {
+          printf ("NXP MIFARE DESFire (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x03) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x28)) {
+          printf ("NXP JCOP31 (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x48) && (nti.nai.btSak == 0x20)) {
+          /* @todo handle ATS to be able to know which one is it. */
+          printf ("NXP JCOP31 or JCOP41 (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x28)) {
+          printf ("NXP JCOP41 (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x88)) {
+          printf ("Infineon MIFARE Classic 1K (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x98)) {
+          printf ("Gemplus MPCOS (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else if ((nti.nai.abtAtqa[0] == 0x0C) && (nti.nai.abtAtqa[1] == 0x00)) {
+          /* @note I'm not sure that Jewel can be detected using this modultation and I haven't Jewel tags to test. */
+          printf ("Innovision R&T Jewel (UID=");
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (")\n");
+        } else {
+          printf ("Unknown ISO14443A tag type: ");
+          printf ("ATQA (SENS_RES): ");
+          print_hex (nti.nai.abtAtqa, 2);
+          printf (", UID (NFCID%c): ", (nti.nai.abtUid[0] == 0x08 ? '3' : '1'));
+          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+          printf (", SAK (SEL_RES): ");
+          print_hex (&nti.nai.btSak, 1);
+          if (nti.nai.szAtsLen) {
+            printf (", ATS (ATR): ");
+            print_hex (nti.nai.abtAts, nti.nai.szAtsLen);
+          }
+          printf ("\n");
         }
-        printf("\n");
+        nfc_initiator_deselect_tag (pnd);
+        tag_count++;
+      } else if (nfc_initiator_select_tag (pnd, NM_FELICA_212, abtFelica, 5, &nti)
+                 || nfc_initiator_select_tag (pnd, NM_FELICA_424, abtFelica, 5, &nti)) {
+        printf ("  Felica: ");
+        printf ("ID (NFCID2): ");
+        print_hex (nti.nfi.abtId, 8);
+        printf (", Parameter (PAD): ");
+        print_hex (nti.nfi.abtPad, 8);
+        printf ("\n");
+        nfc_initiator_deselect_tag (pnd);
+        tag_count++;
+      } else if (nfc_initiator_select_tag (pnd, NM_ISO14443B_106, (byte_t *) "\x00", 1, &nti)) {
+        printf ("  ISO14443B: ");
+        printf ("ATQB: ");
+        print_hex (nti.nbi.abtAtqb, 12);
+        printf (", ID: ");
+        print_hex (nti.nbi.abtId, 4);
+        printf (", CID: %02x\n", nti.nbi.btCid);
+        if (nti.nbi.szInfLen > 0) {
+          printf (", INF: ");
+          print_hex (nti.nbi.abtInf, nti.nbi.szInfLen);
+        }
+        printf (", PARAMS: %02x %02x %02x %02x\n", nti.nbi.btParam1, nti.nbi.btParam2, nti.nbi.btParam3,
+                nti.nbi.btParam4);
+        printf ("\n");
+        nfc_initiator_deselect_tag (pnd);
+        tag_count++;
+      } else if (nfc_initiator_select_tag (pnd, NM_JEWEL_106, NULL, 0, &nti)) {
+        printf ("  Jewel: No test results yet");
+        nfc_initiator_deselect_tag (pnd);
+        tag_count++;
+      } else {
+        no_more_tag = true;
       }
-      nfc_initiator_deselect_tag(pnd);
-      tag_count++;
-    } else if (nfc_initiator_select_tag(pnd,NM_FELICA_212,abtFelica,5,&nti) || nfc_initiator_select_tag(pnd,NM_FELICA_424,abtFelica,5,&nti))  
-    {
-      printf("  Felica: ");
-      printf("ID (NFCID2): "); print_hex(nti.nfi.abtId,8);
-      printf(", Parameter (PAD): "); print_hex(nti.nfi.abtPad,8);
-      printf("\n");
-      nfc_initiator_deselect_tag(pnd);
-      tag_count++;
-    } else if (nfc_initiator_select_tag(pnd,NM_ISO14443B_106,(byte_t*)"\x00",1,&nti))
-    {
-      printf("  ISO14443B: ");
-      printf("ATQB: "); print_hex(nti.nbi.abtAtqb,12);
-      printf(", ID: "); print_hex(nti.nbi.abtId,4);
-      printf(", CID: %02x\n",nti.nbi.btCid);
-      if (nti.nbi.szInfLen>0)
-      {
-        printf(", INF: "); print_hex(nti.nbi.abtInf,nti.nbi.szInfLen);
-      }
-      printf(", PARAMS: %02x %02x %02x %02x\n",nti.nbi.btParam1,nti.nbi.btParam2,nti.nbi.btParam3,nti.nbi.btParam4);
-      printf("\n");
-      nfc_initiator_deselect_tag(pnd);
-      tag_count++;
-    } else if (nfc_initiator_select_tag(pnd,NM_JEWEL_106,NULL,0,&nti))
-    {
-      printf("  Jewel: No test results yet");
-      nfc_initiator_deselect_tag(pnd);
-      tag_count++;
-    } else {
-      no_more_tag = true;
-    }
-  } while (no_more_tag != true);
-  printf("%d tag(s) have been found.\n", tag_count);
+    } while (no_more_tag != true);
+    printf ("%d tag(s) have been found.\n", tag_count);
 
-  // Disable field 
-  nfc_configure(pnd,NDO_ACTIVATE_FIELD,false);
+    // Disable field 
+    nfc_configure (pnd, NDO_ACTIVATE_FIELD, false);
 
-  nfc_disconnect(pnd);
+    nfc_disconnect (pnd);
   }
   return EXIT_SUCCESS;
 }
