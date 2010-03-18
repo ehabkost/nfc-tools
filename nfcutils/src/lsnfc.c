@@ -65,17 +65,6 @@ int main(int argc, const char* argv[])
   {
     pnd = nfc_connect(&(pnddDevices[i]));
 
-
-  // If specific device is wanted, i.e. an ARYGON device on /dev/ttyUSB0
-  /*
-  nfc_device_desc_t ndd;
-  ndd.pcDriver = "ARYGON";
-  ndd.pcPort = "/dev/ttyUSB0";
-  ndd.uiSpeed = 115200;
-
-  pnd = nfc_connect(&ndd);
-  */
-
   if (pnd == NULL) {
     ERR("%s", "Unable to connect to NFC device.");
     return EXIT_FAILURE;
@@ -98,7 +87,7 @@ int main(int argc, const char* argv[])
   bool no_more_tag = false;
   printf("device = %s\n",pnd->acName);
   do {
-    if (nfc_initiator_select_tag(pnd,NM_ISO14443A_106,NULL,0,&nti))  // Poll for a ISO14443A (MIFARE) tag
+    if (nfc_initiator_select_tag(pnd,NM_ISO14443A_106,NULL,0,&nti))
     {
       printf("  ISO14443A: ");
 
@@ -149,7 +138,7 @@ Innovision R&T 	Jewel 			0C 00
         /* @note I'm not sure that Jewel can be detected using this modultation and I haven't Jewel tags to test. */
         printf("Innovision R&T Jewel (UID="); print_hex(nti.nai.abtUid,nti.nai.szUidLen); printf(")\n");
       } else {
-        printf("Unknown tag type: ");
+        printf("Unknown ISO14443A tag type: ");
         printf("ATQA (SENS_RES): "); print_hex(nti.nai.abtAtqa,2);
         printf(", UID (NFCID%c): ",(nti.nai.abtUid[0]==0x08?'3':'1')); print_hex(nti.nai.abtUid,nti.nai.szUidLen);
         printf(", SAK (SEL_RES): "); print_hex(&nti.nai.btSak,1);
@@ -162,7 +151,7 @@ Innovision R&T 	Jewel 			0C 00
       }
       nfc_initiator_deselect_tag(pnd);
       tag_count++;
-    } else if (nfc_initiator_select_tag(pnd,NM_FELICA_212,abtFelica,5,&nti) || nfc_initiator_select_tag(pnd,NM_FELICA_424,abtFelica,5,&nti))  // Poll for a Felica tag
+    } else if (nfc_initiator_select_tag(pnd,NM_FELICA_212,abtFelica,5,&nti) || nfc_initiator_select_tag(pnd,NM_FELICA_424,abtFelica,5,&nti))  
     {
       printf("  Felica: ");
       printf("ID (NFCID2): "); print_hex(nti.nfi.abtId,8);
@@ -170,7 +159,7 @@ Innovision R&T 	Jewel 			0C 00
       printf("\n");
       nfc_initiator_deselect_tag(pnd);
       tag_count++;
-    } else if (nfc_initiator_select_tag(pnd,NM_ISO14443B_106,(byte_t*)"\x00",1,&nti))  // Poll for a ISO14443B tag
+    } else if (nfc_initiator_select_tag(pnd,NM_ISO14443B_106,(byte_t*)"\x00",1,&nti))
     {
       printf("  ISO14443B: ");
       printf("ATQB: "); print_hex(nti.nbi.abtAtqb,12);
@@ -184,7 +173,7 @@ Innovision R&T 	Jewel 			0C 00
       printf("\n");
       nfc_initiator_deselect_tag(pnd);
       tag_count++;
-    } else if (nfc_initiator_select_tag(pnd,NM_JEWEL_106,NULL,0,&nti))  // Poll for a Jewel tag
+    } else if (nfc_initiator_select_tag(pnd,NM_JEWEL_106,NULL,0,&nti))
     {
       printf("  Jewel: No test results yet");
       nfc_initiator_deselect_tag(pnd);
