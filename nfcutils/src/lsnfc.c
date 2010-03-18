@@ -30,6 +30,8 @@ static byte_t abtFelica[5] = { 0x00, 0xff, 0xff, 0x00, 0x00 };
 
 #define ERR(x, ...) printf("ERROR: " x "\n", ## __VA_ARGS__ )
 
+#define MAX_DEVICE_COUNT 16
+
 void print_hex(byte_t* pbtData, size_t szDate)
 {
   for(size_t i=0; i<szDate; i++) {
@@ -42,8 +44,27 @@ int main(int argc, const char* argv[])
   nfc_target_info_t nti;
   uint8_t tag_count = 0;
 
+  nfc_device_desc_t *pnddDevices;
+  size_t szFound;
+
   // Try to open the NFC device
-  pnd = nfc_connect(NULL);
+  if (!(pnddDevices = malloc (MAX_DEVICE_COUNT * sizeof (*pnddDevices))))
+  {
+    fprintf (stderr, "malloc() failed\n");
+    return EXIT_FAILURE;
+  }
+
+  nfc_list_devices (pnddDevices, MAX_DEVICE_COUNT, &szFound);
+
+  if (szFound == 0)
+  {
+    ERR("%s", "No device found.");
+  }
+
+  for (size_t i = 0; i < szFound; i++)
+  {
+    pnd = nfc_connect(&(pnddDevices[i]));
+
 
   // If specific device is wanted, i.e. an ARYGON device on /dev/ttyUSB0
   /*
@@ -178,5 +199,6 @@ Innovision R&T 	Jewel 			0C 00
   nfc_configure(pnd,NDO_ACTIVATE_FIELD,false);
 
   nfc_disconnect(pnd);
+  }
   return EXIT_SUCCESS;
 }
