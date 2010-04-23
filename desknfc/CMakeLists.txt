@@ -18,7 +18,7 @@ SET(desknfc_SOURCES main.cpp NfcUiManager.cpp NotifyAction.cpp Notification.cpp 
 			NfcTarget.cpp NfcDevice.cpp NfcDeviceManager.cpp)
 
 # MOCable headers
-SET(desknfc_MOCABLE_HEADERS NfcUiManager.h Executor.h NotifyAction.h Notification.h Content.h
+SET(desknfc_MOCABLE_HEADERS NfcUiManager.h NotifyAction.h Notification.h Content.h
 			NfcTarget.h NfcDevice.h NfcDeviceManager.h)
 
 # UI Classes
