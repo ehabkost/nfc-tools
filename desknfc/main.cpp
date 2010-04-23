@@ -14,7 +14,6 @@ int main(int argc, char* argv[]) {
 		app.installTranslator(&qtTranslator);
 	QTranslator myappTranslator;
 	myappTranslator.load("/usr/share/desknfc/i18n/trans_" + QLocale::system().name());
-   qDebug() << myappTranslator.isEmpty();
 	app.installTranslator(&myappTranslator);
 	NfcUiManager nfcUt(&app);
 	//mw.setParent(&nfcUt);
