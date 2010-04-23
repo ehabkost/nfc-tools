@@ -1,0 +1,25 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+	"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/nfc_tools/nfcd">
+	<interface name="org.nfc_tools.nfcd.NfcDeviceManager">
+		<method name="getDeviceList">
+			<arg type="as" name="devices" direction="out" />
+		</method>
+		<method name="getDevicePathByName">
+			<arg type="s" name="deviceName" direction="in" />
+			<arg type="s" name="devicePath" direction="out" />
+		</method>
+		<method name="getDevicePathById">
+			<arg type="y" name="id" direction="in" />
+			<arg type="s" name="device" direction="out" />
+		</method>
+		<signal name="devicePlugged">
+			<arg type="y" name="id" direction="out"/>
+			<arg type="s" name="device" direction="out"/>
+		</signal>
+		<signal name="deviceUnplugged">
+			<arg type="y" name="id" direction="out"/>
+			<arg type="s" name="device" direction="out"/>
+		</signal>
+	</interface>
+</node>
