@@ -22,7 +22,7 @@ SET(desknfc_MOCABLE_HEADERS NfcUiManager.h NotifyAction.h Notification.h Content
 			NfcTarget.h NfcDevice.h NfcDeviceManager.h)
 
 # UI Classes
-SET(desknfc_UI MainWindow.ui ContentWidget.ui TargetWidget.ui)
+SET(desknfc_UI ui/MainWindow.ui ui/ContentWidget.ui ui/TargetWidget.ui)
 QT4_WRAP_UI(desknfc_SOURCES ${desknfc_UI})
 
 # Additonnal ressources
