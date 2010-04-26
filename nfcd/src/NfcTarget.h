@@ -29,7 +29,6 @@ public:
   const QUuid getUuid();
   const QString getPath();
   void setPath(QString);
-  void checkAvaibleContent(); // TODO make protected
 
   const QList< QPair<QVariant,QString> >  getContentList();
 
@@ -48,6 +47,7 @@ protected:
   void putContent(QByteArray);
   void processNDEFMessage(NDEFMessage);
   Content* processSpMessage(int, NDEFMessage);
+  void checkAvailableContent();
 
   Mad _mad;
   MifareSectorNumber* _sectors;

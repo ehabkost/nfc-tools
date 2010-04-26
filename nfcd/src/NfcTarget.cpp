@@ -17,7 +17,7 @@ NfcTarget::NfcTarget ( MifareTag tag, QMutex* accessLock )
   free ( u );
   _name = freefare_get_tag_friendly_name ( _tag );
   _targetContent = QList<Entry*>();
-  checkAvaibleContent();
+  checkAvailableContent();
 }
 
 NfcTarget::~NfcTarget() {
@@ -88,7 +88,7 @@ QStringList NfcTarget::getContentListStrings()
 
 #define block(s,b) ((s * 4) + b)
 void
-NfcTarget::checkAvaibleContent()
+NfcTarget::checkAvailableContent()
 {
   _accessLock->lock();
   QByteArray data;
