@@ -92,93 +92,110 @@ NfcTarget::checkAvaibleContent()
 {
   _accessLock->lock();
   QByteArray data;
+  int resConnect = -1;
+  if ( _name == "Mifare Classic 1k") {
+    resConnect = mifare_classic_connect ( _tag );
+    if ( 0 == resConnect ) {
 
-  if ( 0 == mifare_classic_connect ( _tag ) ) {
-    Mad mad = mad_read ( _tag );
-    MadAid aid;
-    aid.function_cluster_code = 0xE1;
-    aid.application_code = 0x03;
+      Mad mad = mad_read ( _tag );
+      MadAid aid;
+      aid.function_cluster_code = 0xE1;
+      aid.application_code = 0x03;
 
-    MifareClassicKey key = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
+      MifareClassicKey key = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
 
-    if ( mad != NULL ) {
-      MifareSectorNumber* sectors = mifare_application_find ( mad, aid );
-      if ( sectors != NULL ) {
-        int i = 0;
-        MifareSectorNumber sector;
-        while ( ( sector = sectors[i] ) ) {
-          qDebug() << "Dump sector " << QString::number ( sector ) << "...";
-          if ( 0 == mifare_classic_authenticate ( _tag, block ( sector, 0 ), key, MFC_KEY_A ) ) {
-            for ( uint8_t b=0; b<3; b++ ) {
-              MifareClassicBlock r;
-              if ( 0 == mifare_classic_read ( _tag, block ( sector, b ), &r ) ) {
-                data.append ( ( char* ) r, sizeof ( MifareClassicBlock ) );
-              } else {
-                qDebug ( "Unable to read block." );
+      if ( mad != NULL ) {
+        MifareSectorNumber* sectors = mifare_application_find ( mad, aid );
+        if ( sectors != NULL ) {
+          int i = 0;
+          MifareSectorNumber sector;
+          while ( ( sector = sectors[i] ) ) {
+            qDebug() << "Dump sector " << QString::number ( sector ) << "...";
+            if ( 0 == mifare_classic_authenticate ( _tag, block ( sector, 0 ), key, MFC_KEY_A ) ) {
+              for ( uint8_t b=0; b<3; b++ ) {
+                MifareClassicBlock r;
+                if ( 0 == mifare_classic_read ( _tag, block ( sector, b ), &r ) ) {
+                  data.append ( ( char* ) r, sizeof ( MifareClassicBlock ) );
+                } else {
+                  qDebug ( "Unable to read block." );
+                }
               }
+            } else {
+              qDebug ( "Unable to authenticate on sector." );
             }
-          } else {
-            qDebug ( "Unable to authenticate on sector." );
+            i++;
           }
-          i++;
-        }
-      } else {
-        qDebug ( "No sector for aid 0x03, 0xE1" );
-      }
-      mad_free ( mad );
-    } else {
-      qDebug ( "Unable to read MAD." );
-    }
-
-    if ( !data.isEmpty() ) {
-      QString hex;
-      //dump
-          /*QDir qd;
-          qd.mkpath(QString("/tmp/nfcd-dumps-") + QString( getlogin() ) );
-          QString path(QString("/tmp/nfcd-dumps-") + QString( getlogin() )
-            + QString("/") + QUuid::createUuid().toString().remove(QRegExp("[{}-]")));
-          QFile f(path);
-          f.open(QIODevice::WriteOnly);
-          qDebug() << f.write(data);*/
-        //pmud
-      for ( int n = 0; n<data.size(); n++ ) {
-        if ( ( uint8_t ) data.at ( n ) < 0x10 )
-          hex = hex + "0";
-
-        hex = hex + QString::number ( ( uint8_t ) data.at ( n ), 16 );
-        if ( ( n%16 ) == 15 ) hex = hex + "\n"; else hex = hex + " ";
-      }
-
-      qDebug() << hex;
-      // Test if content is an NDEF message
-      // TLV according to "Type 1 Tag Operation Specification" from NFCForum
-
-      uint16_t tlv_len;
-      if ( ( uint8_t ) data.at ( 0 ) == 0x03 ) {
-        if ( ( uint8_t ) data.at ( 1 ) != 0xff ) {
-          // TLV use 1 byte for lenght
-          tlv_len = data.at ( 1 );
-          data.remove ( 0, 2 ); // Remove the first 2 bytes (corresponding to "Tag" and "Lenght" from TLV format)
         } else {
-          // TLV use 3 bytes for lenght
-          tlv_len = ( uint8_t ) data.at ( 3 );
-          tlv_len |= ( ( ( uint16_t ) data.at ( 2 ) ) << 8 );
-          data.remove ( 0, 4 ); // Remove the first 4 bytes (corresponding to "Tag" (1 byte) and "Lenght" (3 bytes) from TLV format)
+          qDebug ( "No sector for aid 0x03, 0xE1" );
         }
-
-        data.truncate ( tlv_len );
-
-        // Now we can parse it...
-        NDEFMessage msg = NDEFMessage::fromByteArray ( data );
-        processNDEFMessage ( msg );
-      }
+        mad_free ( mad );
+      } else {
+        qDebug ( "Unable to read MAD." );
+      }  
+    } else {
+      qDebug() << "Unable to connect to mifare classic tag.";
     }
     if( mifare_classic_disconnect ( _tag ) == 0 )
       qDebug() << "disconnected";
-  } else {
-    qDebug() << "Unable to connect to mifare classic tag.";
+    _accessLock->unlock();
   }
-  _accessLock->unlock();
+  else if (_name == "Mifare UltraLight") {
+    resConnect =  mifare_ultralight_connect (_tag);
+    if(0 == resConnect) {
+      uint8_t pageNum = 0;
+      MifareUltralightPage pages[16];
+      for(pageNum = 0; pageNum < 16; pageNum++) {
+        mifare_ultralight_read (_tag, pageNum, &(pages[pageNum]) );
+        for(uint8_t i = 0; i < 4 ; i++) data.append( pages[pageNum][i] );
+      }
+      if( mifare_ultralight_disconnect ( _tag ) == 0 )
+        qDebug() << "disconnected";
+      _accessLock->unlock();
+    }
+  }
+  if ( !data.isEmpty() ) {
+    QString hex;
+    //dump
+        /*QDir qd;
+        qd.mkpath(QString("/tmp/nfcd-dumps-") + QString( getlogin() ) );
+        QString path(QString("/tmp/nfcd-dumps-") + QString( getlogin() )
+           + QString("/") + QUuid::createUuid().toString().remove(QRegExp("[{}-]")));
+        QFile f(path);
+        f.open(QIODevice::WriteOnly);
+        qDebug() << f.write(data);*/
+      //pmud
+    for ( int n = 0; n<data.size(); n++ ) {
+      if ( ( uint8_t ) data.at ( n ) < 0x10 )
+        hex = hex + "0";
+
+      hex = hex + QString::number ( ( uint8_t ) data.at ( n ), 16 );
+      if ( ( n%16 ) == 15 ) hex = hex + "\n"; else hex = hex + " ";
+    }
+
+    qDebug() << hex;
+    // Test if content is an NDEF message
+    // TLV according to "Type 1 Tag Operation Specification" from NFCForum
+
+    uint16_t tlv_len;
+    if ( ( uint8_t ) data.at ( 0 ) == 0x03 ) {
+      if ( ( uint8_t ) data.at ( 1 ) != 0xff ) {
+        // TLV use 1 byte for lenght
+        tlv_len = data.at ( 1 );
+        data.remove ( 0, 2 ); // Remove the first 2 bytes (corresponding to "Tag" and "Lenght" from TLV format)
+      } else {
+        // TLV use 3 bytes for lenght
+        tlv_len = ( uint8_t ) data.at ( 3 );
+        tlv_len |= ( ( ( uint16_t ) data.at ( 2 ) ) << 8 );
+        data.remove ( 0, 4 ); // Remove the first 4 bytes (corresponding to "Tag" (1 byte) and "Lenght" (3 bytes) from TLV format)
+      }
+
+      data.truncate ( tlv_len );
+
+      // Now we can parse it...
+      NDEFMessage msg = NDEFMessage::fromByteArray ( data );
+      processNDEFMessage ( msg );
+    }
+  }
 }
 
 void NfcTarget::putContent(QByteArray data) {
