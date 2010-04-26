@@ -29,13 +29,13 @@ QT4_WRAP_UI(desknfc_SOURCES ${desknfc_UI})
 QT4_ADD_RESOURCES(desknfc_SOURCES systray.qrc)
 
 # Translation
-SET(desknfc_TS trans_fr_FR.ts)
-OPTION (UPDATE_TRANSLATIONS "Update source translation i18n/*.ts (WARNING: make clean will delete the source .ts files! Danger!)")
-IF (UPDATE_TRANSLATIONS)
+SET(desknfc_TS i18n/fr_FR.ts)
+SET(REBUILD_TRANSLATIONS OFF CACHE BOOL "Update source translation i18n/*.ts (WARNING: make clean will delete the source .ts files! Danger!)")
+IF (REBUILD_TRANSLATIONS)
   QT4_CREATE_TRANSLATION(desknfc_QM ${desknfc_SOURCES} ${desknfc_UI} ${desknfc_TS})
-ELSE (UPDATE_TRANSLATIONS)
+ELSE (REBUILD_TRANSLATIONS)
   QT4_ADD_TRANSLATION(desknfc_QM ${desknfc_TS})
-ENDIF (UPDATE_TRANSLATIONS) 
+ENDIF (REBUILD_TRANSLATIONS) 
 
 ADD_CUSTOM_TARGET (translations_target DEPENDS ${desknfc_QM})
 
