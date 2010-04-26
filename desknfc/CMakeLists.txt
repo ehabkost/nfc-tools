@@ -79,6 +79,6 @@ ADD_EXECUTABLE( desknfc ${desknfc_SOURCES} ${desknfc_MOC} ${desknfc_QM})
 TARGET_LINK_LIBRARIES( desknfc ${QT_LIBRARIES} ${KDE4_KDEUI_LIBS} ${KDE4_KPARTS_LIBS} )
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/desknfc DESTINATION bin)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/img/icon.png DESTINATION pixmaps)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/img/desknfc.png DESTINATION pixmaps)
 install(FILES ${desknfc_QM} DESTINATION  i18n)
 
