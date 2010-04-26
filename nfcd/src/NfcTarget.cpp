@@ -10,7 +10,7 @@
 NfcTarget::NfcTarget ( MifareTag tag, QMutex* accessLock )
 {
   _accessLock = accessLock;
-  _tag = freefare_duplicate_tag (tag);
+  _tag = tag;
   char* u = freefare_get_tag_uid ( _tag );
   _uid = QString ( u );
   _uuid = QUuid::createUuid();
