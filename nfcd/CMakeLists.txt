@@ -1,38 +1,39 @@
-PROJECT( nfcd )
+project( nfcd )
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+cmake_minimum_required(VERSION 2.6)
 
 # pkg-config modules
-FIND_PACKAGE( PkgConfig REQUIRED )
+find_package( PkgConfig REQUIRED )
 ## LibNFC
-PKG_CHECK_MODULES( LIBNFC libnfc )
-LINK_DIRECTORIES( ${LIBNFC_LIBRARY_DIRS} )
-INCLUDE_DIRECTORIES( ${LIBNFC_INCLUDE_DIRS} )
+pkg_check_modules( LIBNFC libnfc )
+link_directories( ${LIBNFC_LIBRARY_DIRS} )
+include_directories( ${LIBNFC_INCLUDE_DIRS} )
 
 ## LibFreeFare
-PKG_CHECK_MODULES( LIBFREEFARE libfreefare )
-LINK_DIRECTORIES( ${LIBFREEFARE_LIBRARY_DIRS} )
-INCLUDE_DIRECTORIES( ${LIBFREEFARE_INCLUDE_DIRS} )  
+pkg_check_modules( LIBFREEFARE libfreefare )
+link_directories( ${LIBFREEFARE_LIBRARY_DIRS} )
+include_directories( ${LIBFREEFARE_INCLUDE_DIRS} )  
+
+## @TODO LibNDEF
 
 # Qt4
-FIND_PACKAGE( Qt4 REQUIRED )
-SET(QT_DONT_USE_QTGUI true)
-SET(QT_USE_QTDBUS true)
+find_package( Qt4 REQUIRED )
+set(QT_DONT_USE_QTGUI true)
+set(QT_USE_QTDBUS true)
 
 # Qt Includes
-INCLUDE(${QT_USE_FILE})
+include(${QT_USE_FILE})
 
-
-IF(CMAKE_COMPILER_IS_GNU_CC)
+if(CMAKE_COMPILER_IS_GNU_CC)
   # Use C99 standard
-  ADD_DEFINITIONS(-std=c99)
+  add_definitions(-std=c99)
   # Make sure we will not miss some warnings ;)
-  ADD_DEFINITIONS(-Wall -pedantic)
-ENDIF(CMAKE_COMPILER_IS_GNU_CC)
+  add_definitions(-Wall -pedantic)
+endif(CMAKE_COMPILER_IS_GNU_CC)
 
 # Current Project Include
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 
-ADD_SUBDIRECTORY(src)
+add_subdirectory(src)
 
