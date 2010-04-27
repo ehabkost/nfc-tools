@@ -22,6 +22,11 @@
 #include "Notification.h"
 #include "NotifyAction.h"
 
+//!  NfcUiManager 
+/*!
+  Hello doc!
+*/
+
 class NfcUiManager : public QObject {
 
 	Q_OBJECT

@@ -2,7 +2,7 @@ project(desknfc)
 
 cmake_minimum_required(VERSION 2.6)
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
 set(PACKAGE_NAME "desknfc")
 set(PACKAGE_VERSION "0.0.0")
@@ -33,6 +33,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_SOURCE
 
 # Icons
 add_subdirectory( icons )
+
+# Documentation
+#set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+include(UseDoxygen)
 
 # Sources files
 set(desknfc_SRCS
