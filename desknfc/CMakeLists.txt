@@ -13,77 +13,94 @@ include(${QT_USE_FILE})
 find_package( KDE4 REQUIRED )
 include_directories( ${KDE4_INCLUDES} )
 
+# If definitions like -D_GNU_SOURCE are needed for these checks they
+# should be added to _KDE4_PLATFORM_DEFINITIONS when it is originally
+# defined outside this file.  Here we include these definitions in
+# CMAKE_REQUIRED_DEFINITIONS so they will be included in the build of
+# checks below.
+set( CMAKE_REQUIRED_DEFINITIONS ${_KDE4_PLATFORM_DEFINITIONS} )
+
+add_definitions( ${QT_DEFINITIONS} ${KDE4_DEFINITIONS} )
+remove_definitions(-DQT_NO_STL)
+include_directories( ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${KDE4_INCLUDES} ${LIBKNOTIFICATIONITEM-1_INCLUDE_DIR})
+
 # Icons
 add_subdirectory( icons )
 
 # Sources files
-set(desknfc_SOURCES main.cpp NfcUiManager.cpp NotifyAction.cpp Notification.cpp Content.cpp
-			NfcTarget.cpp NfcDevice.cpp NfcDeviceManager.cpp)
-
-# MOCable headers
-set(desknfc_MOCABLE_HEADERS NfcUiManager.h NotifyAction.h Notification.h Content.h
-			NfcTarget.h NfcDevice.h NfcDeviceManager.h)
+set(desknfc_SRCS
+  main.cpp
+  NfcUiManager.cpp
+  NotifyAction.cpp
+  Notification.cpp
+  Content.cpp
+  NfcTarget.cpp
+  NfcDevice.cpp
+  NfcDeviceManager.cpp
+)
 
 # UI Classes
-set(desknfc_UI ui/MainWindow.ui ui/ContentWidget.ui ui/TargetWidget.ui)
-qt4_wrap_ui(desknfc_SOURCES ${desknfc_UI})
-
-# Additonnal ressources
-#qt4_add_resources(desknfc_SOURCES systray.qrc)
+kde4_add_ui_files(desknfc_SRCS
+  ui/MainWindow.ui
+  ui/ContentWidget.ui
+  ui/TargetWidget.ui
+)
 
 # Translation
 set(desknfc_TS i18n/fr_FR.ts)
 set(rebuild_translations off cache bool "update source translation i18n/*.ts (WARNING: make clean will delete the source .ts files! Danger!)")
 if (REBUILD_TRANSLATIONS)
-  qt4_create_translation(desknfc_QM ${desknfc_SOURCES} ${desknfc_UI} ${desknfc_TS})
+  qt4_create_translation(desknfc_QM ${desknfc_SRCS} ${desknfc_UI} ${desknfc_TS})
 else (REBUILD_TRANSLATIONS)
   qt4_add_translation(desknfc_QM ${desknfc_TS})
 endif (REBUILD_TRANSLATIONS) 
 
 add_custom_target (translations_target DEPENDS ${desknfc_QM})
 
-
 # Generate D-Bus interface
   # NfcDeviceManager
   set_source_files_properties(NfcDeviceManager.xml PROPERTIES CLASSNAME NfcDeviceManagerInterface)
-  qt4_add_dbus_interface(desknfc_SOURCES NfcDeviceManager.xml NfcDeviceManagerInterface)
+  qt4_add_dbus_interface(desknfc_SRCS NfcDeviceManager.xml NfcDeviceManagerInterface)
 
   # NfcDevice
   set_source_files_properties(NfcDevice.xml PROPERTIES CLASSNAME NfcDeviceInterface)
-  qt4_add_dbus_interface(desknfc_SOURCES NfcDevice.xml NfcDeviceInterface)
+  qt4_add_dbus_interface(desknfc_SRCS NfcDevice.xml NfcDeviceInterface)
 
   # Notify
   set_source_files_properties(Notify.xml PROPERTIES CLASSNAME NotifyInterface)
-  qt4_add_dbus_interface(desknfc_SOURCES Notify.xml NotifyInterface)
+  qt4_add_dbus_interface(desknfc_SRCS Notify.xml NotifyInterface)
 
   # NfcTarget
   set_source_files_properties(NfcTarget.xml PROPERTIES CLASSNAME NfcTargetInterface)
-  qt4_add_dbus_interface(desknfc_SOURCES NfcTarget.xml NfcTargetInterface)
+  qt4_add_dbus_interface(desknfc_SRCS NfcTarget.xml NfcTargetInterface)
 
-# Qt Definitions
-add_definitions(${QT_DEFINITIONS})
 
 # Additionnal definitions
 if(CMAKE_COMPILER_IS_GNU_CC)
+  # Set C99 standard flag
   add_definitions(-std=c99)
   # Make sure we will not miss some warnings ;)
   add_definitions(-Wall -pedantic)
 endif(CMAKE_COMPILER_IS_GNU_CC)
 
-# Generate MOC files
-qt4_wrap_cpp( desknfc_MOC ${desknfc_MOCABLE_HEADERS} )
-
 # Current Project Include
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_executable( desknfc ${desknfc_SOURCES} ${desknfc_MOC} ${desknfc_QM})
+kde4_add_app_icon(desknfc_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/icons/desknfc.png")
 
-kde4_add_app_icon(desknfc_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/icons/desknfc.png")
+kde4_add_executable( desknfc ${desknfc_SRCS} ${desknfc_QM})
 
-target_link_libraries( desknfc ${QT_LIBRARIES} ${KDE4_KDEUI_LIBS} ${KDE4_KPARTS_LIBS} )
+target_link_libraries( desknfc
+  ${QT_LIBRARIES}
+  ${KDE4_KDEUI_LIBS}
+  ${KDE4_KPARTS_LIBS}
+)
+
+install(TARGETS desknfc ${INSTALL_TARGETS_DEFAULT_ARGS} )
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/desknfc DESTINATION ${BIN_INSTALL_DIR})
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/desknfc.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
 install(FILES ${desknfc_QM} DESTINATION  ${DATA_INSTALL_DIR}/desknfc/i18n)
 
+kde4_install_icons( ${ICON_INSTALL_DIR} )
