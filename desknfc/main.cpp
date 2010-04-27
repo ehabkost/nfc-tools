@@ -6,7 +6,7 @@
 #include "NfcUiManager.h"
 
 int main(int argc, char* argv[]) {
-	Q_INIT_RESOURCE(systray);
+	// Q_INIT_RESOURCE(systray);
 	QApplication app(argc,argv);
 	QTranslator qtTranslator;
 	qtTranslator.load("qt_" + QLocale::system().name(),

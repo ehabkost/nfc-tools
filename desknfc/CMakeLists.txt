@@ -13,6 +13,9 @@ include(${QT_USE_FILE})
 find_package( KDE4 REQUIRED )
 include_directories( ${KDE4_INCLUDES} )
 
+# Icons
+add_subdirectory( icons )
+
 # Sources files
 set(desknfc_SOURCES main.cpp NfcUiManager.cpp NotifyAction.cpp Notification.cpp Content.cpp
 			NfcTarget.cpp NfcDevice.cpp NfcDeviceManager.cpp)
@@ -26,7 +29,7 @@ set(desknfc_UI ui/MainWindow.ui ui/ContentWidget.ui ui/TargetWidget.ui)
 qt4_wrap_ui(desknfc_SOURCES ${desknfc_UI})
 
 # Additonnal ressources
-qt4_add_resources(desknfc_SOURCES systray.qrc)
+#qt4_add_resources(desknfc_SOURCES systray.qrc)
 
 # Translation
 set(desknfc_TS i18n/fr_FR.ts)
@@ -76,9 +79,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable( desknfc ${desknfc_SOURCES} ${desknfc_MOC} ${desknfc_QM})
 
+kde4_add_app_icon(desknfc_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/icons/desknfc.png")
+
 target_link_libraries( desknfc ${QT_LIBRARIES} ${KDE4_KDEUI_LIBS} ${KDE4_KPARTS_LIBS} )
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/desknfc DESTINATION bin)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/img/desknfc.png DESTINATION pixmaps)
-install(FILES ${desknfc_QM} DESTINATION  i18n)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/desknfc DESTINATION ${BIN_INSTALL_DIR})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/desknfc.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
+install(FILES ${desknfc_QM} DESTINATION  ${DATA_INSTALL_DIR}/desknfc/i18n)
 
