@@ -1,5 +1,7 @@
 #include "NfcUiManager.h"
 
+#include "config.h"
+
 NfcUiManager::NfcUiManager(QApplication* app) {
 	allowNotif = false;
 	lock = true;
@@ -55,8 +57,9 @@ void NfcUiManager::run() {
   }
   _qtw = _uiMW->treeWidget;
   _qsti = new QSystemTrayIcon(this);
-  _qsti->setIcon(QIcon("/usr/share/desknfc/pixmaps/icon.png"));
-  _mw->setWindowIcon(QIcon("/usr/share/desknfc/pixmaps/icon.png"));
+  QIcon icon(PACKAGE_DATA_INSTALL_DIR"/icons/"PACKAGE_NAME".png");
+  _qsti->setIcon(icon);
+  _mw->setWindowIcon(icon);
   _trayIconMenu = new QMenu(_mw);
   _deviceManagerAction = new QAction(NfcUiManager::tr("Device Manager"), _trayIconMenu);
   _quitAction = new QAction(NfcUiManager::tr("Quit"), _trayIconMenu);

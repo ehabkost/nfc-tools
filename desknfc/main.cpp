@@ -5,6 +5,8 @@
 #include "ui_MainWindow.h"
 #include "NfcUiManager.h"
 
+#include "config.h"
+
 int main(int argc, char* argv[]) {
 	// Q_INIT_RESOURCE(systray);
 	QApplication app(argc,argv);
@@ -13,7 +15,7 @@ int main(int argc, char* argv[]) {
 		QLibraryInfo::location(QLibraryInfo::TranslationsPath));
 		app.installTranslator(&qtTranslator);
 	QTranslator myappTranslator;
-	myappTranslator.load("/usr/share/desknfc/i18n/trans_" + QLocale::system().name());
+	myappTranslator.load(PACKAGE_DATA_INSTALL_DIR"/i18n/" + QLocale::system().name());
 	app.installTranslator(&myappTranslator);
 	NfcUiManager nfcUt(&app);
 	//mw.setParent(&nfcUt);
