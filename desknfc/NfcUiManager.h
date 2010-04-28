@@ -22,10 +22,10 @@
 #include "Notification.h"
 #include "NotifyAction.h"
 
-//!  NfcUiManager 
-/*!
-  Hello doc!
-*/
+///  NfcUiManager 
+/**
+  * This class handle the GUI elements 
+  */
 
 class NfcUiManager : public QObject {
 

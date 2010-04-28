@@ -5,6 +5,11 @@
 #include <QString>
 #include <QByteArray>
 
+/// Content
+/**
+ * This class handle a Content as a ByteArray + id + type
+ */
+
 class Content : public QObject{
 
 	Q_OBJECT
