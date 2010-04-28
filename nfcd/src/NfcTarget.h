@@ -19,34 +19,68 @@
 #include "UriEntry.h"
 #include "Content.h"
 
+/// NfcTarget
+/**
+  * This class handle a NFC Target
+  */
+
 class NfcTarget : public QObject
 {
     Q_OBJECT
 
 public:
+
+  /// construct a NfcTarget from the given tag and mutex
   NfcTarget(MifareTag, QMutex*);
   ~NfcTarget();
+
+  /// getter for _uuid
   const QUuid getUuid();
+
+  /// getter for _path
   const QString getPath();
+
+  /// setter for _path
   void setPath(QString);
 
+  /// get the content list
   const QList< QPair<QVariant,QString> >  getContentList();
 
 public slots:
+
+  /// get the content list as a string list
   QStringList getContentListStrings();
+
+  /// getter for _name
   QString getName();
+
+  /// getter for _uid
   const QString getUid();
+
+  /// get the ByteArray of the content with the given id
   QByteArray getContentById(int);
+
+  /// put mime datas on the target
   void putMimeContent(QString, QByteArray);
 
 signals:
+
+  /// signal emitted when a new content is available
   void newContentAvailable(int id,QString type);
   
 
 protected:
+
+  /// write a byte array to the target
   void putContent(QByteArray);
+
+  /// process a NDEF message
   void processNDEFMessage(NDEFMessage);
+
+  /// process a Smart Poster
   Content* processSpMessage(int, NDEFMessage);
+
+  /// check the target for contents
   void checkAvailableContent();
 
   Mad _mad;

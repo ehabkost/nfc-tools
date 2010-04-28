@@ -8,6 +8,12 @@
 #include <QVarLengthArray>
 #include <QMimeData>
 
+/// Entry
+
+/**
+  *  Base class for an entry
+  */
+
 class Entry : public QObject {
 
 	Q_OBJECT

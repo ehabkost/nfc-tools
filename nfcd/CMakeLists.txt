@@ -2,12 +2,17 @@ project( nfcd )
 
 cmake_minimum_required(VERSION 2.6)
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/src/cmake/modules)
+
 # pkg-config modules
 find_package( PkgConfig REQUIRED )
 ## LibNFC
 pkg_check_modules( LIBNFC libnfc )
 link_directories( ${LIBNFC_LIBRARY_DIRS} )
 include_directories( ${LIBNFC_INCLUDE_DIRS} )
+
+# Documentation
+include(UseDoxygen)
 
 ## LibFreeFare
 pkg_check_modules( LIBFREEFARE libfreefare )
