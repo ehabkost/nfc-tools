@@ -16,12 +16,9 @@
 #include "NfcDevice.h"
 #include "NfcDeviceManager.h"
 #include "NfcTarget.h"
-#include "NotifyInterface.h"
 #include "ui_MainWindow.h"
 #include "ui_ContentWidget.h"
 #include "ui_TargetWidget.h"
-#include "Notification.h"
-#include "NotifyAction.h"
 
 ///  NfcUiManager 
 /**
@@ -41,7 +38,6 @@ class NfcUiManager : public QObject {
 	protected:
 		QApplication* _app;
 		QAction* _openAction;
-		OrgFreedesktopNotificationsInterface* _ifaceNotif;
 		QTreeWidget* _qtw;
 		QMainWindow* _mw;
 		Ui_MainWindow* _uiMW;

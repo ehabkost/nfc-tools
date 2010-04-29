@@ -39,12 +39,7 @@ QApplication* NfcUiManager::getApp() {
 
 void NfcUiManager::run() {
   lock = false;
-  allowActions = false;
-  _ifaceNotif = new OrgFreedesktopNotificationsInterface ( 
-			"org.freedesktop.Notifications", "/org/freedesktop/Notifications",
-			QDBusConnection::sessionBus());
-  QStringList caps = _ifaceNotif->GetCapabilities();
-  if(caps.contains("actions")) allowActions = true;
+  allowActions = true;
   _mw = new QMainWindow;
   _uiMW = new Ui_MainWindow;
   _uiMW->setupUi(_mw);

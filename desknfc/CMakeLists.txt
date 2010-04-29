@@ -42,8 +42,6 @@ include(UseDoxygen)
 set(desknfc_SRCS
   main.cpp
   NfcUiManager.cpp
-  NotifyAction.cpp
-  Notification.cpp
   Content.cpp
   NfcTarget.cpp
   NfcDevice.cpp
@@ -76,10 +74,6 @@ add_custom_target (translations_target DEPENDS ${desknfc_QM})
   # NfcDevice
   set_source_files_properties(NfcDevice.xml PROPERTIES CLASSNAME NfcDeviceInterface)
   qt4_add_dbus_interface(desknfc_SRCS NfcDevice.xml NfcDeviceInterface)
-
-  # Notify
-  set_source_files_properties(Notify.xml PROPERTIES CLASSNAME NotifyInterface)
-  qt4_add_dbus_interface(desknfc_SRCS Notify.xml NotifyInterface)
 
   # NfcTarget
   set_source_files_properties(NfcTarget.xml PROPERTIES CLASSNAME NfcTargetInterface)
