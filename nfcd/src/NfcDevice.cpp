@@ -123,6 +123,7 @@ void NfcDevice::checkAvailableTargets()
         }
         i++;
       }
+      free(tags);
       nfc_disconnect (nfc_device);
       nfc_device = NULL;
     }
