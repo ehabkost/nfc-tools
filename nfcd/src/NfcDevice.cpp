@@ -123,9 +123,6 @@ void NfcDevice::checkAvailableTargets()
         }
         i++;
       }
-
-      freefare_free_tags (tags);
-      tags = NULL;
       nfc_disconnect (nfc_device);
       nfc_device = NULL;
     }
