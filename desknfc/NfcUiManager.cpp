@@ -47,9 +47,7 @@ void NfcUiManager::run() {
   if(caps.contains("actions")) allowActions = true;
   _mw = new QMainWindow;
   _uiMW = new Ui_MainWindow;
-  //_uiIW = new Ui_InfosWidget();
   _uiMW->setupUi(_mw);
-  //_uiIW->setupUi( _uiMW->infosWidget );
   _uiMW->infosWidget->setPalette( _app->palette() );
   foreach(QObject* qw, _uiMW->infosWidget->children()) {
     QWidget* casted_qw = qobject_cast<QWidget*>(qw);
@@ -108,7 +106,6 @@ void NfcUiManager::showContentWidget(QTreeWidgetItem* item,Content* pt_Content) 
     } else {
       KUrl url(*(pt_Content->getData()));
       casted_qcw->typeLabel->setText(url.protocol() );
-      //_uiMW->UrlLabel->setText(url.pathOrUrl());
       casted_qcw->iconLabel->setPixmap( KIconLoader().loadIcon(
 			KMimeType::iconNameForUrl(url), KIconLoader::Desktop));
     }
@@ -343,9 +340,6 @@ void NfcUiManager::actualizeInfos() {
 		delete qo;
 	}
 	QList<QTreeWidgetItem*> l = _qtw->selectedItems();
-	//_uiIW->typeLabel->setText( NfcUiManager::tr("No information") );
-	//_uiMW->UrlLabel->setText("");
-	//_uiIW->iconLabel->setPixmap( QPixmap() );
 	if(l.size() == 1) {
 		QTreeWidgetItem* item = l.at(0);
 		bool contentFound = false;
@@ -360,31 +354,18 @@ void NfcUiManager::actualizeInfos() {
 		for(itTg=_targetsQtwi.begin(); itTg!=_targetsQtwi.end(); ++itTg) {
 			if( item==(*itTg).first && !contentFound) {
             this->showTargetWidget(item,(*itTg).second);
-				/*_uiIW->typeLabel->setText(NfcUiManager::tr("NFC target"));
-				_uiIW->iconLabel->setPixmap(QPixmap("img/NFCCard.png"));*/
 			}
 		}
 		QList< QPair<QTreeWidgetItem*,NfcDevice*> >::iterator itDev;
 		for(itDev=_devicesQtwi.begin(); itDev!=_devicesQtwi.end(); ++itDev) {
 			if( item==(*itDev).first) {
 				this->showDeviceWidget(item);
-				/*_uiIW->typeLabel->setText(NfcUiManager::tr("NFC Reader"));
-				_uiIW->iconLabel->setPixmap(QPixmap("img/NFCReader.png"));*/
 			}
 		}
 	}
 }
 
 void NfcUiManager::notify(int id, QString notif, bool openAction) {
-		/*(void)id;
-		QString msg = notif;
-		if( _ifaceNotif->isValid() ) {
-			Notification* notification = new Notification( _ifaceNotif, "NFC notification", notif);
-			if ( allowActions && openAction ) {
-				notification->addAction(_openAction);
-			}
-		notification->send();
-		}*/
 	KNotification* notification = new KNotification("contentAvailable");
 	notification->setText( notif );
    notification->setActions( QStringList( tr( "Show Window" ) ) );
