@@ -376,7 +376,7 @@ void NfcUiManager::actualizeInfos() {
 }
 
 void NfcUiManager::notify(int id, QString notif, bool openAction) {
-		(void)id;
+		/*(void)id;
 		QString msg = notif;
 		if( _ifaceNotif->isValid() ) {
 			Notification* notification = new Notification( _ifaceNotif, "NFC notification", notif);
@@ -384,7 +384,12 @@ void NfcUiManager::notify(int id, QString notif, bool openAction) {
 				notification->addAction(_openAction);
 			}
 		notification->send();
-		}
+		}*/
+	KNotification* notification = new KNotification("contentAvailable");
+	notification->setText( notif );
+   notification->setActions( QStringList( tr( "Show Window" ) ) );
+	connect(notification, SIGNAL(activated(unsigned int )), this , SLOT(showWindow()) );
+	notification->sendEvent();
 }
 
 void NfcUiManager::openBtClicked() {

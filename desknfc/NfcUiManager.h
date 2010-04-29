@@ -9,6 +9,7 @@
 #include <QSystemTrayIcon>
 #include <QDesktopServices>
 #include <KUrl>
+#include <KNotification>
 #include <QMenu>
 #include <kiconloader.h>
 #include <kfileitem.h>

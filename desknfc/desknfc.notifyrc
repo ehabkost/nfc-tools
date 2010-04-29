@@ -1,0 +1,4 @@
+[Event/contentAvailable]
+  Name=New Content available
+  Comment=A new content is available
+  Action=Popup
