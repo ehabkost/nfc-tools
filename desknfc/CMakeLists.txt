@@ -46,6 +46,7 @@ set(desknfc_SRCS
   NfcTarget.cpp
   NfcDevice.cpp
   NfcDeviceManager.cpp
+  Notification.cpp
 )
 
 # UI Classes

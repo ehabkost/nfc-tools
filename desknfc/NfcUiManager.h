@@ -9,7 +9,7 @@
 #include <QSystemTrayIcon>
 #include <QDesktopServices>
 #include <KUrl>
-#include <KNotification>
+#include "Notification.h"
 #include <QMenu>
 #include <kiconloader.h>
 #include <kfileitem.h>
@@ -71,7 +71,7 @@ class NfcUiManager : public QObject {
 		void openBtClicked();
 		void writeAFile();
 		void qstiHandler(QSystemTrayIcon::ActivationReason);
-		void notify(int,QString,bool);
+		void notify(Content*);
 
 	private:
 		QString makeFile(QByteArray,QString);

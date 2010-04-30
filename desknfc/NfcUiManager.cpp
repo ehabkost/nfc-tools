@@ -226,13 +226,13 @@ bool NfcUiManager::addTarget(NfcTarget* tg, QObject* parent) {
 			QStringList contentList = tg->getContentListStrings();
 			QStringList::iterator it3;
 			for( it3 = contentList.begin(); it3 != contentList.end(); ++it3) {
-				if(allowNotif) notify((*it3).remove(QRegExp(":.*")).toInt(), NfcUiManager::tr("content found on ") +
-				tg->getName() + " (" + tg->getUid() + ")" + " : " + (*it3).remove(QRegExp(".*: ")), true);
-				QTreeWidgetItem* qtwi3 = new QTreeWidgetItem( ( fullTree ? (QTreeWidgetItem*)parent2 : NULL ) );
 				QString type = (*it3).remove("\n");
+				int contentId = (*it3).remove(QRegExp(":.*")).toInt();
+				if(allowNotif) notify( tg->getContentById(contentId));
+				QTreeWidgetItem* qtwi3 = new QTreeWidgetItem( ( fullTree ? (QTreeWidgetItem*)parent2 : NULL ) );
 			    if(!type.contains("(URI)") ) {
    				QByteArray data = QByteArray().append(*(tg->getContentById(
-						(*it3).remove(QRegExp(":.*")).toInt())->getData()));
+						contentId)->getData()));
      				QString path = "";
     				if(!_paths.contains(data)) {
 						path = makeFile(data,type);
@@ -358,11 +358,17 @@ void NfcUiManager::actualizeInfos() {
 	}
 }
 
-void NfcUiManager::notify(int id, QString notif, bool openAction) {
-	KNotification* notification = new KNotification("contentAvailable");
-	notification->setText( notif );
-   notification->setActions( QStringList( tr( "Show Window" ) ) );
-	connect(notification, SIGNAL(activated(unsigned int )), this , SLOT(showWindow()) );
+void NfcUiManager::notify(Content* content) {
+	QByteArray qb(*(content->getData()));
+	QString path = "";
+	if(!_paths.contains(qb)) {
+		path = makeFile(qb,content->getType());
+		_paths.insert(qb,path);
+	}
+	else path = _paths.value(qb);
+	Notification* notification = new Notification("contentAvailable",content,path);
+   notification->setActions( QStringList( tr( "Open" ) ) );
+	connect(notification, SIGNAL(activated(unsigned int)), notification , SLOT(open()) );
 	notification->sendEvent();
 }
 
