@@ -85,8 +85,6 @@ void NfcUiManager::showContentWidget(QTreeWidgetItem* item,Content* pt_Content) 
       QWidget* casted_qw = qobject_cast<QWidget*>(qw);
       if(casted_qw != NULL) casted_qw->setPalette( _app->palette() );
     }
-    QString type = item->text(0).remove(QRegExp(".*: "));
-    type = type.remove("\n");
     if(! item->text(0).contains("(URI)") ) {
       QByteArray data = QByteArray().append(*(pt_Content->getData()));
       QString path = "";
