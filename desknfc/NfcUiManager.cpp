@@ -87,7 +87,7 @@ void NfcUiManager::showContentWidget(QTreeWidgetItem* item,Content* pt_Content) 
     }
     QString type = item->text(0).remove(QRegExp(".*: "));
     type = type.remove("\n");
-    if(!type.contains("(URI)") ) {
+    if(! item->text(0).contains("(URI)") ) {
       QByteArray data = QByteArray().append(*(pt_Content->getData()));
       QString path = "";
       if(!_paths.contains(data)) {
@@ -245,7 +245,7 @@ bool NfcUiManager::addTarget(NfcTarget* tg, QObject* parent) {
    		      KFileItem fileItem(KFileItem::Unknown, KFileItem::Unknown, path);
       		   qtwi3->setText( 0, fileItem.mimeComment() ); 
 				}
-				else qtwi3->setText( 0, (*it3).remove(QRegExp(".*: ")).remove("(URI) ").remove("\n") );
+				else qtwi3->setText( 0, (*it3).remove(QRegExp(".*: ")).remove("\n") );
 				if(fullTree) 
 					((QTreeWidgetItem*)parent2)->addChild(qtwi3);
 				else _qtw->addTopLevelItem(qtwi3);
@@ -382,9 +382,10 @@ void NfcUiManager::qtwiDoubleClickHandler(QTreeWidgetItem * item, int column) {
 		if(item==(*it).first) {
 			//launch the program
 			QByteArray content = QByteArray().append(*((*it).second->getData()));
-			QString type = item->text(0).remove(QRegExp(".*: "));
+			QString type = item->text(0);
+         type.remove(QRegExp(".*: "));
 			type = type.remove("\n");
-			if(type.contains("(URI)")) {
+			if(item->text(0).contains("(URI)")) {
 				QDesktopServices::openUrl(QString(content));
 			}
 			else openFile(content, type);
