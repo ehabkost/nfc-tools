@@ -161,18 +161,8 @@ void NotifierDialog::insertContent(Content* content, const QString &devName, con
     int rowNum = m_contentsCategoryItem->rowCount();
     m_contentsCategoryItem->insertRow(rowNum, item);
     m_contentsCategoryItem->setChild(rowNum, 1, actionItem);
-    //connect(item, SIGNAL( clicked() ), content, SLOT( open() ) );
-    //QModelIndex index = item->index();
-    //kDebug() << "udi: " + udi;
 
     m_contents_index << QPair<QModelIndex,Content*>(item->index(),content);
-   /* m_contents_index << QPair<QModelIndex,Content*>(actionItem->index(),content);
-    m_contents_devNames << QPair<QModelIndex,QString>(item->index(),devName);
-    m_contents_devNames << QPair<QModelIndex,QString>(actionItem->index(),devName);
-    m_contents_tgUids << QPair<QModelIndex,QString>(item->index(),tgUid);
-    m_contents_tgUids << QPair<QModelIndex,QString>(actionItem->index(),tgUid);*/
-
-    //connect(content,SIGNAL(destroyed(QObject*)),this,SLOT(removeContent(QObject*)));
      
     m_notifierView->calculateRects();
 
