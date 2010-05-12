@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Desknfc
+Name[en_GB]=DeskNFC
+Name[fr]=DeskNFC
+GenericName=NFC device manager
+GenericName[fr]=Gestionnaire de périphérique NFC
+Icon=desknfc
+Type=Service
+ServiceTypes=Plasma/Applet
+X-KDE-Library=plasma_applet_desknfc
+X-KDE-PluginInfo-Name=desknfc
+X-KDE-PluginInfo-Category=Utilities
+X-KDE-PluginInfo-EnabledByDefault=true

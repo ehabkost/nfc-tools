@@ -36,6 +36,9 @@ public:
 
   /// getter for the Uuid
   const QUuid getUuid();
+
+  /// getter for _targets
+  QList<NfcTarget*> getTargets();
   
 public Q_SLOTS:
 

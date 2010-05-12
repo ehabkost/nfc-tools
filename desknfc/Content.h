@@ -4,6 +4,18 @@
 #include <QObject>
 #include <QString>
 #include <QByteArray>
+#include <QDir>
+#include <QUuid>
+#include <QFile>
+#include <QString>
+#include <QUrl>
+#include <QRegExp>
+#include <QDesktopServices>
+
+#include <KFileItem>
+#include <KUrl>
+#include <KIconLoader>
+#include <KMimeType>
 
 /// Content
 /**
@@ -20,16 +32,25 @@ class Content : public QObject{
 		~Content();
 
 		QString getType();
+		QString getPath();
 	   int getId();
+		QString getDesc();
+		QPixmap getIcon();
 		QByteArray* getData();
+
+	public slots:
+		void open();
+
 
 	protected:
 		QByteArray* _content; 
 		int _id;
 		QString _type;
+		QString _path;
 
 
 	private: 
+		QString makeFile(QByteArray, QString);
 
 };
 

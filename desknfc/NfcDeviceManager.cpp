@@ -19,6 +19,7 @@ NfcDeviceManager::NfcDeviceManager()
       this, SLOT(removeDevice(uchar,QString)) );
   }
 }
+
 QStringList NfcDeviceManager::getDeviceList()
 {
   /*QStringList devicesName;

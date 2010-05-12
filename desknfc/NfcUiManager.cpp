@@ -2,11 +2,12 @@
 
 #include "config.h"
 
-NfcUiManager::NfcUiManager(QApplication* app) {
+NfcUiManager::NfcUiManager(QObject* parent) : QObject(parent) {
 	allowNotif = false;
 	lock = true;
 	fullTree = false;
-	_app = app;
+	//_app = app;
+	(void)_qtw;
 	_nfcDm = new NfcDeviceManager;
 	QObject::connect(_nfcDm, SIGNAL( devicePlugged(uchar,QString) ),
 		this, SLOT( fillTree() ) );
@@ -42,12 +43,13 @@ void NfcUiManager::run() {
   allowActions = true;
   _mw = new QMainWindow;
   _uiMW = new Ui_MainWindow;
+  //_mp = new MainPlasmoid(this);
   _uiMW->setupUi(_mw);
-  _uiMW->infosWidget->setPalette( _app->palette() );
-  foreach(QObject* qw, _uiMW->infosWidget->children()) {
+  //_uiMW->infosWidget->setPalette( _app->palette() );
+  /*foreach(QObject* qw, _uiMW->infosWidget->children()) {
     QWidget* casted_qw = qobject_cast<QWidget*>(qw);
     if(casted_qw != NULL) casted_qw->setPalette( _app->palette() );
-  }
+  }*/
   _qtw = _uiMW->treeWidget;
   _qsti = new QSystemTrayIcon(this);
   QIcon icon(PACKAGE_DATA_INSTALL_DIR"/icons/"PACKAGE_NAME".png");
@@ -59,7 +61,7 @@ void NfcUiManager::run() {
   _trayIconMenu->addAction(_deviceManagerAction);
   _trayIconMenu->addAction(_quitAction);
   QObject::connect(_deviceManagerAction,SIGNAL(triggered()),this, SLOT(showWindow()));
-  QObject::connect(_quitAction,SIGNAL(triggered()),_app,SLOT( quit() ) );
+  //QObject::connect(_quitAction,SIGNAL(triggered()),_app,SLOT( quit() ) );
   QObject::connect(_uiMW->fullTreeCheckBox,SIGNAL(stateChanged(int)),this, SLOT(fullTreeCBHandler(int)));
   QObject::connect(_qsti,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
     this, SLOT(qstiHandler(QSystemTrayIcon::ActivationReason)));
@@ -80,10 +82,10 @@ void NfcUiManager::showContentWidget(QTreeWidgetItem* item,Content* pt_Content) 
   Ui_ContentWidget* casted_qcw = (Ui_ContentWidget*)_uiIW ;
   if(casted_qcw != NULL) {
     casted_qcw->setupUi( _uiMW->infosWidget );
-    _uiMW->infosWidget->setPalette( _app->palette() );
+    //_uiMW->infosWidget->setPalette( _app->palette() );
     foreach(QObject* qw, _uiMW->infosWidget->children()) {
       QWidget* casted_qw = qobject_cast<QWidget*>(qw);
-      if(casted_qw != NULL) casted_qw->setPalette( _app->palette() );
+      //if(casted_qw != NULL) casted_qw->setPalette( _app->palette() );
     }
     if(! item->text(0).contains("(URI)") ) {
       QByteArray data = QByteArray().append(*(pt_Content->getData()));
@@ -119,10 +121,10 @@ void NfcUiManager::showTargetWidget(QTreeWidgetItem* qtwi, NfcTarget* target) {
   Ui_TargetWidget* casted_qtw = (Ui_TargetWidget*)_uiIW ;
   if(casted_qtw != NULL) {
     casted_qtw->setupUi( _uiMW->infosWidget );
-    _uiMW->infosWidget->setPalette( _app->palette() );
+    //_uiMW->infosWidget->setPalette( _app->palette() );
     foreach(QObject* qw, _uiMW->infosWidget->children()) {
       QWidget* casted_qw = qobject_cast<QWidget*>(qw);
-      if(casted_qw != NULL) casted_qw->setPalette( _app->palette() );
+      //if(casted_qw != NULL) casted_qw->setPalette( _app->palette() );
     }
   }
   QObject::connect(((Ui_TargetWidget*)_uiIW)->writeButton,SIGNAL(clicked()),this,SLOT(writeAFile()));
@@ -146,7 +148,7 @@ void NfcUiManager::writeAFile() {
 		for(it=_targetsQtwi.begin(); it!=_targetsQtwi.end(); ++it) {
 			if( item==(*it).first) {
 				QString fileName = QFileDialog::getOpenFileName(_mw,
-					tr("File to write"), "", tr("Tous (*)"));
+					tr("File to write"), "", tr("All (*)"));
 				KFileItem fileItem(KFileItem::Unknown, KFileItem::Unknown, fileName);
 				QFile f(fileName);
 				f.open(QIODevice::ReadOnly);

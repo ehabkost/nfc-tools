@@ -36,6 +36,10 @@ const QString NfcDevice::getName()
   return _name;
 }
 
+QList<NfcTarget*> NfcDevice::getTargets() {
+  return QList<NfcTarget*>(_targets);
+}
+
 void NfcDevice::addTarget(QString uid, QString name) {
   QString path = _iface->getTargetPathByUid(uid); 
   _targets.append( new NfcTarget(path) );

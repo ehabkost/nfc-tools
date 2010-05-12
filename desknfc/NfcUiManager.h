@@ -13,6 +13,7 @@
 #include <QMenu>
 #include <kiconloader.h>
 #include <kfileitem.h>
+#include <ui/MainPlasmoid.h>
 #include "NfcDevice.h"
 #include "NfcDeviceManager.h"
 #include "NfcTarget.h"
@@ -30,17 +31,18 @@ class NfcUiManager : public QObject {
 	Q_OBJECT
 
 	public:
-		NfcUiManager(QApplication*);
+		NfcUiManager(QObject*);
 		~NfcUiManager();
 		QApplication* getApp();
 		bool lock;
 
 	protected:
-		QApplication* _app;
+		//QApplication* _app;
 		QAction* _openAction;
 		QTreeWidget* _qtw;
 		QMainWindow* _mw;
 		Ui_MainWindow* _uiMW;
+		MainPlasmoid* _mp;
 		void* _uiIW;
 		QSystemTrayIcon* _qsti;
 		QMenu* _trayIconMenu;
