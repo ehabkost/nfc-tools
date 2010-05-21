@@ -22,6 +22,7 @@ class NfcDeviceManager : public QObject
 
 public:
   NfcDeviceManager();
+  bool haveNfcdConnection();
 
 public Q_SLOTS:
 
