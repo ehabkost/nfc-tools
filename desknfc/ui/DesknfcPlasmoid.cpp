@@ -80,7 +80,7 @@ void DesknfcPlasmoid::init()
     m_itemsValidity = cg.readEntry("ItemsValidity", 5);
 
     m_devManager = new NfcDeviceManager();
-
+    
     m_icon = new Plasma::IconWidget(KIcon("desknfc",NULL), QString());
     m_iconName = QString("desknfc");
 
@@ -124,6 +124,7 @@ void DesknfcPlasmoid::fillPreviousDevices()
             this, SLOT(onTargetRemoved(QString,QString)));
         foreach(const QString & uidTarget, dev->getTargetList()) {
             NfcTarget* target = dev->getTargetByUid(uidTarget);
+            m_dialog->insertTarget(target,dev->getName());
             foreach(Content* content, target->getTargetContent()) {
                 //onDeviceAdded(0, content->getType());
                 m_dialog->insertContent(content,dev->getName(), target->getUid());
@@ -228,7 +229,7 @@ void DesknfcPlasmoid::notifyDevice(const QString &name)
 
 void DesknfcPlasmoid::toolTipAboutToShow()
 {
-    Plasma::ToolTipContent toolTip;
+    /*Plasma::ToolTipContent toolTip;
     if (!m_lastPlugged.isEmpty()) {
         Solid::Device device(m_lastPlugged.last());
 
@@ -239,7 +240,7 @@ void DesknfcPlasmoid::toolTipAboutToShow()
         toolTip.setImage(KIcon("device-notifier"));
     }
 
-    Plasma::ToolTipManager::self()->setContent(this, toolTip);
+    Plasma::ToolTipManager::self()->setContent(this, toolTip);*/
 }
 
 void DesknfcPlasmoid::toolTipHidden()
