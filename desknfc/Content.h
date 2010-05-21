@@ -14,8 +14,10 @@
 
 #include <KFileItem>
 #include <KUrl>
+#include <KRun>
 #include <KIconLoader>
 #include <KMimeType>
+#include <KMimeTypeTrader>
 
 /// Content
 /**
@@ -36,6 +38,7 @@ class Content : public QObject{
 	   int getId();
 		QString getDesc();
 		QPixmap getIcon();
+		QString getAssociatedServiceName();
 		QByteArray* getData();
 
 	public slots:

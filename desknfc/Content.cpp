@@ -48,7 +48,13 @@ void Content::open() {
 		if(_path == "") {
 			_path = makeFile(*_content,_type);
 		}
-		QDesktopServices::openUrl(_path);
+		//QDesktopServices::openUrl(_path);
+		//KRun::runUrl(_path,type,NULL);
+		KFileItem fileItem(KFileItem::Unknown, KFileItem::Unknown, _path);
+		QString mimeType = fileItem.mimetype();
+		KService::List lst = KMimeTypeTrader::self()->query(mimeType);
+		//serviceName = lst.first()->desktopEntryName();
+		lst.first()->createInstance<QObject>();
 	}
 }
 
@@ -65,6 +71,21 @@ QString Content::getDesc() {
       desc = url.pathOrUrl();
 	}
 	return desc;
+}
+
+QString Content::getAssociatedServiceName() {
+	QString serviceName = "";
+	if(_path == "") {
+		_path = makeFile(*_content,_type);
+	}
+	QString desc = "";
+	if(! _type.contains("(URI)") ) {
+		KFileItem fileItem(KFileItem::Unknown, KFileItem::Unknown, _path);
+		QString mimeType = fileItem.mimetype();
+		KService::List lst = KMimeTypeTrader::self()->query(mimeType);
+		serviceName = lst.first()->desktopEntryName();
+	}
+	return serviceName;
 }
 
 QPixmap Content::getIcon() {
