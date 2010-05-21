@@ -44,7 +44,7 @@ protected:
 private:
 
   /// DBUS interface to this DeviceManager provided by nfcd
-  OrgNfc_toolsNfcdNfcDeviceManagerInterface* _iface;
+  NfcDeviceManagerInterface* _iface;
 
   /// QList containing the NfcDevices objects
   QList<NfcDevice*> _devices;

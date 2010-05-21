@@ -69,7 +69,7 @@ protected:
   QString _name;
 
   /// DBUS interface to this Device provided by nfcd
-  OrgNfc_toolsNfcdNfcDeviceInterface* _iface;
+  NfcDeviceInterface* _iface;
   
 private:
 

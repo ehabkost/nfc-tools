@@ -2,7 +2,7 @@
 
 NfcDeviceManager::NfcDeviceManager()
 {
-  _iface = new OrgNfc_toolsNfcdNfcDeviceManagerInterface("org.nfc_tools.nfcd",
+  _iface = new NfcDeviceManagerInterface("org.nfc_tools.nfcd",
 		"/nfcd", QDBusConnection::sessionBus(), this);
   if(!_iface->isValid()) qFatal("%s\n",NfcDeviceManager::tr("please launch nfcd").toStdString().c_str());
   else {

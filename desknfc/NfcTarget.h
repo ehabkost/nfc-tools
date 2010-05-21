@@ -81,7 +81,7 @@ protected:
   QList<Content*> _targetContent;
 
   /// DBUS interface to the associated object provided by nfcd.
-  OrgNfc_toolsNfcdNfcTargetInterface* _iface;
+  NfcTargetInterface* _iface;
 
 private:
 

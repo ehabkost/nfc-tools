@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 NfcDevice::NfcDevice(QString path) {
-  _iface = new OrgNfc_toolsNfcdNfcDeviceInterface("org.nfc_tools.nfcd",
+  _iface = new NfcDeviceInterface("org.nfc_tools.nfcd",
 			path, QDBusConnection::sessionBus(), this);
   _name = _iface->getName();
   _id = _iface->getId();
