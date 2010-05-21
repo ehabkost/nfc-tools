@@ -172,13 +172,13 @@ void NotifierDialog::insertContent(Content* content, const QString &devName, con
 
     QStandardItem *actionItem = new QStandardItem();
     actionItem->setData(name, SolidUdiRole);
-    actionItem->setData(Plasma::Delegate::SecondaryActionColumn, ScopeRole);
 
     QString udi = item->data(SolidUdiRole).toString();
 
     int rowNum = m_contentsCategoryItem->rowCount();
     m_contentsCategoryItem->insertRow(rowNum, item);
     m_contentsCategoryItem->setChild(rowNum, 1, actionItem);
+    m_hotplugModel->setData(item->index(), content->getAssociatedServiceName(), NotifierDialog::ActionRole);
 
     m_contents_index << QPair<QModelIndex,Content*>(item->index(),content);
      
