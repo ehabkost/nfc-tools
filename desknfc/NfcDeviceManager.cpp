@@ -13,11 +13,11 @@ NfcDeviceManager::NfcDeviceManager()
       _devicesName << dev->getName();
       _devices.append( dev );
     }
-    QObject::connect(_iface, SIGNAL(devicePlugged(uchar,QString)),
-      this, SLOT(addDevice(uchar,QString)) );
-    QObject::connect(_iface, SIGNAL(deviceUnplugged(uchar,QString)),
-      this, SLOT(removeDevice(uchar,QString)) );
   }
+  QObject::connect(_iface, SIGNAL(devicePlugged(uchar,QString)),
+    this, SLOT(addDevice(uchar,QString)) );
+  QObject::connect(_iface, SIGNAL(deviceUnplugged(uchar,QString)),
+    this, SLOT(removeDevice(uchar,QString)) );
 }
 
 QStringList NfcDeviceManager::getDeviceList()
