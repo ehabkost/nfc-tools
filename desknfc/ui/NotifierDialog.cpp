@@ -69,9 +69,12 @@ NotifierDialog::NotifierDialog(DesknfcPlasmoid * applet,QObject *parent)
     buildDialog();
     //make the invisible root for tree device
     m_rootItem = m_hotplugModel->invisibleRootItem();
-    m_contentsCategoryItem = new QStandardItem(QString("NFC"));
-    m_hotplugModel->setData(m_contentsCategoryItem->index(),"NFC",Qt::DisplayRole);
+    m_contentsCategoryItem = new QStandardItem(tr("Contents"));
+    m_hotplugModel->setData(m_contentsCategoryItem->index(),tr("Contents"),Qt::DisplayRole);
     m_rootItem->insertRow(0,m_contentsCategoryItem);
+	 m_targetsCategoryItem = new QStandardItem(tr("Targets"));
+    m_hotplugModel->setData(m_targetsCategoryItem->index(),tr("Targets"),Qt::DisplayRole);
+    m_rootItem->insertRow(1,m_targetsCategoryItem);
     m_hotplugModel->setItem(0, 1, NULL);
     m_hotplugModel->setHeaderData(0, Qt::Horizontal,QString(""),Qt::EditRole);
     m_hotplugModel->setHeaderData(1, Qt::Horizontal,QString(""),Qt::EditRole);
@@ -83,11 +86,16 @@ NotifierDialog::~NotifierDialog()
 }
 
 void NotifierDialog::clear() {
+    m_contents_index.clear();
+    m_targets_index.clear();
     m_hotplugModel->clear();
-    m_contentsCategoryItem = new QStandardItem(QString("NFC"));
+    m_contentsCategoryItem = new QStandardItem(QString(tr("Contents")));
     m_rootItem = m_hotplugModel->invisibleRootItem();
-    m_hotplugModel->setData(m_contentsCategoryItem->index(),"NFC",Qt::DisplayRole);
+    m_hotplugModel->setData(m_contentsCategoryItem->index(),tr("Contents"),Qt::DisplayRole);
     m_rootItem->insertRow(0,m_contentsCategoryItem);
+    m_targetsCategoryItem = new QStandardItem(tr("Targets"));
+    m_hotplugModel->setData(m_targetsCategoryItem->index(),tr("Targets"),Qt::DisplayRole);
+    m_rootItem->insertRow(1,m_targetsCategoryItem);
     m_hotplugModel->setItem(0, 1, NULL);
     m_hotplugModel->setHeaderData(0, Qt::Horizontal,QString(""),Qt::EditRole);
     m_hotplugModel->setHeaderData(1, Qt::Horizontal,QString(""),Qt::EditRole);
@@ -141,7 +149,6 @@ QStandardItem* NotifierDialog::searchOrCreateDeviceCategory(const QString &categ
     return newCategory;
 }
 
-
 void NotifierDialog::insertContent(Content* content, const QString &devName, const QString &tgUid)
 {
     QString name = "" + qHash( content->getData() );
@@ -165,6 +172,32 @@ void NotifierDialog::insertContent(Content* content, const QString &devName, con
     m_contents_index << QPair<QModelIndex,Content*>(item->index(),content);
      
     m_notifierView->calculateRects();
+
+}
+
+void NotifierDialog::insertTarget(NfcTarget* tg, const QString &devName) {
+	QString name = tg->getUuid().toString();
+	QStandardItem *item = new QStandardItem();
+    item->setData(name, SolidUdiRole);
+    item->setData(Plasma::Delegate::MainColumn, ScopeRole);
+    item->setData(false, SubTitleMandatoryRole);
+    item->setText(tg->getName());
+    //item->setIcon(QIcon(content->getIcon())); 
+
+    QStandardItem *actionItem = new QStandardItem();
+    actionItem->setData(name, SolidUdiRole);
+    actionItem->setData(Plasma::Delegate::SecondaryActionColumn, ScopeRole);
+    //setDeviceData(name, content->getType(), NotifierDialog::ActionRole);
+    //item->setData("test?!", NotifierDialog::ActionRole);
+
+    QString udi = item->data(SolidUdiRole).toString();
+
+    int rowNum = m_targetsCategoryItem->rowCount();
+    m_targetsCategoryItem->insertRow(rowNum, item);
+    m_targetsCategoryItem->setChild(rowNum, 1, actionItem);
+    m_hotplugModel->setData(item->index(), tg->getUid(), NotifierDialog::ActionRole);
+
+    m_targets_index << QPair<QModelIndex,NfcTarget*>(item->index(),tg);
 
 }
 
@@ -341,14 +374,34 @@ QModelIndex NotifierDialog::indexForUdi(const QString &udi) const
 
 void NotifierDialog::itemClicked(const QModelIndex &index)
 {
-    QList< QPair<QModelIndex, Content*> >::iterator it;
-    for(it = m_contents_index.begin(); it != m_contents_index.end(); ++it) {
-        if(it->first == index) {
-            it->second->open();
-            break;
+    QList< QPair<QModelIndex, Content*> >::iterator itContents;
+    for(itContents = m_contents_index.begin(); itContents != m_contents_index.end(); ++itContents) {
+        if(itContents->first == index) {
+            itContents->second->open();
+            emit itemSelected();
+            return;
         }
     }
-    emit itemSelected();
+    QList< QPair<QModelIndex, NfcTarget*> >::iterator itTargets;
+    for(itTargets = m_targets_index.begin(); itTargets != m_targets_index.end(); ++itTargets ) {
+        if(itTargets->first == index) {
+            KFileDialog* fileChooser = new KFileDialog(KUrl(""),"",NULL);
+            if(fileChooser->exec()) {
+                //qDebug() << fileChooser->selectedFiles();
+                KFileItem fileItem(KFileItem::Unknown, KFileItem::Unknown, fileChooser->selectedFile());
+                QString mimeType = fileItem.mimetype();
+                QByteArray qb;
+                QDataStream ds(&qb,QIODevice::WriteOnly);
+                //QFile f(fileItem.url().path());
+                ds << fileItem;
+                qDebug() << fileItem.mimetype();
+                itTargets->second->writeAFile(qb,"application/octet-stream");
+            }
+            delete fileChooser;
+            emit itemSelected();
+            return;
+        }
+    }
 }
 
 QString NotifierDialog::getCategoryNameOfDevice(const Solid::Device& device)

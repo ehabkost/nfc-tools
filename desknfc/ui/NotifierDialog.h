@@ -27,6 +27,9 @@
 #include <QPair>
 #include <QHash>
 
+//KDE
+#include <KFileDialog>
+
 //solid
 #include <solid/solidnamespace.h>
 
@@ -125,9 +128,17 @@ namespace Notifier
           /**
           *  insert a content in the data-model of the dialog
           *  @param content a pointer to the content
-          *  @param name the name of the device
+          *  @param devName the name of the device
+          *  @param tgUid the uid of the target
           **/
-          void insertContent(Content* content, const QString &name, const QString &uid);
+          void insertContent(Content* content, const QString &devName, const QString &tgUid);
+
+          /**
+          *  insert a target in the data-model of the dialog
+          *  @param tg a pointer to the target
+          *  @param devName the name of the device
+          **/
+          void insertTarget(NfcTarget* tg, const QString &devName);
 
           void setUnMount(bool unmount,const QString &name);
   
@@ -250,7 +261,11 @@ namespace Notifier
           ///Contents category item in treeview
           QStandardItem *m_contentsCategoryItem;
 
+          ///Targets category item in treeview
+          QStandardItem *m_targetsCategoryItem;
+
           QList< QPair<QModelIndex,Content*> > m_contents_index;
+          QList< QPair<QModelIndex,NfcTarget*> > m_targets_index;
 
           /**
           * @internal Search a category with same name. If not find, create a new category in top of treeview
