@@ -149,6 +149,17 @@ QStandardItem* NotifierDialog::searchOrCreateDeviceCategory(const QString &categ
     return newCategory;
 }
 
+void NotifierDialog::nfcdOffline() {
+    QStandardItem *item = new QStandardItem();
+    item->setData("nfcd-offline", SolidUdiRole);
+    item->setData(Plasma::Delegate::MainColumn, ScopeRole);
+    item->setData(false, SubTitleMandatoryRole);
+    item->setText("Please launch nfcd");
+    m_rootItem->insertRow(0,item);
+    m_notifierView->calculateRects();
+
+}
+
 void NotifierDialog::insertContent(Content* content, const QString &devName, const QString &tgUid)
 {
     QString name = "" + qHash( content->getData() );

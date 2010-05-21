@@ -96,6 +96,10 @@ void DesknfcPlasmoid::init()
     connect(m_devManager, SIGNAL(deviceUnplugged(uchar,QString)),
             this, SLOT(onDeviceRemoved(uchar, const QString&)));
 
+    if(! m_devManager->haveNfcdConnection() ) {
+        m_dialog->nfcdOffline();
+    }
+
     fillPreviousDevices();
 }
 

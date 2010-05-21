@@ -120,6 +120,11 @@ namespace Notifier
           void show();
 
           /**
+          * notify that nfcd is offline
+          **/
+          void nfcdOffline();
+
+          /**
           * insert a device in the data-model of the dialog
           * @param name the name of the device
           **/
