@@ -150,14 +150,13 @@ QStandardItem* NotifierDialog::searchOrCreateDeviceCategory(const QString &categ
 }
 
 void NotifierDialog::nfcdOffline() {
-    QStandardItem *item = new QStandardItem();
-    item->setData("nfcd-offline", SolidUdiRole);
-    item->setData(Plasma::Delegate::MainColumn, ScopeRole);
-    item->setData(false, SubTitleMandatoryRole);
-    item->setText("Please launch nfcd");
-    m_rootItem->insertRow(0,item);
-    m_notifierView->calculateRects();
+    KColorScheme colorTheme = KColorScheme(QPalette::Active, KColorScheme::View,Plasma::Theme::defaultTheme()->colorScheme());
+    m_label->setText(i18n("<font color=\"%1\">Please launch nfcd</font>",colorTheme.foreground(KColorScheme::NormalText).color().name()));
+}
 
+void NotifierDialog::nfcdOnline() {
+    KColorScheme colorTheme = KColorScheme(QPalette::Active, KColorScheme::View,Plasma::Theme::defaultTheme()->colorScheme());
+    m_label->setText(i18n("<font color=\"%1\">NFC Contents detected:</font>",colorTheme.foreground(KColorScheme::NormalText).color().name()));
 }
 
 void NotifierDialog::insertContent(Content* content, const QString &devName, const QString &tgUid)

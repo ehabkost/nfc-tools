@@ -125,6 +125,11 @@ namespace Notifier
           void nfcdOffline();
 
           /**
+          * actualize the text when nfcd is online
+          **/
+          void nfcdOnline();
+
+          /**
           * insert a device in the data-model of the dialog
           * @param name the name of the device
           **/

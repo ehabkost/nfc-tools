@@ -116,24 +116,30 @@ QWidget *DesknfcPlasmoid::widget()
 void DesknfcPlasmoid::fillPreviousDevices()
 {
     m_fillingPreviousDevices = true;
-    foreach (const QString & nDev, m_devManager->getDeviceList() ) {
-        NfcDevice* dev = m_devManager->getDeviceByName(nDev);
-        disconnect(dev,SIGNAL(targetFieldEntered(QString,QString)),
-            this, SLOT(onTargetAdded(QString,QString)));
-        connect(dev,SIGNAL(targetFieldEntered(QString,QString)),
-            this, SLOT(onTargetAdded(QString,QString)));
-        disconnect(dev,SIGNAL(targetFieldLeft(QString,QString)),
-            this, SLOT(onTargetRemoved(QString,QString)));
-        connect(dev,SIGNAL(targetFieldLeft(QString,QString)),
-            this, SLOT(onTargetRemoved(QString,QString)));
-        foreach(const QString & uidTarget, dev->getTargetList()) {
-            NfcTarget* target = dev->getTargetByUid(uidTarget);
-            m_dialog->insertTarget(target,dev->getName());
-            foreach(Content* content, target->getTargetContent()) {
-                //onDeviceAdded(0, content->getType());
-                m_dialog->insertContent(content,dev->getName(), target->getUid());
+    if( m_devManager->haveNfcdConnection() ) {
+        m_dialog->nfcdOnline();
+        foreach (const QString & nDev, m_devManager->getDeviceList() ) {
+            NfcDevice* dev = m_devManager->getDeviceByName(nDev);
+            disconnect(dev,SIGNAL(targetFieldEntered(QString,QString)),
+                this, SLOT(onTargetAdded(QString,QString)));
+            connect(dev,SIGNAL(targetFieldEntered(QString,QString)),
+                this, SLOT(onTargetAdded(QString,QString)));
+            disconnect(dev,SIGNAL(targetFieldLeft(QString,QString)),
+                this, SLOT(onTargetRemoved(QString,QString)));
+            connect(dev,SIGNAL(targetFieldLeft(QString,QString)),
+               this, SLOT(onTargetRemoved(QString,QString)));
+            foreach(const QString & uidTarget, dev->getTargetList()) {
+               NfcTarget* target = dev->getTargetByUid(uidTarget);
+               m_dialog->insertTarget(target,dev->getName());
+               foreach(Content* content, target->getTargetContent()) {
+                   //onDeviceAdded(0, content->getType());
+                   m_dialog->insertContent(content,dev->getName(), target->getUid());
+               }
             }
         }
+    }
+    else {
+        m_dialog->nfcdOffline();
     }
     m_fillingPreviousDevices = false;
 }
