@@ -54,7 +54,7 @@ void Content::open() {
 		QString mimeType = fileItem.mimetype();
 		KService::List lst = KMimeTypeTrader::self()->query(mimeType);
 		//serviceName = lst.first()->desktopEntryName();
-		lst.first()->createInstance<QObject>();
+		if(!lst.isEmpty()) lst.first()->createInstance<QObject>();
 	}
 }
 
@@ -83,7 +83,7 @@ QString Content::getAssociatedServiceName() {
 		KFileItem fileItem(KFileItem::Unknown, KFileItem::Unknown, _path);
 		QString mimeType = fileItem.mimetype();
 		KService::List lst = KMimeTypeTrader::self()->query(mimeType);
-		serviceName = lst.first()->desktopEntryName();
+		serviceName = !lst.isEmpty() ? lst.first()->desktopEntryName() : "unknown";
 	}
 	return serviceName;
 }
