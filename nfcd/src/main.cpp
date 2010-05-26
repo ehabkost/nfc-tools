@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QtDBus>
 #include <QtDBus/QDBusConnection>
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
@@ -19,7 +20,8 @@ int main(int argc, char *argv[])
   }
 //  connection.registerObject("/nfcd", nfcDeviceManager, QDBusConnection::ExportChildObjects);
   if ( !connection.registerService("org.nfc_tools.nfcd") ) {
-    qFatal("Unable to register service on D-Bus.");
+    qDebug() <<  connection.lastError().message();
+    qFatal("Unable to register service on D-Bus");
   }
   return app.exec();
 }
