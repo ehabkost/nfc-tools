@@ -116,7 +116,7 @@ void NfcDeviceManager::registerDevice(uchar id, nfc_device_desc_t device)
 
   new NfcDeviceAdaptor(nfcDevice);
 
-  QDBusConnection connection = QDBusConnection::sessionBus();
+  QDBusConnection connection = QDBusConnection::systemBus();
   QString path = QString("/nfcd") + QString("/device") 
 	+ nfcDevice->getUuid().toString().remove(QRegExp("[{}-]"));
   qDebug() << "Trying to register \"" << deviceName << "\" at path: \"" << path << "\".";
@@ -136,7 +136,7 @@ void NfcDeviceManager::unregisterDevice(uchar id, QString device)
   for(int i=0; i<_devices.size(); i++) {
     if(_devices.at(i)->getId() == id) {
       NfcDevice* nfcDevice = _devices.takeAt(i);
-      QDBusConnection connection = QDBusConnection::sessionBus();
+      QDBusConnection connection = QDBusConnection::systemBus();
       QString path = QString("/nfcd") + QString("/device") 
         + nfcDevice->getUuid().toString().remove(QRegExp("[{}-]"));
       connection.unregisterObject(path);

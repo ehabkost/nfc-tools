@@ -138,7 +138,7 @@ NfcDevice::registerTarget(MifareTag tag)
   targets << nfcTarget;
   new NfcTargetAdaptor(nfcTarget);
 
-  QDBusConnection connection = QDBusConnection::sessionBus();
+  QDBusConnection connection = QDBusConnection::systemBus();
   QString path = QString("/nfcd") + QString("/target_") 
 		+ nfcTarget->getUuid().toString().remove(QRegExp("[{}-]"));
   if( connection.registerObject(path, nfcTarget) ) {
@@ -160,7 +160,7 @@ void NfcDevice::unregisterTarget(NfcTarget* target)
   for(int i=0; i<targets.size(); i++) {
     if(targets.at(i) == target) {
       NfcTarget* nfcTarget = targets.takeAt(i);
-      QDBusConnection connection = QDBusConnection::sessionBus();
+      QDBusConnection connection = QDBusConnection::systemBus();
       QString path = QString("/nfcd") + QString("/target_") 
         + nfcTarget->getUuid().toString().remove(QRegExp("[{}-]"));
       connection.unregisterObject(path);

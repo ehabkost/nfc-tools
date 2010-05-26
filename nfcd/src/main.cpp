@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
   new NfcDeviceManagerAdaptor(nfcDeviceManager);
 
-  QDBusConnection connection = QDBusConnection::sessionBus();
+  QDBusConnection connection = QDBusConnection::systemBus();
   if( !connection.registerObject("/nfcd", nfcDeviceManager) ) {
     qFatal("Unable to register device manager on D-Bus.");
   }
