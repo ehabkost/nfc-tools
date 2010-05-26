@@ -38,7 +38,7 @@ void TitleEntry::setTitle(QString lang,QString title) {
 }
 
 QString TitleEntry::getTitle(QString lang) {
-	QString title = "Unknown";
+	QString title = _titles.empty() ? "Unknown" : _titles.first()->second;
 	QList< QPair<QString,QString>* >::iterator it;
 	for(it=_titles.begin(); it!=_titles.end(); ++it ) {
 		if((*it)->first == lang) title = (*it)->second;
