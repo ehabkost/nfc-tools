@@ -10,7 +10,7 @@
 NfcTarget::NfcTarget ( QString path )
 {
   _iface = new NfcTargetInterface("org.nfc_tools.nfcd",
-     path, QDBusConnection::sessionBus(), this);
+     path, QDBusConnection::systemBus(), this);
   _uid = _iface->getUid();
   _uuid = _iface->getUuid();
   _name = _iface->getName();

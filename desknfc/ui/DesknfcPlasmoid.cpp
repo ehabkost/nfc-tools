@@ -127,7 +127,7 @@ void DesknfcPlasmoid::fillPreviousDevices()
             disconnect(dev,SIGNAL(targetFieldLeft(QString,QString)),
                 this, SLOT(onTargetRemoved(QString,QString)));
             connect(dev,SIGNAL(targetFieldLeft(QString,QString)),
-               this, SLOT(onTargetRemoved(QString,QString)));
+                this, SLOT(onTargetRemoved(QString,QString)));
             foreach(const QString & uidTarget, dev->getTargetList()) {
                NfcTarget* target = dev->getTargetByUid(uidTarget);
                m_dialog->insertTarget(target,dev->getName());

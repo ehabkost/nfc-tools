@@ -3,7 +3,7 @@
 NfcDeviceManager::NfcDeviceManager()
 {
   _iface = new NfcDeviceManagerInterface("org.nfc_tools.nfcd",
-		"/nfcd", QDBusConnection::sessionBus(), this);
+		"/nfcd", QDBusConnection::systemBus(), this);
   if(!_iface->isValid()) qDebug("please launch nfcd");
   else {
     QStringList devicesList = _iface->getDeviceList();
@@ -17,7 +17,7 @@ NfcDeviceManager::NfcDeviceManager()
   QObject::connect(_iface, SIGNAL(devicePlugged(uchar,QString)),
     this, SLOT(addDevice(uchar,QString)) );
   QObject::connect(_iface, SIGNAL(deviceUnplugged(uchar,QString)),
-    this, SLOT(removeDevice(uchar,QString)) );
+    this, SLOT(removeDevice(uchar,QString)) );  
 }
 
 bool NfcDeviceManager::haveNfcdConnection() {

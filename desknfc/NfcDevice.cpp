@@ -8,17 +8,22 @@
 
 NfcDevice::NfcDevice(QString path) {
   _iface = new NfcDeviceInterface("org.nfc_tools.nfcd",
-			path, QDBusConnection::sessionBus(), this);
-  _name = _iface->getName();
-  _id = _iface->getId();
-  QObject::connect(_iface,SIGNAL(targetFieldEntered(QString,QString)),
-    this, SLOT(addTarget(QString,QString)));
-  QObject::connect(_iface,SIGNAL(targetFieldLeft(QString,QString)),
-    this, SLOT(removeTarget(QString,QString)));
-  QStringList targetsList = _iface->getTargetList();
-  for(int i = 0; i < targetsList.size(); i++) {
-    QString path = _iface->getTargetPathByUid(targetsList.at(i));
-    _targets.append( new NfcTarget(path) );
+			path, QDBusConnection::systemBus(), this);
+  if( _iface->isValid() ) {
+    _name = _iface->getName();
+    _id = _iface->getId();
+    QObject::connect(_iface,SIGNAL(targetFieldEntered(QString,QString)),
+      this, SLOT(addTarget(QString,QString)));
+    QObject::connect(_iface,SIGNAL(targetFieldLeft(QString,QString)),
+      this, SLOT(removeTarget(QString,QString)));
+    QStringList targetsList = _iface->getTargetList();
+    for(int i = 0; i < targetsList.size(); i++) {
+      QString path = _iface->getTargetPathByUid(targetsList.at(i));
+      _targets.append( new NfcTarget(path) );
+    }
+  }
+  else {
+    qDebug() << "DBus interface not valid with path: (" + path + ")";
   }
 }
 
