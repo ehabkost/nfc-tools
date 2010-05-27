@@ -212,7 +212,8 @@ void NfcTarget::putContent(QByteArray data) {
   data.prepend( tlv_lenR );
   data.prepend( tlv_lenL);
   data.prepend((char)0xff);
-  data.prepend( (char)0x03 ); 
+  data.prepend( (char)0x03 );
+  data.append( (char)0xfe ); 
   if ( 0 == mifare_classic_connect ( _tag ) ) {
     Mad mad = mad_read ( _tag );
     MadAid aid;
@@ -265,9 +266,7 @@ NfcTarget::putMimeContent(QString type, QByteArray data)
 {
   NDEFRecord rec = NDEFRecord::createMimeRecord(type,data);
   NDEFMessage msg(rec);
-  QByteArray qb;
-  qb.append(msg.toByteArray());
-  putContent(qb);
+  putContent(msg.toByteArray());
 }
 
 void
