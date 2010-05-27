@@ -13,6 +13,7 @@ NfcDevice::NfcDevice(const uchar deviceId, const nfc_device_desc_t device,
   QMutex* accessLock) : _id (deviceId)
 {
   _device = device;
+  _device_connect = nfc_connect(&_device);
   _uuid = QUuid::createUuid();
   _dbusPath = "";
   _accessLock = accessLock;	
@@ -70,17 +71,11 @@ void NfcDevice::timerEvent(QTimerEvent *event)
 void NfcDevice::checkAvailableTargets()
 {
   _accessLock->lock();
-  nfc_device_t * nfc_device = NULL;
-  nfc_device = nfc_connect(&_device);
-
-  if(nfc_device) {
+  if(_device_connect) {
     /* We are connected to NFC device */
     MifareTag *tags = NULL;
-    tags = freefare_get_tags (nfc_device);
-    if (tags == NULL) {
-      nfc_disconnect (nfc_device);
-      nfc_device = NULL;
-    } else {
+    tags = freefare_get_tags (_device_connect);
+    if (! tags == NULL) {
       int i = 0;
       MifareTag tag;
 
@@ -88,7 +83,7 @@ void NfcDevice::checkAvailableTargets()
       for(i = 0; i < targets.size(); i++) {
         bool still_here = false;
         int j = 0;
-        while((tag = tags[j])) {
+        while(tag = tags[j]) {
           char* u = freefare_get_tag_uid(tag);
           QString uid(u);
           free(u);
@@ -123,9 +118,6 @@ void NfcDevice::checkAvailableTargets()
         }
         i++;
       }
-      free(tags);
-      nfc_disconnect (nfc_device);
-      nfc_device = NULL;
     }
   }
   _accessLock->unlock();

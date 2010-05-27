@@ -67,6 +67,9 @@ protected:
   /// descriptor of the device
   nfc_device_desc_t _device;
 
+  /// pointer to the device
+  nfc_device_t* _device_connect;
+
   /// uuid of the device
   QUuid _uuid;
 
