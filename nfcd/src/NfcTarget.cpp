@@ -228,13 +228,13 @@ void NfcTarget::putContent(QByteArray data) {
         int i = 0;
         MifareSectorNumber sector;
         while ( ( sector = sectors[i] ) ) {
-          qDebug() << "Dump sector " << QString::number ( sector ) << "...";
+          qDebug() << "Writing sector " << QString::number ( sector ) << "...";
           if ( 0 == mifare_classic_authenticate ( _tag, block ( sector, 0 ), key, MFC_KEY_A ) ) {
             for ( uint8_t b=0; b<3; b++ ) {
               QByteArray tmpArray;
               MifareClassicBlock r={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-					for( int j=0; (i*64)+(b*16)+j < data.size() && j<16; j++ ) {
-						r[j] = data[ (i*64)+(b*16)+j ];
+					for( int j=0; (i*48)+(b*16)+j < data.size() && j<16; j++ ) {
+						r[j] = data[ (i*48)+(b*16)+j ];
 					}
               if ( 0 == mifare_classic_write ( _tag, block ( sector, b ), r ) ) {
                 //data.append ( ( char* ) r, sizeof ( MifareClassicBlock ) );
@@ -258,6 +258,8 @@ void NfcTarget::putContent(QByteArray data) {
     qDebug() << "Unable to connect to mifare classic tag.";
   }
   warn(NULL);
+  if( mifare_classic_disconnect ( _tag ) == 0 )
+    qDebug() << "disconnected";
   _accessLock->unlock();
 }
 
