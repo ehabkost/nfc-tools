@@ -266,6 +266,8 @@ void NfcTarget::putContent(QByteArray data) {
 void
 NfcTarget::putMimeContent(QString type, QByteArray data)
 {
+  // hack due to compatibility issue with the NFC phone used
+  type = type.contains("text/directory") ? "text/x-vCard" : type;
   NDEFRecord rec = NDEFRecord::createMimeRecord(type,data);
   NDEFMessage msg(rec);
   putContent(msg.toByteArray());
