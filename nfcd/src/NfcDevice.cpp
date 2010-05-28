@@ -75,7 +75,7 @@ void NfcDevice::checkAvailableTargets()
     /* We are connected to NFC device */
     MifareTag *tags = NULL;
     tags = freefare_get_tags (_device_connect);
-    if (! tags == NULL) {
+    if (tags != NULL) {
       int i = 0;
       MifareTag tag;
 
