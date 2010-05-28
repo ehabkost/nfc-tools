@@ -19,7 +19,10 @@ pkg_check_modules( LIBFREEFARE libfreefare )
 link_directories( ${LIBFREEFARE_LIBRARY_DIRS} )
 include_directories( ${LIBFREEFARE_INCLUDE_DIRS} )  
 
-## @TODO LibNDEF
+## LibNDEF
+pkg_check_modules( LIBNDEF ndef )
+link_directories( ${LIBNDEF_LIBRARY_DIRS} )
+include_directories( ${LIBNDEF_INCLUDE_DIRS} )  
 
 # Qt4
 find_package( Qt4 REQUIRED )
