@@ -1,3 +1,14 @@
+[Global]
+  IconName=DeskNFC
+  Comment=Near Field Communication
+
+[Context/group]
+  Name=NFC
+  Comment=Near Field Communication
+
+[Context/folder]
+  Name=NFC
+
 [Event/contentAvailable]
   Name=New Content available
   Comment=A new content is available
