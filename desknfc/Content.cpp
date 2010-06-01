@@ -48,13 +48,7 @@ void Content::open() {
 		if(_path == "") {
 			_path = makeFile(*_content,_type);
 		}
-		//QDesktopServices::openUrl(_path);
-		//KRun::runUrl(_path,type,NULL);
-		KFileItem fileItem(KFileItem::Unknown, KFileItem::Unknown, _path);
-		QString mimeType = fileItem.mimetype();
-		KService::List lst = KMimeTypeTrader::self()->query(mimeType);
-		//serviceName = lst.first()->desktopEntryName();
-		if(!lst.isEmpty()) lst.first()->createInstance<QObject>();
+		KRun::runUrl(_path,type,NULL);
 	}
 }
 
