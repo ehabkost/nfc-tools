@@ -1,4 +1,4 @@
-AC_INIT(nfc-eventd, 0.1.1, rconty@il4p.fr)
+AC_INIT(nfc-eventd, 0.1.2, rconty@il4p.fr)
 
 AC_CONFIG_HEADER(config.h)
 

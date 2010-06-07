@@ -261,12 +261,11 @@ static int parse_args ( int argc, char *argv[] ) {
 }
 
 /**
- * @fn ned_get_tag(nfc_device_t* nfc_device, tag_t* tag)
  * @brief try to find a valid tag
  * @return pointer on a valid tag or NULL.
  */
 tag_t*
-ned_get_tag(nfc_device_t* nfc_device, tag_t* tag) {
+ned_select_tag(nfc_device_t* nfc_device, tag_t* tag) {
   nfc_target_info_t ti;
   tag_t* rv = NULL;
 
@@ -291,6 +290,70 @@ ned_get_tag(nfc_device_t* nfc_device, tag_t* tag) {
   }
 
   return rv;
+}
+
+typedef enum {
+  NFC_POLL_HARDWARE,
+  NFC_POLL_SOFTWARE,
+} nfc_poll_mode;
+
+tag_t*
+ned_poll_for_tag(nfc_device_t* nfc_device, tag_t* tag)
+{
+  static nfc_poll_mode mode = NFC_POLL_HARDWARE;
+
+  if((mode == NFC_POLL_HARDWARE) && (nfc_device->nc == NC_PN531)) {
+    DBG("%s doesn't support hardware polling, falling back to software polling");
+    mode = NFC_POLL_SOFTWARE;
+  }
+
+  switch(mode) {
+    case NFC_POLL_SOFTWARE:
+      sleep ( polling_time );
+      return ned_select_tag(nfc_device, tag);
+    break;
+    case NFC_POLL_HARDWARE:
+      {
+        byte_t btPollNr;
+        const byte_t btPeriod = 2; /* 2 x 150 ms = 300 ms */
+        const nfc_target_type_t nttMifare = NTT_MIFARE;
+        const size_t szTargetTypes = 1;
+  
+        if( tag != NULL ) {
+  	/* We are looking for a previous tag */
+          /* In this case, to prevent for intensive polling we add a sleeping time */
+          sleep ( polling_time );
+          btPollNr = 3; /* Polling duration : btPollNr * szTargetTypes * btPeriod * 150 = btPollNr * 300 = 900 */
+        } else {
+          /* We are looking for any tag */
+          btPollNr = 0xff; /* We endless poll for a new tag */
+        }
+        nfc_target_t antTargets[2];
+        size_t szTargetFound;
+  
+        bool res = nfc_initiator_poll_targets (nfc_device, &nttMifare, 1, btPollNr, btPeriod, antTargets, &szTargetFound);
+        if (res) {
+          DBG ("%ld target(s) have been found.\n", (unsigned long) szTargetFound);
+          if( szTargetFound < 1 ) {
+            return NULL;
+          } else {
+            if( (tag != NULL) && (memcmp(tag->ti.nai.abtUid, antTargets[0].nti.nai.abtUid, tag->ti.nai.szUidLen) == 0 ) ) {
+              return tag;
+            } else {
+              tag_t* rv;
+              rv = malloc(sizeof(tag_t));
+              rv->ti = antTargets[0].nti;
+              rv->modulation = NM_ISO14443A_106;
+              nfc_initiator_deselect_tag ( nfc_device );
+              return rv;
+            }
+          }
+        } else {
+          ERR ("%s", "Polling failed.");
+        }
+    }
+    break;
+  }
 }
 
 int
@@ -353,8 +416,7 @@ main ( int argc, char *argv[] ) {
 
     do {
 detect:
-        sleep ( polling_time );
-        new_tag = ned_get_tag(nfc_device, old_tag);
+        new_tag = ned_poll_for_tag(nfc_device, old_tag);
 
         if ( old_tag == new_tag ) { /* state unchanged */
             /* on card not present, increase and check expire time */
