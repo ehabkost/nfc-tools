@@ -312,8 +312,7 @@ ned_poll_for_tag(nfc_device_t* nfc_device, tag_t* tag)
       sleep ( polling_time );
       return ned_select_tag(nfc_device, tag);
     break;
-    case NFC_POLL_HARDWARE:
-      {
+    case NFC_POLL_HARDWARE: {
         byte_t btPollNr;
         const byte_t btPeriod = 2; /* 2 x 150 ms = 300 ms */
         const nfc_target_type_t nttMifare = NTT_MIFARE;
@@ -354,6 +353,7 @@ ned_poll_for_tag(nfc_device_t* nfc_device, tag_t* tag)
     }
     break;
   }
+  return NULL;
 }
 
 int
@@ -384,7 +384,7 @@ main ( int argc, char *argv[] ) {
      * We only stop in case of an error
      *
      * COMMENT:
-     * There are no way in libnfc API to detect if a card is present or no
+     * There are no way in libnfc API to detect if a card is present or not
      * so the way we proceed is to look for an tag
      * Any ideas will be welcomed
      */
