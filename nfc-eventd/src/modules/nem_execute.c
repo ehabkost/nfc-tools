@@ -170,7 +170,7 @@ int
     // DBG ( "Onerror is set to: '%s'", onerrorstr );
 
     if ( _tag_uid == NULL ) {
-        ERR( "%s", "Enable to read tag UID... This should not happend !" );
+        ERR( "%s", "Unable to read tag UID... This should not happend !" );
         switch ( onerr ) {
         case ONERROR_IGNORE:
             break;
