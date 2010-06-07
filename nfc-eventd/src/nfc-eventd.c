@@ -15,7 +15,8 @@
  * You should have received a copy of the GNU General Public License along with
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA  02111-1307 USA
-*/
+ */
+
 #ifdef HAVE_CONFIG_H
   #include "config.h"
 #endif // HAVE_CONFIG_H
@@ -43,7 +44,6 @@
 
 #include "types.h"
 
-
 #define DEF_POLLING 1    /* 1 second timeout */
 #define DEF_EXPIRE 0    /* no expire */
 
@@ -64,6 +64,9 @@ static module_init_fct_t module_init_fct_ptr = NULL;
 static module_event_handler_fct_t module_event_handler_fct_ptr = NULL;
 static nfc_device_desc_t* nfc_device_desc = NULL;
 
+/**
+ * @brief Load and init specified (in config file) NEM module
+ */
 static int load_module( void ) {
     nfcconf_block **module_list, *my_module;
 
@@ -120,10 +123,16 @@ static int load_module( void ) {
     return 0;
 }
 
+/**
+ * @brief Execute NEM function that handle events
+ */
 static int execute_event ( const nfc_device_t *nfc_device, const tag_t* tag, const nem_event_t event ) {
     return (*module_event_handler_fct_ptr)( nfc_device, tag, event );
 }
 
+/**
+ * @brief Parse configuration file
+ */
 static int parse_config_file() {
     ctx = nfcconf_new ( cfgfile );
     if ( !ctx ) {
@@ -183,6 +192,9 @@ static int parse_config_file() {
     return 0;
 }
 
+/**
+ * @brief Parse command line args
+ */
 static int parse_args ( int argc, char *argv[] ) {
     int i;
     int res;
@@ -249,10 +261,10 @@ static int parse_args ( int argc, char *argv[] ) {
 }
 
 /**
-* @fn ned_get_tag(nfc_device_t* nfc_device, tag_t* tag)
-* @brief try to find a valid tag
-* @return pointer on a valid tag or NULL.
-*/
+ * @fn ned_get_tag(nfc_device_t* nfc_device, tag_t* tag)
+ * @brief try to find a valid tag
+ * @return pointer on a valid tag or NULL.
+ */
 tag_t*
 ned_get_tag(nfc_device_t* nfc_device, tag_t* tag) {
   nfc_target_info_t ti;
