@@ -7,7 +7,7 @@ UriEntry::UriEntry() {
 }
 
 UriEntry::UriEntry(int id, QByteArray data)
-  : Entry(id,"Uri") {
+  : Entry(id,"(URI)") {
 	_data = new QByteArray();
    _data->append(NDEFRecord::uriProtocol(data));
 	_data->append(data.right(data.size()-1));
