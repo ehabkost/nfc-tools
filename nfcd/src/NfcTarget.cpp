@@ -136,12 +136,12 @@ NfcTarget::checkAvailableContent()
         mad_free ( mad );
         } else {
           qDebug ( "Unable to read MAD." );
-        }  
+        }
+        if( mifare_classic_disconnect ( _tag ) == 0 )
+        qDebug() << "disconnected";
       } else {
         qDebug() << "Unable to connect to mifare classic tag.";
       }
-      if( mifare_classic_disconnect ( _tag ) == 0 )
-        qDebug() << "disconnected";
       _accessLock->unlock();
     break;
     case ULTRALIGHT:
@@ -183,6 +183,7 @@ NfcTarget::checkAvailableContent()
     // TLV according to "Type 1 Tag Operation Specification" from NFCForum
 
     uint16_t tlv_len;
+    if ( type == ULTRALIGHT) data.remove(0,16);
     if ( ( uint8_t ) data.at ( 0 ) == 0x03 ) {
       if ( ( uint8_t ) data.at ( 1 ) != 0xff ) {
         // TLV use 1 byte for lenght
@@ -201,11 +202,22 @@ NfcTarget::checkAvailableContent()
       NDEFMessage msg = NDEFMessage::fromByteArray ( data );
       processNDEFMessage ( msg );
     }
+  
   }
 }
 
 void NfcTarget::putContent(QByteArray data) {
   _accessLock->lock();
+  MifareClassicKey default_keys[] = {
+    { 0xff,0xff,0xff,0xff,0xff,0xff },
+    { 0xd3,0xf7,0xd3,0xf7,0xd3,0xf7 },
+    { 0xa0,0xa1,0xa2,0xa3,0xa4,0xa5 },
+    { 0xb0,0xb1,0xb2,0xb3,0xb4,0xb5 },
+    { 0x4d,0x3a,0x99,0xc3,0x51,0xdd },
+    { 0x1a,0x98,0x2c,0x7e,0x45,0x9a },
+    { 0xaa,0xbb,0xcc,0xdd,0xee,0xff },
+    { 0x00,0x00,0x00,0x00,0x00,0x00 }
+  };
   uint16_t tlv_len = data.size();
   uint8_t tlv_lenR = (uint8_t) (tlv_len & 0xff);
   uint8_t tlv_lenL = (uint8_t) (tlv_len >> 8);
@@ -216,6 +228,10 @@ void NfcTarget::putContent(QByteArray data) {
   data.append( (char)0xfe ); 
   if ( 0 == mifare_classic_connect ( _tag ) ) {
     Mad mad = mad_read ( _tag );
+    if(mad == NULL) {
+        mad = mad_new(2);
+        qDebug() << mad_write(_tag,mad,default_keys[0],default_keys[4]);
+    }
     MadAid aid;
     aid.function_cluster_code = 0xE1;
     aid.application_code = 0x03;
