@@ -148,11 +148,12 @@ NfcTarget::checkAvailableContent()
       resConnect =  mifare_ultralight_connect (_tag);
       if(0 == resConnect) {
         uint8_t pageNum = 0;
-        MifareUltralightPage pages[16];
-        for(pageNum = 0; pageNum < 16; pageNum++) {
-          mifare_ultralight_read (_tag, pageNum, &(pages[pageNum]) );
-          for(uint8_t i = 0; i < 4 ; i++) data.append( pages[pageNum][i] );
+        MifareUltralightPage pages[12];
+        for(pageNum = 0x04; pageNum <= 0x0f; pageNum++) {
+          mifare_ultralight_read (_tag, pageNum, &(pages[pageNum - 0x04]) );
         }
+        data.append( (const char *)pages, 12 * sizeof(MifareUltralightPage) );
+
         if( mifare_ultralight_disconnect ( _tag ) == 0 )
           qDebug() << "disconnected";
         _accessLock->unlock();
@@ -183,7 +184,6 @@ NfcTarget::checkAvailableContent()
     // TLV according to "Type 1 Tag Operation Specification" from NFCForum
 
     uint16_t tlv_len;
-    if ( type == ULTRALIGHT) data.remove(0,16);
     if ( ( uint8_t ) data.at ( 0 ) == 0x03 ) {
       if ( ( uint8_t ) data.at ( 1 ) != 0xff ) {
         // TLV use 1 byte for lenght
