@@ -208,6 +208,14 @@ NfcTarget::checkAvailableContent()
 
 void NfcTarget::putContent(QByteArray data) {
   _accessLock->lock();
+  enum mifare_tag_type type = freefare_get_tag_type(_tag);
+  if( (type == CLASSIC_1K && data.size() >= 720) 
+    ||  (type == CLASSIC_4K && data.size() >= 3840) ) {  
+    // TODO: is 3840 the right capacity for a 4K?
+    emit contentTooBig();
+    qDebug() << "content too big, don't write";
+    return;
+  }
   MifareClassicKey default_keys[] = {
     { 0xff,0xff,0xff,0xff,0xff,0xff },
     { 0xd3,0xf7,0xd3,0xf7,0xd3,0xf7 },
@@ -230,7 +238,8 @@ void NfcTarget::putContent(QByteArray data) {
     Mad mad = mad_read ( _tag );
     if(mad == NULL) {
         mad = mad_new(2);
-        qDebug() << mad_write(_tag,mad,default_keys[0],default_keys[4]);
+        mifare_classic_connect ( _tag );
+        if(mad_write(_tag,mad,default_keys[0],default_keys[0])) warn("écriture MAD: %s");
     }
     MadAid aid;
     aid.function_cluster_code = 0xE1;

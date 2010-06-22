@@ -68,6 +68,8 @@ signals:
   /// signal emitted when a new content is available
   void newContentAvailable(int id,QString type);
   
+  /// signal emitted when trying to write a content bigger than card's capacity
+  void contentTooBig();
 
 protected:
 
