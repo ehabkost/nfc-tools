@@ -74,7 +74,7 @@ signals:
 protected:
 
   /// write a byte array to the target
-  void putContent(QByteArray);
+  void putMessage(NDEFMessage msg);
 
   /// process a NDEF message
   void processNDEFMessage(NDEFMessage);
@@ -84,6 +84,11 @@ protected:
 
   /// check the target for contents
   void checkAvailableContent();
+
+  int search_sector_key (MifareTag, MifareClassicBlockNumber, MifareClassicKey *, MifareClassicKeyType *);
+
+  /// put a MAD on the tag
+  void putMad(NDEFMessage);
 
   Mad _mad;
   MifareSectorNumber* _sectors;
@@ -96,6 +101,9 @@ protected:
   QMutex* _accessLock;
 
 private:
+
+MifareClassicKey default_keys[8];
+
 };
 
 #endif // NFCTARGET_H
