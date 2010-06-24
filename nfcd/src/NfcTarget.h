@@ -85,24 +85,35 @@ protected:
   /// check the target for contents
   void checkAvailableContent();
 
+  /// search the key of a sector
   int search_sector_key (MifareTag, MifareClassicBlockNumber, MifareClassicKey *, MifareClassicKeyType *);
 
   /// put a MAD on the tag
   void putMad(NDEFMessage);
 
+  /// stock this tag's MAD
   Mad _mad;
+  /// sectors of this tag
   MifareSectorNumber* _sectors;
+  /// MifareTag object of this tag, from libfreefare
   MifareTag _tag;
+  /// name of this tag
   QString _name;
+  /// uid of this tag
   QString _uid;
+  /// uuid of this tag
   QUuid _uuid;
+  /// _D-Bus path of this tag
   QString _path;
+  /// content of this tag
   QList<Entry*> _targetContent;
+  /// mutex locking access to this tag
   QMutex* _accessLock;
 
 private:
 
-MifareClassicKey default_keys[8];
+  /// array with the default keys for Mifare Classic
+  MifareClassicKey default_keys[8];
 
 };
 
