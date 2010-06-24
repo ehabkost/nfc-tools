@@ -23,14 +23,13 @@ class TitleEntry : public Entry {
 		TitleEntry(const TitleEntry& other);
 		~TitleEntry();
 
-      /// get the title as a Byte Array
 		QByteArray* getData();
 
-      /// get the title grom the given language
 		QString getTitle(QString);
-      /// set the title for a language
+
       void setTitle(QString,QString);
-		void addTitle(QByteArray);
+
+      void addTitle(QByteArray);
 
 	protected:
 

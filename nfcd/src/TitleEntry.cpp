@@ -18,10 +18,18 @@ TitleEntry::~TitleEntry() {
 	}
 }
 
+/**
+ * @brief getter for this title
+ * @return title as a Byte Array
+ */
 QByteArray* TitleEntry::getData() {
 	return new QByteArray;
 }
 
+/**
+ * @brief add a new title
+ * @param data new title as a Byte Array
+ */
 void TitleEntry::addTitle(QByteArray data) {
 	quint8 langLength = data.at(0);
 	QString lang(data.left(langLength+1).right(langLength));
@@ -29,6 +37,11 @@ void TitleEntry::addTitle(QByteArray data) {
 	this->setTitle(lang,title);
 }
 
+/**
+ * @brief set a title for a lang
+ * @param lang the lang code
+ * @param title the title
+ */
 void TitleEntry::setTitle(QString lang,QString title) {
  	QList< QPair<QString,QString>* >::iterator it;
 	for(it=_titles.begin(); it!=_titles.end(); ++it ) {
@@ -37,6 +50,10 @@ void TitleEntry::setTitle(QString lang,QString title) {
 	_titles.append( new QPair<QString,QString>(lang,title) );
 }
 
+/**
+ * @brief get a localised title
+ * @param lang the lang wanted
+ */
 QString TitleEntry::getTitle(QString lang) {
 	QString title = _titles.empty() ? "Unknown" : _titles.first()->second;
 	QList< QPair<QString,QString>* >::iterator it;
