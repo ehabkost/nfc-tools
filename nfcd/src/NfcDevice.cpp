@@ -9,6 +9,12 @@
 
 #include <stdlib.h>
 
+/**
+ * @brief construct a device with the given id, descriptor and mutex
+ * @param devicId id of the device
+ * @param device the descriptor of the device
+ * @param accessLock mutex locking this device's access
+ */
 NfcDevice::NfcDevice(const uchar deviceId, const nfc_device_desc_t device,
   QMutex* accessLock) : _id (deviceId)
 {
@@ -19,24 +25,29 @@ NfcDevice::NfcDevice(const uchar deviceId, const nfc_device_desc_t device,
   _accessLock = accessLock;	
 }
 
+/// get device name
 const QString NfcDevice::getName()
 {
   return QString(_device.acDevice);
 }
 
+/// getter for _uuid
 const QUuid NfcDevice::getUuid() {
   return _uuid;
 }
 
+/// getter for _dbusPath
 const QString NfcDevice::getPath() {
 	return _dbusPath;
 }
 
+/// getter for _id
 const uchar NfcDevice::getId()
 {
   return _id;
 }
 
+/// get the DBUS path of the target with the given uid
 QString NfcDevice::getTargetPathByUid(QString tgUid)
 {
   QString path = "";
@@ -47,10 +58,15 @@ QString NfcDevice::getTargetPathByUid(QString tgUid)
   return path;
 }
 
+/** 
+ * @brief setter for _dbusPath
+ * @param s new D-Bus path
+ */
 void NfcDevice::setPath(QString s) {
 	_dbusPath = s;
 } 
 
+/// get the target list for this device
 QStringList NfcDevice::getTargetList()
 {
   QStringList targetUids;
@@ -68,6 +84,7 @@ void NfcDevice::timerEvent(QTimerEvent *event)
   qDebug ("NfcDevice::timerEvent");
 }
 
+/// checking for new targets or missing targets
 void NfcDevice::checkAvailableTargets()
 {
   _accessLock->lock();

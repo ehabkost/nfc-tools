@@ -22,33 +22,26 @@ class NfcDevice : public QObject
     Q_OBJECT
 
 public:
-  /// construct a device with the given id, descriptor and mutex
+  
   NfcDevice(const uchar, const nfc_device_desc_t, QMutex*);
 
-  /// get device name
+
   const QString getName();
 
-  /// getter for _uuid
   const QUuid getUuid();
 
-  /// getter for _dbusPath
   const QString getPath();
 
-  /// setter for _dbusPath
   void setPath(QString);
 
 public Q_SLOTS:
 
-  /// getter for _id
   const uchar getId();
 
-  /// checking for new targets or missing targets
   void checkAvailableTargets();
 
-  /// get the target list for this device
   QStringList getTargetList();
 
-  /// get the DBUS path of the target with the given uid
   QString getTargetPathByUid(QString);
 
 Q_SIGNALS:
