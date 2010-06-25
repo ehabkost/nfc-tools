@@ -321,7 +321,7 @@ NfcTarget::search_sector_key (MifareTag tag, MifareClassicBlockNumber block, Mif
 		return 1;
 	    }
 	}
-
+   mifare_classic_disconnect (tag);
 	if ((0 == mifare_classic_connect (tag)) && (0 == mifare_classic_authenticate (tag, block, default_keys[i], MFC_KEY_B))) {
 	    if (((block == 0) || (1 == mifare_classic_get_data_block_permission (tag, block + 0, MCAB_W, MFC_KEY_B))) &&
 		(1 == mifare_classic_get_data_block_permission (tag, block + 1, MCAB_W, MFC_KEY_B)) &&
@@ -334,6 +334,7 @@ NfcTarget::search_sector_key (MifareTag tag, MifareClassicBlockNumber block, Mif
 		return 1;
 	    }
 	}
+  mifare_classic_disconnect (tag);
     }
 
     warnx ("No known authentication key for block %d", block);
@@ -458,6 +459,13 @@ void NfcTarget::putMad(NDEFMessage msg)
 		    error = 1;
 		    goto error;
 		}
+	    }
+
+       mifare_classic_trailer_block (&block, default_keyb, 0x0, 0x0, 0x0, 0x6, 0x40, default_keyb);
+	    if (mifare_classic_write (tags[i], 0x07, block) < 0) {
+		perror ("mifare_classic_write");
+		error = 1;
+		goto error;
 	    }
 
 	    free (tlv_data);
