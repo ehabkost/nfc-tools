@@ -44,7 +44,9 @@ int
 main (int argc, const char *argv[])
 {
   nfc_target_info_t nti;
-  uint8_t tag_count = 0;
+  uint8_t device_count = 0;
+  uint8_t device_tag_count = 0;	// per device
+  uint8_t tag_count = 0;	// total
 
   nfc_device_desc_t *pnddDevices;
   size_t szFound;
@@ -63,6 +65,9 @@ main (int argc, const char *argv[])
 
   for (size_t i = 0; i < szFound; i++) {
     pnd = nfc_connect (&(pnddDevices[i]));
+
+    device_count++;
+    device_tag_count = 0;
 
     if (pnd == NULL) {
       ERR ("%s", "Unable to connect to NFC device.");
@@ -163,6 +168,7 @@ Innovision R&T 	Jewel 			0C 00
           printf ("Unknown ISO14443A tag type: ");
           printf ("ATQA (SENS_RES): ");
           print_hex (nti.nai.abtAtqa, 2);
+	  printf (" == %02x%02d == ", nti.nai.abtAtqa[0], nti.nai.abtAtqa[1]);
           printf (", UID (NFCID%c): ", (nti.nai.abtUid[0] == 0x08 ? '3' : '1'));
           print_hex (nti.nai.abtUid, nti.nai.szUidLen);
           printf (", SAK (SEL_RES): ");
@@ -174,7 +180,7 @@ Innovision R&T 	Jewel 			0C 00
           printf ("\n");
         }
         nfc_initiator_deselect_tag (pnd);
-        tag_count++;
+        device_tag_count++;
       } else if (nfc_initiator_select_tag (pnd, NM_FELICA_212, abtFelica, 5, &nti)
                  || nfc_initiator_select_tag (pnd, NM_FELICA_424, abtFelica, 5, &nti)) {
         printf ("  Felica: ");
@@ -184,7 +190,7 @@ Innovision R&T 	Jewel 			0C 00
         print_hex (nti.nfi.abtPad, 8);
         printf ("\n");
         nfc_initiator_deselect_tag (pnd);
-        tag_count++;
+        device_tag_count++;
       } else if (nfc_initiator_select_tag (pnd, NM_ISO14443B_106, (byte_t *) "\x00", 1, &nti)) {
         printf ("  ISO14443B: ");
         printf ("ATQB: ");
@@ -200,21 +206,24 @@ Innovision R&T 	Jewel 			0C 00
                 nti.nbi.btParam4);
         printf ("\n");
         nfc_initiator_deselect_tag (pnd);
-        tag_count++;
+        device_tag_count++;
       } else if (nfc_initiator_select_tag (pnd, NM_JEWEL_106, NULL, 0, &nti)) {
         printf ("  Jewel: No test results yet");
         nfc_initiator_deselect_tag (pnd);
-        tag_count++;
+        device_tag_count++;
       } else {
         no_more_tag = true;
       }
     } while (no_more_tag != true);
-    printf ("%d tag(s) have been found.\n", tag_count);
+    printf ("%d tag(s) on device.\n\n", device_tag_count);
+    tag_count += device_tag_count;
 
     // Disable field 
     nfc_configure (pnd, NDO_ACTIVATE_FIELD, false);
 
     nfc_disconnect (pnd);
   }
+  if (device_count > 1)
+      printf ("Total: %d tag(s) on %d device(s).\n", tag_count, device_count);
   return EXIT_SUCCESS;
 }
