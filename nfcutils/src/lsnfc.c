@@ -197,12 +197,12 @@ Innovision R&T 	Jewel 			0C 00
         print_hex (nti.nbi.abtAtqb, 12);
         printf (", ID: ");
         print_hex (nti.nbi.abtId, 4);
-        printf (", CID: %02x\n", nti.nbi.btCid);
+        printf (", CID: %02x", nti.nbi.btCid);
         if (nti.nbi.szInfLen > 0) {
           printf (", INF: ");
           print_hex (nti.nbi.abtInf, nti.nbi.szInfLen);
         }
-        printf (", PARAMS: %02x %02x %02x %02x\n", nti.nbi.btParam1, nti.nbi.btParam2, nti.nbi.btParam3,
+        printf (", PARAMS: %02x %02x %02x %02x", nti.nbi.btParam1, nti.nbi.btParam2, nti.nbi.btParam3,
                 nti.nbi.btParam4);
         printf ("\n");
         nfc_initiator_deselect_tag (pnd);
