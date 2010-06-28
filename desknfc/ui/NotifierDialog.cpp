@@ -151,12 +151,12 @@ QStandardItem* NotifierDialog::searchOrCreateDeviceCategory(const QString &categ
 
 void NotifierDialog::nfcdOffline() {
     KColorScheme colorTheme = KColorScheme(QPalette::Active, KColorScheme::View,Plasma::Theme::defaultTheme()->colorScheme());
-    m_label->setText(i18n("<font color=\"%1\">Please launch nfcd</font>",colorTheme.foreground(KColorScheme::NormalText).color().name()));
+    m_label->setText(i18n("<font color=\"%1\">Please launch NFCd</font>",colorTheme.foreground(KColorScheme::NormalText).color().name()));
 }
 
 void NotifierDialog::nfcdOnline() {
     KColorScheme colorTheme = KColorScheme(QPalette::Active, KColorScheme::View,Plasma::Theme::defaultTheme()->colorScheme());
-    m_label->setText(i18n("<font color=\"%1\">NFC Contents detected:</font>",colorTheme.foreground(KColorScheme::NormalText).color().name()));
+    m_label->setText(i18n("<font color=\"%1\">Near Field Communication</font>",colorTheme.foreground(KColorScheme::NormalText).color().name()));
 }
 
 void NotifierDialog::insertContent(Content* content, const QString &devName, const QString &tgUid)
@@ -439,7 +439,7 @@ void NotifierDialog::resetNotifierIcon()
 void NotifierDialog::updateColors()
 {
     KColorScheme colorTheme = KColorScheme(QPalette::Active, KColorScheme::View,Plasma::Theme::defaultTheme()->colorScheme());
-    m_label->setText(i18n("<font color=\"%1\">NFC Contents detected:</font>",colorTheme.foreground(KColorScheme::NormalText).color().name()));
+    m_label->setText(i18n("<font color=\"%1\">Near Field Communication</font>",colorTheme.foreground(KColorScheme::NormalText).color().name()));
 
 }
 
