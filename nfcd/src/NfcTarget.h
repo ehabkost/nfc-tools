@@ -71,10 +71,6 @@ signals:
     void contentTooBig();
 
 protected:
-
-    /// write a byte array to the target
-    void putMessage( NDEFMessage msg );
-
     /// process a NDEF message
     void processNDEFMessage( NDEFMessage );
 
@@ -85,16 +81,10 @@ protected:
     void checkAvailableContent();
 
     /// search the key of a sector
-    int search_sector_key( MifareTag, MifareClassicBlockNumber, MifareClassicKey *, MifareClassicKeyType * );
+    int searchSectorKey( MifareTag, MifareClassicBlockNumber, MifareClassicKey *, MifareClassicKeyType * );
 
-    /// put a MAD on the tag
-    void putMad( NDEFMessage );
+    void writeNDEF( NDEFMessage );
 
-    /// stock this tag's MAD
-    Mad _mad;
-    /// sectors of this tag
-    MifareSectorNumber* _sectors;
-    /// MifareTag object of this tag, from libfreefare
     MifareTag _tag;
     /// name of this tag
     QString _name;
@@ -111,8 +101,8 @@ protected:
 
 private:
 
-    /// array with the default keys for Mifare Classic
-    MifareClassicKey default_keys[8];
+    int MifareClassicSearchSectorKey( MifareClassicBlockNumber block, MifareClassicKey *key, MifareClassicKeyType *key_type );
+    int MifareClassicFixMadTrailerBlock( MifareSectorNumber sector, MifareClassicKey key, MifareClassicKeyType key_type );
 
 };
 

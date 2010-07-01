@@ -7,6 +7,29 @@
 #include <nfc/nfc.h>
 
 
+static const MifareClassicKey default_keys[] = {
+  { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+  { 0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7 },
+  { 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5 },
+  { 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5 },
+  { 0x4d, 0x3a, 0x99, 0xc3, 0x51, 0xdd },
+  { 0x1a, 0x98, 0x2c, 0x7e, 0x45, 0x9a },
+  { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff },
+  { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+
+static const MifareClassicKey mad_key_a = {
+  0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5
+};
+
+static const MifareClassicKey default_key_b = {
+  0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7
+};
+
+static const MifareClassicKey default_key_a = {
+  0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7
+};
+
 NfcTarget::NfcTarget( MifareTag tag, QMutex* accessLock )
 {
   _accessLock = accessLock;
@@ -18,18 +41,6 @@ NfcTarget::NfcTarget( MifareTag tag, QMutex* accessLock )
   _name = freefare_get_tag_friendly_name( _tag );
   _targetContent = QList<Entry*>();
   checkAvailableContent();
-  default_keys = {
-    { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
-    { 0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7 },
-    { 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5 },
-    { 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5 },
-    { 0x4d, 0x3a, 0x99, 0xc3, 0x51, 0xdd },
-    { 0x1a, 0x98, 0x2c, 0x7e, 0x45, 0x9a },
-    { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff },
-    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
-  };
-
-
 }
 
 NfcTarget::~NfcTarget()
@@ -99,7 +110,8 @@ QStringList NfcTarget::getContentListStrings()
   return sl;
 }
 
-#define block(s,b) ((s * 4) + b)
+// FIXME This only work with sectors < 32.
+#define BLOCK(s,b) ((s * 4) + b)
 void
 NfcTarget::checkAvailableContent()
 {
@@ -129,10 +141,10 @@ NfcTarget::checkAvailableContent()
             MifareSectorNumber sector;
             while (( sector = sectors[i] ) ) {
               qDebug() << "Dump sector " << QString::number( sector ) << "...";
-              if ( 0 == mifare_classic_authenticate( _tag, block( sector, 0 ), key, MFC_KEY_A ) ) {
+              if ( 0 == mifare_classic_authenticate( _tag, BLOCK( sector, 0 ), key, MFC_KEY_A ) ) {
                 for ( uint8_t b = 0; b < 3; b++ ) {
                   MifareClassicBlock r;
-                  if ( 0 == mifare_classic_read( _tag, block( sector, b ), &r ) ) {
+                  if ( 0 == mifare_classic_read( _tag, BLOCK( sector, b ), &r ) ) {
                     data.append(( char* ) r, sizeof( MifareClassicBlock ) );
                   } else {
                     qDebug( "Unable to read block." );
@@ -140,6 +152,7 @@ NfcTarget::checkAvailableContent()
                 }
               } else {
                 qDebug( "Unable to authenticate on sector." );
+                return;
               }
               i++;
             }
@@ -220,86 +233,6 @@ NfcTarget::checkAvailableContent()
   }
 }
 
-void NfcTarget::putMessage( NDEFMessage msg )
-{
-  _accessLock->lock();
-  bool needAlloc = false;
-  QByteArray data = msg.toByteArray();
-  enum mifare_tag_type type = freefare_get_tag_type( _tag );
-  if (( type == CLASSIC_1K && data.size() >= 720 )
-      || ( type == CLASSIC_4K && data.size() >= 3840 ) ) {
-    // TODO: is 3840 the right capacity for a 4K?
-    emit contentTooBig();
-    qDebug() << "content too big, don't write";
-    return;
-  }
-  /*uint16_t tlv_len = data.size();
-  uint8_t tlv_lenR = (uint8_t) (tlv_len & 0xff);
-  uint8_t tlv_lenL = (uint8_t) (tlv_len >> 8);
-  data.prepend( tlv_lenR );
-  data.prepend( tlv_lenL);
-  data.prepend((char)0xff);
-  data.prepend( (char)0x03 );*/
-  data.append(( char )0xfe );
-  if ( 0 == mifare_classic_connect( _tag ) ) {
-    Mad mad = mad_read( _tag );
-    if ( mad == NULL ) {
-      needAlloc = true;
-      mifare_classic_connect( _tag );
-      putMad( msg );
-      qDebug() << "new MAD written on tag";
-    }
-    MadAid aid;
-    aid.function_cluster_code = 0xE1;
-    aid.application_code = 0x03;
-    size_t size = data.size() / 16;
-    if ( size % 16 ) size++;
-    if ( needAlloc ) {
-      mifare_application_alloc( mad, aid, size );
-    }
-    MifareClassicKey key = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
-
-    if ( mad != NULL ) {
-      MifareSectorNumber* sectors = mifare_application_find( mad, aid );
-      if ( sectors != NULL ) {
-        int i = 0;
-        MifareSectorNumber sector;
-        while (( sector = sectors[i] ) ) {
-          qDebug() << "Writing sector " << QString::number( sector ) << "...";
-          if ( 0 == mifare_classic_authenticate( _tag, block( sector, 0 ), key, MFC_KEY_A ) ) {
-            for ( uint8_t b = 0; b < 3; b++ ) {
-              QByteArray tmpArray;
-              MifareClassicBlock r = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-              for ( int j = 0; ( i*48 ) + ( b*16 ) + j < data.size() && j < 16; j++ ) {
-                r[j] = data[( i*48 )+( b*16 )+j ];
-              }
-              if ( 0 == mifare_classic_write( _tag, block( sector, b ), r ) ) {
-                //data.append ( ( char* ) r, sizeof ( MifareClassicBlock ) );
-              } else {
-                qDebug( "Unable to write block." );
-              }
-            }
-          } else {
-            qDebug( "Unable to authenticate on sector." );
-          }
-          i++;
-        }
-      } else {
-        qDebug( "No sector for aid 0x03, 0xE1" );
-      }
-      mad_free( mad );
-    } else {
-      qDebug( "Unable to read MAD." );
-    }
-  } else {
-    qDebug() << "Unable to connect to mifare classic tag.";
-  }
-  warn( NULL );
-  if ( mifare_classic_disconnect( _tag ) == 0 )
-    qDebug() << "disconnected";
-  _accessLock->unlock();
-}
-
 void
 NfcTarget::putMimeContent( QString type, QByteArray data )
 {
@@ -307,70 +240,93 @@ NfcTarget::putMimeContent( QString type, QByteArray data )
   type = type.contains( "text/directory" ) ? "text/x-vCard" : type;
   NDEFRecord rec = NDEFRecord::createMimeRecord( type, data );
   NDEFMessage msg( rec );
-  putMessage( msg );
+  this->writeNDEF( msg );
 }
 
+#define MIN(a,b) ((a < b) ? a: b)
 int
-NfcTarget::search_sector_key( MifareTag tag, MifareClassicBlockNumber block, MifareClassicKey *key, MifareClassicKeyType *key_type )
+NfcTarget::MifareClassicSearchSectorKey( MifareSectorNumber sector, MifareClassicKey *key, MifareClassicKeyType *key_type )
 {
-  mifare_classic_disconnect( tag );
-  for ( int i = 0; i < ( sizeof( default_keys ) / sizeof( MifareClassicKey ) ); i++ ) {
-    if (( 0 == mifare_classic_connect( tag ) ) && ( 0 == mifare_classic_authenticate( tag, block, default_keys[i], MFC_KEY_A ) ) ) {
-      if (( 1 == mifare_classic_get_trailer_block_permission( tag, block + 3, MCAB_WRITE_KEYA, MFC_KEY_A ) ) &&
-          ( 1 == mifare_classic_get_trailer_block_permission( tag, block + 3, MCAB_WRITE_ACCESS_BITS, MFC_KEY_A ) ) &&
-          ( 1 == mifare_classic_get_trailer_block_permission( tag, block + 3, MCAB_WRITE_KEYB, MFC_KEY_A ) ) ) {
+  // FIXME This only works with sector < 32.
+  const MifareClassicBlockNumber block = sector * 4;
+  mifare_classic_disconnect( _tag );
+  for ( size_t i = 0; i < ( sizeof( default_keys ) / sizeof( MifareClassicKey ) ); i++ ) {
+    if (( 0 == mifare_classic_connect( _tag ) ) && ( 0 == mifare_classic_authenticate( _tag, block, default_keys[i], MFC_KEY_A ) ) ) {
+      if (( 1 == mifare_classic_get_trailer_block_permission( _tag, block + 3, MCAB_WRITE_KEYA, MFC_KEY_A ) ) &&
+          ( 1 == mifare_classic_get_trailer_block_permission( _tag, block + 3, MCAB_WRITE_ACCESS_BITS, MFC_KEY_A ) ) &&
+          ( 1 == mifare_classic_get_trailer_block_permission( _tag, block + 3, MCAB_WRITE_KEYB, MFC_KEY_A ) ) ) {
         memcpy( key, &default_keys[i], sizeof( MifareClassicKey ) );
         *key_type = MFC_KEY_A;
         return 1;
       }
     }
-    mifare_classic_disconnect( tag );
-    if (( 0 == mifare_classic_connect( tag ) ) && ( 0 == mifare_classic_authenticate( tag, block, default_keys[i], MFC_KEY_B ) ) ) {
-      if ((( block == 0 ) || ( 1 == mifare_classic_get_data_block_permission( tag, block + 0, MCAB_W, MFC_KEY_B ) ) ) &&
-          ( 1 == mifare_classic_get_data_block_permission( tag, block + 1, MCAB_W, MFC_KEY_B ) ) &&
-          ( 1 == mifare_classic_get_data_block_permission( tag, block + 2, MCAB_W, MFC_KEY_B ) ) &&
-          ( 1 == mifare_classic_get_trailer_block_permission( tag, block + 3, MCAB_WRITE_KEYA, MFC_KEY_B ) ) &&
-          ( 1 == mifare_classic_get_trailer_block_permission( tag, block + 3, MCAB_WRITE_ACCESS_BITS, MFC_KEY_B ) ) &&
-          ( 1 == mifare_classic_get_trailer_block_permission( tag, block + 3, MCAB_WRITE_KEYB, MFC_KEY_B ) ) ) {
+    mifare_classic_disconnect( _tag );
+
+    if (( 0 == mifare_classic_connect( _tag ) ) && ( 0 == mifare_classic_authenticate( _tag, block, default_keys[i], MFC_KEY_B ) ) ) {
+      if ((( block == 0 ) || ( 1 == mifare_classic_get_data_block_permission( _tag, block + 0, MCAB_W, MFC_KEY_B ) ) ) &&
+          ( 1 == mifare_classic_get_data_block_permission( _tag, block + 1, MCAB_W, MFC_KEY_B ) ) &&
+          ( 1 == mifare_classic_get_data_block_permission( _tag, block + 2, MCAB_W, MFC_KEY_B ) ) &&
+          ( 1 == mifare_classic_get_trailer_block_permission( _tag, block + 3, MCAB_WRITE_KEYA, MFC_KEY_B ) ) &&
+          ( 1 == mifare_classic_get_trailer_block_permission( _tag, block + 3, MCAB_WRITE_ACCESS_BITS, MFC_KEY_B ) ) &&
+          ( 1 == mifare_classic_get_trailer_block_permission( _tag, block + 3, MCAB_WRITE_KEYB, MFC_KEY_B ) ) ) {
         memcpy( key, &default_keys[i], sizeof( MifareClassicKey ) );
         *key_type = MFC_KEY_B;
         return 1;
       }
     }
-    mifare_classic_disconnect( tag );
+    mifare_classic_disconnect( _tag );
   }
 
   warnx( "No known authentication key for block %d", block );
   return 0;
 }
 
-#define MIN(a,b) ((a < b) ? a: b)
-void NfcTarget::putMad( NDEFMessage msg )
+int
+NfcTarget::MifareClassicFixMadTrailerBlock( MifareSectorNumber sector, MifareClassicKey key, MifareClassicKeyType key_type )
 {
-  int error = 0;
-  nfc_device_t *device = NULL;
-  //MifareTag *tags = NULL;
-  MifareClassicKey key_00, key_01, key_10;
-  MifareClassicKeyType key_00_type, key_01_type, key_10_type;
   MifareClassicBlock block;
+  if ( sector == 0 ) {
+    mifare_classic_trailer_block( &block, mad_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
+  } else {
+    mifare_classic_trailer_block( &block, default_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
+  }
+  
+  if ( mifare_classic_authenticate( _tag, BLOCK( sector, 0 ), key, key_type ) < 0 ) {
+    qDebug() << "mifare_classic_authenticate failed. sector=" << sector << "key_type=" << key_type << "(MFC_KEY_B=" << MFC_KEY_B << ")" ;
+    return -1;
+  }
+  /*
+   * FIXME: Using BLOCK( sector, 3 ) selects trailer block only for sector <
+   * 32.  In actual case, this is not a problem: we only call this function
+   * for sector 0x00 (0) and 0x10 (16).
+   */
+  if ( mifare_classic_write( _tag, BLOCK( sector, 3 ), block ) < 0 ) {
+    qDebug() << "mifare_classic_write: error while writing trailer block";
+    return -1;
+  }
+  return 0;
+}
+
+/**
+ * Write NDEF message on this target
+ * @param msg NDEF message to write on target
+ */
+void NfcTarget::writeNDEF( NDEFMessage msg )
+{
+  MifareClassicKey key_00, key_10;
+  MifareClassicKeyType key_00_type, key_10_type;
   Mad mad;
-
-  size_t encoded_size;
-  off_t pos = 0;
-  uint8_t *tlv_data = tlv_encode( 3, ( uint8_t* )msg.toByteArray().data(), msg.toByteArray().size(), &encoded_size );
-  MifareClassicBlockNumber bn = 0x04;
-
+  _accessLock->lock();
+  int error = 0;
 
   switch ( freefare_get_tag_type( _tag ) ) {
     case CLASSIC_4K:
-      if ( !search_sector_key( _tag, 0x40, &key_10, &key_10_type ) ) {
-        error = 1;
-        goto error;
+      if ( !MifareClassicSearchSectorKey( 0x40, &key_10, &key_10_type ) ) {
+        return;
       }
     case CLASSIC_1K:
-      if ( !search_sector_key( _tag, 0x00, &key_00, &key_00_type ) ) {
-        error = 1;
-        goto error;
+      if ( !MifareClassicSearchSectorKey( 0x00, &key_00, &key_00_type ) ) {
+        return;
       }
       break;
     default:
@@ -378,40 +334,25 @@ void NfcTarget::putMad( NDEFMessage msg )
       break;
   }
 
-
   if ( !error ) {
     /* Ensure the auth key is always a B one. If not, change it! */
     switch ( freefare_get_tag_type( _tag ) ) {
       case CLASSIC_4K:
         if ( key_10_type != MFC_KEY_B ) {
-          mifare_classic_trailer_block( &block, default_keys[2], 0x0, 0x1, 0x1, 0x6, 0x00, default_keys[1] );
-          if ( mifare_classic_authenticate( _tag, 0x10, key_10, key_10_type ) < 0 ) {
-            perror( "mifare_classic_authenticate 1" );
+          if ( 0 != MifareClassicFixMadTrailerBlock( 0x40, key_10, key_10_type ) ) {
             error = 1;
-            goto error;
+            return;
           }
-          if ( mifare_classic_write( _tag, 0x43, block ) < 0 ) {
-            perror( "mifare_classic_write" );
-            error = 1;
-            goto error;
-          }
-          memcpy( &key_10, &( default_keys[1] ), sizeof( MifareClassicKey ) );
+          memcpy( &key_10, &default_key_b, sizeof( MifareClassicKey ) );
           key_10_type = MFC_KEY_B;
         }
       case CLASSIC_1K:
         if ( key_00_type != MFC_KEY_B ) {
-          mifare_classic_trailer_block( &block, default_keys[2], 0x0, 0x1, 0x1, 0x6, 0x00, default_keys[1] );
-          if ( mifare_classic_authenticate( _tag, 0x00, key_00, key_00_type ) < 0 ) {
-            perror( "mifare_classic_authenticate 2" );
+          if ( 0 != MifareClassicFixMadTrailerBlock( 0x00, key_00, key_00_type ) ) {
             error = 1;
-            goto error;
+            return;
           }
-          if ( mifare_classic_write( _tag, 0x03, block ) < 0 ) {
-            perror( "mifare_classic_write" );
-            error = 1;
-            goto error;
-          }
-          memcpy( &key_00, &( default_keys[1] ), sizeof( MifareClassicKey ) );
+          memcpy( &key_00, &default_key_b, sizeof( MifareClassicKey ) );
           key_00_type = MFC_KEY_B;
         }
         break;
@@ -421,65 +362,93 @@ void NfcTarget::putMad( NDEFMessage msg )
     }
   }
 
+  /* Now, we encode NDEF message in TLV format to know how many blocks is required */
+  size_t encoded_size;
+  const char* ndef_msg = msg.toByteArray().data();
+  uint8_t *tlv_data = tlv_encode( 3, ( uint8_t* )ndef_msg, msg.toByteArray().size(), &encoded_size );
+  int blockNeededCount = encoded_size / 16;
+  if ( encoded_size % 16 ) blockNeededCount++;
+
   if ( !( mad = mad_new(( freefare_get_tag_type( _tag ) == CLASSIC_4K ) ? 2 : 1 ) ) ) {
     perror( "mad_new" );
     error = 1;
-    goto error;
+    return;
   }
 
   MadAid aid;
   aid.function_cluster_code = 0xe1;
   aid.application_code = 0x03;
 
+  // FIXME This only work with sectors which have 4 blocks. (3 data block and 1 trailer block)
+  MifareSectorNumber *sectors = mifare_application_alloc( mad, aid, ( blockNeededCount / 3 ) );
+  if ( sectors == NULL ) {
+    error = 1;
+    return;
+  }
+  MifareSectorNumber s;
+  int i = 0;
+  MifareClassicKey key;
+  MifareClassicKeyType key_type;
+  while ( s = sectors[i++] ) {
+    if ( !MifareClassicSearchSectorKey( s, &key, &key_type ) ) {
+      error = 1;
+      return;
+    }
 
-  mad_set_aid( mad, 1, aid );
+    if ( 0 != MifareClassicFixMadTrailerBlock( s, key, key_type ) ) {
+      error = 1;
+      return;
+    }
+  }
+
 
   if ( mad_write( _tag, mad, key_00, key_10 ) < 0 ) {
     perror( "mad_write" );
     error = 1;
-    goto error;
+    return;
   }
 
-
-
-
-  if ( mifare_classic_authenticate( _tag, bn, key_01, key_01_type ) < 0 ) {
-    perror( "mifare_classic_authenticate 3" );
-    error = 1;
-    goto error;
-  }
+  size_t pos = 0;
 
   MifareClassicBlock data;
+  i = 0;
+  s = sectors[i];
+  int block_offset = 0;
 
+  if ( mifare_classic_authenticate( _tag, BLOCK( s, block_offset ), default_key_b, MFC_KEY_B ) < 0 ) {
+    perror( "mifare_classic_authenticate" );
+    error = 1;
+    return;
+  }
   while ( pos < encoded_size ) {
     memset( &data, '\0', sizeof( MifareClassicBlock ) );
     memcpy( &data, tlv_data + pos, MIN( encoded_size - pos, sizeof( MifareClassicBlock ) ) );
     pos += sizeof( MifareClassicBlock );
-    if ( bn == 0x07 )
-      abort();
-    if ( mifare_classic_write( _tag, bn++, data ) < 0 ) {
+
+    qDebug() << "mifare_classic_write( _tag," << BLOCK( s, block_offset ) << ", data)";
+    if ( mifare_classic_write( _tag, BLOCK( s, block_offset ), data ) < 0 ) {
       perror( "mifare_classic_write" );
       error = 1;
-      goto error;
+      return;
     }
-  }
 
-  mifare_classic_trailer_block( &block, default_keyb, 0x0, 0x0, 0x0, 0x6, 0x40, default_keyb );
-  if ( mifare_classic_write( tags[i], 0x07, block ) < 0 ) {
-    perror( "mifare_classic_write" );
-    error = 1;
-    goto error;
+    if (( ++block_offset ) > 2 ) {
+      i++;
+      s = sectors[i];
+      block_offset = 0;
+      if ( mifare_classic_authenticate( _tag, BLOCK( s, block_offset ), default_key_b, MFC_KEY_B ) < 0 ) {
+        perror( "mifare_classic_authenticate" );
+        error = 1;
+        return;
+      }
+    }
   }
 
   free( tlv_data );
 
   free( mad );
-error:
-  //free (tag_uid);
-  return;
-
+  _accessLock->unlock();
 }
-
 
 void
 NfcTarget::processNDEFMessage( NDEFMessage msg )
