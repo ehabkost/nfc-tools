@@ -1,7 +1,7 @@
  /**
  * NFC utils - lsnfc
  *
- * Copyright (C) 2009, Romuald Conty
+ * Copyright (C) 2009, 2010, Romuald Conty
  * 
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -17,6 +17,19 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+/*
+ * This implementation was written based on information provided by the
+ * following documents:
+ *
+ * MIFARE Type Identification Procedure
+ *  AN10833
+ *  Rev. 3.1 — 07 July 2009
+ *  Application note
+ *
+ * ISO14443 tags list
+ *  http://www.libnfc.org/documentation/hardware/tags/iso14443
+ */
+
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -30,7 +43,69 @@ static byte_t abtFelica[5] = { 0x00, 0xff, 0xff, 0x00, 0x00 };
 
 #define ERR(x, ...) printf("ERROR: " x "\n", ## __VA_ARGS__ )
 
-#define MAX_DEVICE_COUNT 16
+#define MAX_DEVICE_COUNT	16
+#define MAX_ATS_LENGTH		32
+
+struct iso14443a_tag {
+    uint8_t ATQA[2], SAK;
+    const char *name;
+    size_t ATS_length;
+    uint8_t ATS[MAX_ATS_LENGTH];
+};
+
+/*
+Theses values comes from http://www.libnfc.org/documentation/hardware/tags/iso14443
+
+Manufacturer	Product			ATQA	SAK	ATS (called ATR for contact smartcards) 
+
+NXP		MIFARE Mini		00 04 	09 	
+		MIFARE Classic 1K 	00 04 	08 	
+		MIFARE Classic 4K 	00 02 	18 	
+		MIFARE Ultralight 	00 44 	00 	
+		MIFARE DESFire		03 44 	20 	06 75 77 81 02 80
+		MIFARE DESFire EV1 	03 44 	20 	06 75 77 81 02 80
+		JCOP31			03 04 	28 	38 77 b1 4a 43 4f 50 33 31
+		JCOP31 v2.4.1		00 48 	20 	78 77 b1 02 4a 43 4f 50 76 32 34 31
+		JCOP41 v2.2		00 48 	20 	38 33 b1 4a 43 4f 50 34 31 56 32 32
+		JCOP41 v2.3.1		00 04 	28 	38 33 b1 4a 43 4f 50 34 31 56 32 33 31
+Infineon 	MIFARE Classic 1K 	00 04 	88 	
+Gemplus 	MPCOS 			00 02 	98
+Innovision R&T 	Jewel 			0C 00
+*/
+
+struct iso14443a_tag iso14443a_tags[] = {
+    { { 0x00, 0x44 }, 0x00, "NXP MIFARE UltraLight", 0, {} },
+    { { 0x00, 0x44 }, 0x00, "NXP MIFARE UltraLight C", 0, {} },
+    { { 0x00, 0x04 }, 0x09, "NXP MIFARE Mini", 0, {} },
+    { { 0x00, 0x04 }, 0x08, "NXP MIFARE Classic 1k", 0, {} },
+    { { 0x00, 0x02 }, 0x18, "NXP MIFARE Classic 4k", 0, {} },
+
+    { { 0x00, 0x04 }, 0x08, "NXP MIFARE Plus 1k", 0, {} },
+    { { 0x00, 0x04 }, 0x18, "NXP MIFARE Plus 4k", 0, {} },
+    { { 0x00, 0x02 }, 0x08, "NXP MIFARE Plus 1k", 0, {} },
+    { { 0x00, 0x02 }, 0x18, "NXP MIFARE Plus 4k", 0, {} },
+    { { 0x00, 0x04 }, 0x10, "NXP MIFARE Plus 1k", 0, {} },
+    { { 0x00, 0x04 }, 0x11, "NXP MIFARE Plus 4k", 0, {} },
+    { { 0x00, 0x02 }, 0x10, "NXP MIFARE Plus 1k", 0, {} },
+    { { 0x00, 0x02 }, 0x11, "NXP MIFARE Plus 4k", 0, {} },
+    { { 0x00, 0x04 }, 0x20, "NXP MIFARE Plus 1k", 0, {} },
+    { { 0x00, 0x04 }, 0x20, "NXP MIFARE Plus 4k", 0, {} },
+    { { 0x00, 0x02 }, 0x20, "NXP MIFARE Plus 1k", 0, {} },
+    { { 0x00, 0x02 }, 0x20, "NXP MIFARE Plus 4k", 0, {} },
+
+    { { 0x00, 0x44 }, 0x20, "NXP MIFARE Plus 2k/4k", 0, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6 } },
+
+    { { 0x00, 0x04 }, 0x88, "Infineon MIFARE Classic 1k", 0, {} },
+    { { 0x00, 0x02 }, 0x38, "Nokia MIFARE Classic 4k (Emulated)", 0, {} },
+    { { 0x03, 0x44 }, 0x20, "NXP MIFARE DESFire", 5, { 0x75, 0x77, 0x81, 0x02, 0x80 } },
+    { { 0x03, 0x04 }, 0x28, "NXP JCOP31", 0, {} },
+    /* @todo handle ATS to be able to know which one is it. */
+    { { 0x00, 0x48 }, 0x20, "NXP JCOP31 or JCOP41", 0, {} },
+    { { 0x00, 0x04 }, 0x28, "NXP JCOP41", 0, {} },
+    { { 0x00, 0x02 }, 0x98, "Gemplus MPCOS", 0, {} },
+    /* @note I'm not sure that Jewel can be detected using this modulation but I haven't Jewel tags to test. */
+    { { 0x00, 0x02 }, 0x98, "Innovision R&T Jewel", 0, {} },
+};
 
 void
 print_hex (byte_t * pbtData, size_t szDate)
@@ -93,82 +168,34 @@ main (int argc, const char *argv[])
     do {
       if (nfc_initiator_select_tag (pnd, NM_ISO14443A_106, NULL, 0, &nti)) {
         printf ("  ISO14443A: ");
+        char * tag_name = NULL;
 
-/*
-Theses values comes from http://www.libnfc.org/documentation/hardware/tags/iso14443
+        for (size_t i = 0; i < sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag); i++) {
+            if ((nti.nai.abtAtqa[0] == iso14443a_tags[i].ATQA[0]) &&
+                (nti.nai.abtAtqa[1] == iso14443a_tags[i].ATQA[1]) &&
+                (nti.nai.btSak == iso14443a_tags[i].SAK)) {
+                // printf("DBG: iso14443a_tags[i].ATS_length = %d , nti.nai.szAtsLen = %d", iso14443a_tags[i].ATS_length, nti.nai.szAtsLen);
+                if( iso14443a_tags[i].ATS_length == 0 ) {
+                    tag_name = (iso14443a_tags[i].name);
+                    break;
+                }
 
-Manufacturer	Product			ATQA	SAK	ATS (called ATR for contact smartcards) 
-
-NXP		MIFARE Mini		00 04 	09 	
-		MIFARE Classic 1K 	00 04 	08 	
-		MIFARE Classic 4K 	00 02 	18 	
-		MIFARE Ultralight 	00 44 	00 	
-		MIFARE DESFire		03 44 	20 	06 75 77 81 02 80
-		MIFARE DESFire EV1 	03 44 	20 	06 75 77 81 02 80
-		JCOP31			03 04 	28 	38 77 b1 4a 43 4f 50 33 31
-		JCOP31 v2.4.1		00 48 	20 	78 77 b1 02 4a 43 4f 50 76 32 34 31
-		JCOP41 v2.2		00 48 	20 	38 33 b1 4a 43 4f 50 34 31 56 32 32
-		JCOP41 v2.3.1		00 04 	28 	38 33 b1 4a 43 4f 50 34 31 56 32 33 31
-Infineon 	MIFARE Classic 1K 	00 04 	88 	
-Gemplus 	MPCOS 			00 02 	98
-Innovision R&T 	Jewel 			0C 00
-*/
-
-        if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x09)) {
-          printf ("NXP MIFARE Mini (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x08)) {
-          printf ("NXP MIFARE Classic 1K (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x18)) {
-          printf ("NXP MIFARE Classic 4K (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x38)) {
-          printf ("Nokia MIFARE Classic 4K - emulated - (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x44) && (nti.nai.btSak == 0x00)) {
-          printf ("NXP MIFARE Ultralight (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x03) && (nti.nai.abtAtqa[1] == 0x44) && (nti.nai.btSak == 0x20)) {
-          printf ("NXP MIFARE DESFire (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x03) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x28)) {
-          printf ("NXP JCOP31 (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x48) && (nti.nai.btSak == 0x20)) {
-          /* @todo handle ATS to be able to know which one is it. */
-          printf ("NXP JCOP31 or JCOP41 (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x28)) {
-          printf ("NXP JCOP41 (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x04) && (nti.nai.btSak == 0x88)) {
-          printf ("Infineon MIFARE Classic 1K (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x00) && (nti.nai.abtAtqa[1] == 0x02) && (nti.nai.btSak == 0x98)) {
-          printf ("Gemplus MPCOS (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
-        } else if ((nti.nai.abtAtqa[0] == 0x0C) && (nti.nai.abtAtqa[1] == 0x00)) {
-          /* @note I'm not sure that Jewel can be detected using this modultation and I haven't Jewel tags to test. */
-          printf ("Innovision R&T Jewel (UID=");
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (")\n");
+                if( iso14443a_tags[i].ATS_length == nti.nai.szAtsLen ) {
+                    if ( memcmp( nti.nai.abtAts, iso14443a_tags[i].ATS, iso14443a_tags[i].ATS_length ) == 0 ) {
+                        tag_name = (iso14443a_tags[i].name);
+                        break;
+                    }
+                }
+            }
+        }
+        if( tag_name != NULL ) {
+            printf("%s (UID=", tag_name);
+            print_hex (nti.nai.abtUid, nti.nai.szUidLen);
+            printf (")\n");
         } else {
           printf ("Unknown ISO14443A tag type: ");
           printf ("ATQA (SENS_RES): ");
           print_hex (nti.nai.abtAtqa, 2);
-	  printf (" == %02x%02d == ", nti.nai.abtAtqa[0], nti.nai.abtAtqa[1]);
           printf (", UID (NFCID%c): ", (nti.nai.abtUid[0] == 0x08 ? '3' : '1'));
           print_hex (nti.nai.abtUid, nti.nai.szUidLen);
           printf (", SAK (SEL_RES): ");
