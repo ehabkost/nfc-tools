@@ -18,10 +18,6 @@ static const MifareClassicKey default_keys[] = {
   { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 };
 
-static const MifareClassicKey mad_key_a = {
-  0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5
-};
-
 static const MifareClassicKey default_key_b = {
   0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7
 };
@@ -286,7 +282,7 @@ NfcTarget::MifareClassicFixMadTrailerBlock( MifareClassicSectorNumber sector, Mi
 {
   MifareClassicBlock block;
   if ( sector == 0 ) {
-    mifare_classic_trailer_block( &block, mad_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
+    mifare_classic_trailer_block( &block, mad_public_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
   } else {
     mifare_classic_trailer_block( &block, default_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
   }
