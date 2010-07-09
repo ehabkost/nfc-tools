@@ -128,8 +128,6 @@ NfcTarget::checkAvailableContent()
         aid.function_cluster_code = 0xE1;
         aid.application_code = 0x03;
 
-        MifareClassicKey key = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
-
         if ( mad != NULL ) {
           MifareClassicSectorNumber* sectors = mifare_application_find( mad, aid );
           if ( sectors != NULL ) {
@@ -137,7 +135,7 @@ NfcTarget::checkAvailableContent()
             MifareClassicSectorNumber sector;
             while (( sector = sectors[i] ) ) {
               qDebug() << "Dump sector " << QString::number( sector ) << "...";
-              if ( 0 == mifare_classic_authenticate( _tag, BLOCK( sector, 0 ), key, MFC_KEY_A ) ) {
+              if ( 0 == mifare_classic_authenticate( _tag, BLOCK( sector, 0 ), default_key_a, MFC_KEY_A ) ) {
                 for ( uint8_t b = 0; b < 3; b++ ) {
                   MifareClassicBlock r;
                   if ( 0 == mifare_classic_read( _tag, BLOCK( sector, b ), &r ) ) {
@@ -171,6 +169,8 @@ NfcTarget::checkAvailableContent()
       if ( 0 == resConnect ) {
         uint8_t pageNum = 0;
         MifareUltralightPage pages[12];
+	/* TODO Check is the OTP bytes are correctly sets:
+	 *      according to NFC Forum - Type 2 Tag Operation, CC bytes must be checked to detect NDEF content (Chap 6) */
         for ( pageNum = 0x04; pageNum <= 0x0f; pageNum++ ) {
           mifare_ultralight_read( _tag, pageNum, &( pages[pageNum - 0x04] ) );
         }
@@ -309,6 +309,7 @@ NfcTarget::MifareClassicFixMadTrailerBlock( MifareClassicSectorNumber sector, Mi
  */
 void NfcTarget::writeNDEF( NDEFMessage msg )
 {
+  /* FIXME This function need full error handling rework. */
   MifareClassicKey key_00, key_10;
   MifareClassicKeyType key_00_type, key_10_type;
   Mad mad;
@@ -393,7 +394,6 @@ void NfcTarget::writeNDEF( NDEFMessage msg )
       return;
     }
   }
-
 
   if ( mad_write( _tag, mad, key_00, key_10 ) < 0 ) {
     perror( "mad_write" );
