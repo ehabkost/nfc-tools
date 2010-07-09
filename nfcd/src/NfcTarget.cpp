@@ -366,8 +366,6 @@ void NfcTarget::writeNDEF( NDEFMessage msg )
   size_t encoded_size;
   const char* ndef_msg = msg.toByteArray().data();
   uint8_t *tlv_data = tlv_encode( 3, ( uint8_t* )ndef_msg, msg.toByteArray().size(), &encoded_size );
-  int blockNeededCount = encoded_size / 16;
-  if ( encoded_size % 16 ) blockNeededCount++;
 
   if ( !( mad = mad_new(( freefare_get_tag_type( _tag ) == CLASSIC_4K ) ? 2 : 1 ) ) ) {
     perror( "mad_new" );
@@ -379,8 +377,7 @@ void NfcTarget::writeNDEF( NDEFMessage msg )
   aid.function_cluster_code = 0xe1;
   aid.application_code = 0x03;
 
-  // FIXME This only work with sectors which have 4 blocks. (3 data block and 1 trailer block)
-  MifareClassicSectorNumber *sectors = mifare_application_alloc( mad, aid, ( blockNeededCount / 3 ) );
+  MifareClassicSectorNumber *sectors = mifare_application_alloc( mad, aid, encoded_size );
   if ( sectors == NULL ) {
     error = 1;
     return;
