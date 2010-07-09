@@ -135,10 +135,10 @@ NfcTarget::checkAvailableContent()
         MifareClassicKey key = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
 
         if ( mad != NULL ) {
-          MifareSectorNumber* sectors = mifare_application_find( mad, aid );
+          MifareClassicSectorNumber* sectors = mifare_application_find( mad, aid );
           if ( sectors != NULL ) {
             int i = 0;
-            MifareSectorNumber sector;
+            MifareClassicSectorNumber sector;
             while (( sector = sectors[i] ) ) {
               qDebug() << "Dump sector " << QString::number( sector ) << "...";
               if ( 0 == mifare_classic_authenticate( _tag, BLOCK( sector, 0 ), key, MFC_KEY_A ) ) {
@@ -245,7 +245,7 @@ NfcTarget::putMimeContent( QString type, QByteArray data )
 
 #define MIN(a,b) ((a < b) ? a: b)
 int
-NfcTarget::MifareClassicSearchSectorKey( MifareSectorNumber sector, MifareClassicKey *key, MifareClassicKeyType *key_type )
+NfcTarget::MifareClassicSearchSectorKey( MifareClassicSectorNumber sector, MifareClassicKey *key, MifareClassicKeyType *key_type )
 {
   // FIXME This only works with sector < 32.
   const MifareClassicBlockNumber block = sector * 4;
@@ -282,7 +282,7 @@ NfcTarget::MifareClassicSearchSectorKey( MifareSectorNumber sector, MifareClassi
 }
 
 int
-NfcTarget::MifareClassicFixMadTrailerBlock( MifareSectorNumber sector, MifareClassicKey key, MifareClassicKeyType key_type )
+NfcTarget::MifareClassicFixMadTrailerBlock( MifareClassicSectorNumber sector, MifareClassicKey key, MifareClassicKeyType key_type )
 {
   MifareClassicBlock block;
   if ( sector == 0 ) {
@@ -380,12 +380,12 @@ void NfcTarget::writeNDEF( NDEFMessage msg )
   aid.application_code = 0x03;
 
   // FIXME This only work with sectors which have 4 blocks. (3 data block and 1 trailer block)
-  MifareSectorNumber *sectors = mifare_application_alloc( mad, aid, ( blockNeededCount / 3 ) );
+  MifareClassicSectorNumber *sectors = mifare_application_alloc( mad, aid, ( blockNeededCount / 3 ) );
   if ( sectors == NULL ) {
     error = 1;
     return;
   }
-  MifareSectorNumber s;
+  MifareClassicSectorNumber s;
   int i = 0;
   MifareClassicKey key;
   MifareClassicKeyType key_type;

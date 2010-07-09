@@ -102,7 +102,7 @@ protected:
 private:
 
     int MifareClassicSearchSectorKey( MifareClassicBlockNumber block, MifareClassicKey *key, MifareClassicKeyType *key_type );
-    int MifareClassicFixMadTrailerBlock( MifareSectorNumber sector, MifareClassicKey key, MifareClassicKeyType key_type );
+    int MifareClassicFixMadTrailerBlock( MifareClassicSectorNumber sector, MifareClassicKey key, MifareClassicKeyType key_type );
 
 };
 
