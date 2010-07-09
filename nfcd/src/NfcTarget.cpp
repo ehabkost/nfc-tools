@@ -401,40 +401,10 @@ void NfcTarget::writeNDEF( NDEFMessage msg )
     return;
   }
 
-  size_t pos = 0;
-
-  MifareClassicBlock data;
-  i = 0;
-  s = sectors[i];
-  int block_offset = 0;
-
-  if ( mifare_classic_authenticate( _tag, BLOCK( s, block_offset ), default_key_b, MFC_KEY_B ) < 0 ) {
-    perror( "mifare_classic_authenticate" );
+  if ( mad_application_write( _tag, mad, aid, tlv_data, encoded_size, default_key_b, MFC_KEY_B ) < 0 ) {
+    perror( "mad_application_write" );
     error = 1;
     return;
-  }
-  while ( pos < encoded_size ) {
-    memset( &data, '\0', sizeof( MifareClassicBlock ) );
-    memcpy( &data, tlv_data + pos, MIN( encoded_size - pos, sizeof( MifareClassicBlock ) ) );
-    pos += sizeof( MifareClassicBlock );
-
-    qDebug() << "mifare_classic_write( _tag," << BLOCK( s, block_offset ) << ", data)";
-    if ( mifare_classic_write( _tag, BLOCK( s, block_offset ), data ) < 0 ) {
-      perror( "mifare_classic_write" );
-      error = 1;
-      return;
-    }
-
-    if (( ++block_offset ) > 2 ) {
-      i++;
-      s = sectors[i];
-      block_offset = 0;
-      if ( mifare_classic_authenticate( _tag, BLOCK( s, block_offset ), default_key_b, MFC_KEY_B ) < 0 ) {
-        perror( "mifare_classic_authenticate" );
-        error = 1;
-        return;
-      }
-    }
   }
 
   free( tlv_data );
