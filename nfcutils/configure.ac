@@ -58,13 +58,12 @@ then
 fi
 AC_SUBST([DEBUG_CFLAGS])
 
-PKG_CHECK_MODULES(LIBNFC, libnfc, [WITH_NFC=1], [WITH_NFC=0])
+# Checks for pkg-config modules.
+LIBNFC_REQUIRED_VERSION=1.3.9
+PKG_CHECK_MODULES([libnfc], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], [AC_MSG_ERROR([libnfc >= $LIBNFC_REQUIRED_VERSION is mandatory.])])
 
-if test x"$WITH_NFC" = "x0"; then
-  AC_MSG_ERROR([libnfc is mandatory.])
-fi
-AC_SUBST(LIBNFC_LIBS)
-AC_SUBST(LIBNFC_CFLAGS)
+AC_SUBST(libnfc_LIBS)
+AC_SUBST(libnfc_CFLAGS)
 
 # Set C standard to C99
 CFLAGS="$CFLAGS -std=c99"
