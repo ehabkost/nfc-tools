@@ -161,7 +161,7 @@ void NotifierDialog::nfcdOnline() {
 
 void NotifierDialog::insertContent(Content* content, const QString &devName, const QString &tgUid)
 {
-    QString name = "" + qHash( content->getData() );
+    QString name( qHash( content->getData() ) );
     QStandardItem *item = new QStandardItem();
     item->setData(name, SolidUdiRole);
     item->setData(Plasma::Delegate::MainColumn, ScopeRole);
@@ -182,7 +182,6 @@ void NotifierDialog::insertContent(Content* content, const QString &devName, con
     m_contents_index << QPair<QModelIndex,Content*>(item->index(),content);
      
     m_notifierView->calculateRects();
-
 }
 
 void NotifierDialog::insertTarget(NfcTarget* tg, const QString &devName) {

@@ -133,7 +133,7 @@ void DesknfcPlasmoid::fillPreviousDevices()
                m_dialog->insertTarget(target,dev->getName());
                foreach(Content* content, target->getTargetContent()) {
                    //onDeviceAdded(0, content->getType());
-                   m_dialog->insertContent(content,dev->getName(), target->getUid());
+                   m_dialog->insertContent(content, dev->getName(), target->getUid());
                }
             }
         }
