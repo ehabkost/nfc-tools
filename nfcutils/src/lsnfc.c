@@ -164,7 +164,7 @@ main (int argc, const char *argv[])
     bool no_more_tag = false;
     printf ("device = %s\n", pnd->acName);
     do {
-      if (nfc_initiator_select_tag (pnd, NM_ISO14443A_106, NULL, 0, &nti)) {
+      if (nfc_initiator_select_passive_target (pnd, NM_ISO14443A_106, NULL, 0, &nti)) {
         printf ("  ISO14443A: ");
         char * tag_name = NULL;
 
@@ -204,19 +204,19 @@ main (int argc, const char *argv[])
           }
           printf ("\n");
         }
-        nfc_initiator_deselect_tag (pnd);
+        nfc_initiator_deselect_target (pnd);
         device_tag_count++;
-      } else if (nfc_initiator_select_tag (pnd, NM_FELICA_212, abtFelica, 5, &nti)
-                 || nfc_initiator_select_tag (pnd, NM_FELICA_424, abtFelica, 5, &nti)) {
+      } else if (nfc_initiator_select_passive_target (pnd, NM_FELICA_212, abtFelica, 5, &nti)
+                 || nfc_initiator_select_passive_target (pnd, NM_FELICA_424, abtFelica, 5, &nti)) {
         printf ("  Felica: ");
         printf ("ID (NFCID2): ");
         print_hex (nti.nfi.abtId, 8);
         printf (", Parameter (PAD): ");
         print_hex (nti.nfi.abtPad, 8);
         printf ("\n");
-        nfc_initiator_deselect_tag (pnd);
+        nfc_initiator_deselect_target (pnd);
         device_tag_count++;
-      } else if (nfc_initiator_select_tag (pnd, NM_ISO14443B_106, (byte_t *) "\x00", 1, &nti)) {
+      } else if (nfc_initiator_select_passive_target (pnd, NM_ISO14443B_106, (byte_t *) "\x00", 1, &nti)) {
         printf ("  ISO14443B: ");
         printf ("ATQB: ");
         print_hex (nti.nbi.abtAtqb, 12);
@@ -230,11 +230,11 @@ main (int argc, const char *argv[])
         printf (", PARAMS: %02x %02x %02x %02x", nti.nbi.btParam1, nti.nbi.btParam2, nti.nbi.btParam3,
                 nti.nbi.btParam4);
         printf ("\n");
-        nfc_initiator_deselect_tag (pnd);
+        nfc_initiator_deselect_target (pnd);
         device_tag_count++;
-      } else if (nfc_initiator_select_tag (pnd, NM_JEWEL_106, NULL, 0, &nti)) {
+      } else if (nfc_initiator_select_passive_target (pnd, NM_JEWEL_106, NULL, 0, &nti)) {
         printf ("  Jewel: No test results yet");
-        nfc_initiator_deselect_tag (pnd);
+        nfc_initiator_deselect_target (pnd);
         device_tag_count++;
       } else {
         no_more_tag = true;
