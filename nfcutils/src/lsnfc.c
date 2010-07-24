@@ -41,7 +41,7 @@
 static nfc_device_t *pnd;
 static byte_t abtFelica[5] = { 0x00, 0xff, 0xff, 0x00, 0x00 };
 
-#define ERR(x, ...) printf("ERROR: " x "\n", ## __VA_ARGS__ )
+#define ERR(x, ...) printf("ERROR: " x "\n", __VA_ARGS__ )
 
 #define MAX_DEVICE_COUNT	16
 #define MAX_ATS_LENGTH		32
@@ -74,35 +74,35 @@ Innovision R&T 	Jewel 			0C 00
 */
 
 struct iso14443a_tag iso14443a_tags[] = {
-    { { 0x00, 0x44 }, 0x00, "NXP MIFARE UltraLight", 0, {} },
-    { { 0x00, 0x44 }, 0x00, "NXP MIFARE UltraLight C", 0, {} },
-    { { 0x00, 0x04 }, 0x09, "NXP MIFARE Mini", 0, {} },
-    { { 0x00, 0x04 }, 0x08, "NXP MIFARE Classic 1k", 0, {} },
-    { { 0x00, 0x02 }, 0x18, "NXP MIFARE Classic 4k", 0, {} },
+    { { 0x00, 0x44 }, 0x00, "NXP MIFARE UltraLight",      0, { 0 } },
+    { { 0x00, 0x44 }, 0x00, "NXP MIFARE UltraLight C",    0, { 0 } },
+    { { 0x00, 0x04 }, 0x09, "NXP MIFARE Mini",            0, { 0 } },
+    { { 0x00, 0x04 }, 0x08, "NXP MIFARE Classic 1k",      0, { 0 } },
+    { { 0x00, 0x02 }, 0x18, "NXP MIFARE Classic 4k",      0, { 0 } },
 
-    { { 0x00, 0x04 }, 0x08, "NXP MIFARE Plus 1k", 0, {} },
-    { { 0x00, 0x04 }, 0x18, "NXP MIFARE Plus 4k", 0, {} },
-    { { 0x00, 0x02 }, 0x08, "NXP MIFARE Plus 1k", 0, {} },
-    { { 0x00, 0x02 }, 0x18, "NXP MIFARE Plus 4k", 0, {} },
-    { { 0x00, 0x04 }, 0x10, "NXP MIFARE Plus 1k", 0, {} },
-    { { 0x00, 0x04 }, 0x11, "NXP MIFARE Plus 4k", 0, {} },
-    { { 0x00, 0x02 }, 0x10, "NXP MIFARE Plus 1k", 0, {} },
-    { { 0x00, 0x02 }, 0x11, "NXP MIFARE Plus 4k", 0, {} },
-    { { 0x00, 0x04 }, 0x20, "NXP MIFARE Plus 1k", 0, {} },
-    { { 0x00, 0x04 }, 0x20, "NXP MIFARE Plus 4k", 0, {} },
-    { { 0x00, 0x02 }, 0x20, "NXP MIFARE Plus 1k/4k", 11, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6} },
-    { { 0x00, 0x44 }, 0x20, "NXP MIFARE Plus 2k/4k", 11, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6 } },
+    { { 0x00, 0x04 }, 0x08, "NXP MIFARE Plus 1k",         0, { 0 } },
+    { { 0x00, 0x04 }, 0x18, "NXP MIFARE Plus 4k",         0, { 0 } },
+    { { 0x00, 0x02 }, 0x08, "NXP MIFARE Plus 1k",         0, { 0 } },
+    { { 0x00, 0x02 }, 0x18, "NXP MIFARE Plus 4k",         0, { 0 } },
+    { { 0x00, 0x04 }, 0x10, "NXP MIFARE Plus 1k",         0, { 0 } },
+    { { 0x00, 0x04 }, 0x11, "NXP MIFARE Plus 4k",         0, { 0 } },
+    { { 0x00, 0x02 }, 0x10, "NXP MIFARE Plus 1k",         0, { 0 } },
+    { { 0x00, 0x02 }, 0x11, "NXP MIFARE Plus 4k",         0, { 0 } },
+    { { 0x00, 0x04 }, 0x20, "NXP MIFARE Plus 1k",         0, { 0 } },
+    { { 0x00, 0x04 }, 0x20, "NXP MIFARE Plus 4k",         0, { 0 } },
+    { { 0x00, 0x02 }, 0x20, "NXP MIFARE Plus 1k/4k",     11, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6} },
+    { { 0x00, 0x44 }, 0x20, "NXP MIFARE Plus 2k/4k",     11, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6 } },
 
-    { { 0x00, 0x04 }, 0x88, "Infineon MIFARE Classic 1k", 0, {} },
-    { { 0x00, 0x02 }, 0x38, "Nokia MIFARE Classic 4k (Emulated)", 0, {} },
-    { { 0x03, 0x44 }, 0x20, "NXP MIFARE DESFire", 5, { 0x75, 0x77, 0x81, 0x02, 0x80 } },
-    { { 0x03, 0x04 }, 0x28, "NXP JCOP31", 0, {} },
+    { { 0x00, 0x04 }, 0x88, "Infineon MIFARE Classic 1k", 0, { 0 } },
+    { { 0x00, 0x02 }, 0x38, "Nokia MIFARE Classic 4k (Emulated)", 0, { 0 } },
+    { { 0x03, 0x44 }, 0x20, "NXP MIFARE DESFire",         5, { 0x75, 0x77, 0x81, 0x02, 0x80 } },
+    { { 0x03, 0x04 }, 0x28, "NXP JCOP31",                 0, { 0 } },
     /* @todo handle ATS to be able to know which one is it. */
-    { { 0x00, 0x48 }, 0x20, "NXP JCOP31 or JCOP41", 0, {} },
-    { { 0x00, 0x04 }, 0x28, "NXP JCOP41", 0, {} },
-    { { 0x00, 0x02 }, 0x98, "Gemplus MPCOS", 0, {} },
+    { { 0x00, 0x48 }, 0x20, "NXP JCOP31 or JCOP41",       0, { 0 } },
+    { { 0x00, 0x04 }, 0x28, "NXP JCOP41",                 0, { 0 } },
+    { { 0x00, 0x02 }, 0x98, "Gemplus MPCOS",              0, { 0 } },
     /* @note I'm not sure that Jewel can be detected using this modulation but I haven't Jewel tags to test. */
-    { { 0x00, 0x02 }, 0x98, "Innovision R&T Jewel", 0, {} },
+    { { 0x00, 0x02 }, 0x98, "Innovision R&T Jewel",       0, { 0 } },
 };
 
 void
@@ -123,6 +123,8 @@ main (int argc, const char *argv[])
 
   nfc_device_desc_t *pnddDevices;
   size_t szFound;
+
+  (void)(argc, argv);
 
   // Try to open the NFC device
   if (!(pnddDevices = malloc (MAX_DEVICE_COUNT * sizeof (*pnddDevices)))) {
@@ -166,7 +168,7 @@ main (int argc, const char *argv[])
     do {
       if (nfc_initiator_select_passive_target (pnd, NM_ISO14443A_106, NULL, 0, &nti)) {
         printf ("  ISO14443A: ");
-        char * tag_name = NULL;
+        const char *tag_name = NULL;
 
         for (size_t i = 0; i < sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag); i++) {
             if ((nti.nai.abtAtqa[0] == iso14443a_tags[i].ATQA[0]) &&
