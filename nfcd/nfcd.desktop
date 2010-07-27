@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=NFCd
+Name[en_GB]=NFCd
+Name[fr]=NFCd
+GenericName=NFC daemon
+GenericName[fr]=Service NFC
+Exec=nfcd
+Type=Service
+Terminal=false
+X-KDE-StartupNotify=false
+Categories=Qt;KDE;Utility;
