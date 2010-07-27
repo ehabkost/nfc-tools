@@ -106,9 +106,6 @@ QStringList NfcTarget::getContentListStrings()
   return sl;
 }
 
-// FIXME This only work with sectors < 32.
-#define BLOCK(s,b) ((s * 4) + b)
-
 #define MIFARE_CONTENT_BUFFER_SIZE 4096
 void
 NfcTarget::checkAvailableContent()
@@ -273,16 +270,11 @@ NfcTarget::MifareClassicFixMadTrailerBlock( MifareClassicSectorNumber sector, Mi
     mifare_classic_trailer_block( &block, default_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
   }
   
-  if ( mifare_classic_authenticate( _tag, BLOCK( sector, 0 ), key, key_type ) < 0 ) {
+  if ( mifare_classic_authenticate( _tag, mifare_classic_sector_last_block( sector ), key, key_type ) < 0 ) {
     qDebug() << "mifare_classic_authenticate failed. sector=" << sector << "key_type=" << key_type << "(MFC_KEY_B=" << MFC_KEY_B << ")" ;
     return -1;
   }
-  /*
-   * FIXME: Using BLOCK( sector, 3 ) selects trailer block only for sector <
-   * 32.  In actual case, this is not a problem: we only call this function
-   * for sector 0x00 (0) and 0x10 (16).
-   */
-  if ( mifare_classic_write( _tag, BLOCK( sector, 3 ), block ) < 0 ) {
+  if ( mifare_classic_write( _tag, mifare_classic_sector_last_block( sector ), block ) < 0 ) {
     qDebug() << "mifare_classic_write: error while writing trailer block";
     return -1;
   }
