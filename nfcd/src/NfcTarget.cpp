@@ -108,6 +108,8 @@ QStringList NfcTarget::getContentListStrings()
 
 // FIXME This only work with sectors < 32.
 #define BLOCK(s,b) ((s * 4) + b)
+
+#define MIFARE_CONTENT_BUFFER_SIZE 4096
 void
 NfcTarget::checkAvailableContent()
 {
@@ -129,29 +131,13 @@ NfcTarget::checkAvailableContent()
         aid.application_code = 0x03;
 
         if ( mad != NULL ) {
-          MifareClassicSectorNumber* sectors = mifare_application_find( mad, aid );
-          if ( sectors != NULL ) {
-            int i = 0;
-            MifareClassicSectorNumber sector;
-            while (( sector = sectors[i] ) ) {
-              qDebug() << "Dump sector " << QString::number( sector ) << "...";
-              if ( 0 == mifare_classic_authenticate( _tag, BLOCK( sector, 0 ), default_key_a, MFC_KEY_A ) ) {
-                for ( uint8_t b = 0; b < 3; b++ ) {
-                  MifareClassicBlock r;
-                  if ( 0 == mifare_classic_read( _tag, BLOCK( sector, b ), &r ) ) {
-                    data.append(( char* ) r, sizeof( MifareClassicBlock ) );
-                  } else {
-                    qDebug( "Unable to read block." );
-                  }
-                }
-              } else {
-                qDebug( "Unable to authenticate on sector." );
-                return;
-              }
-              i++;
-            }
+          char buffer[MIFARE_CONTENT_BUFFER_SIZE];
+          ssize_t ret = mad_application_read (_tag, mad, aid, buffer, MIFARE_CONTENT_BUFFER_SIZE, default_key_a, MFC_KEY_A);
+          if( ret > 0 ) {
+            data.append( buffer );
           } else {
-            qDebug( "No sector for aid 0x03, 0xE1" );
+            qDebug( "Unable to fetch content with this AID: fct=0xe1, app=0x03." );
+            return;
           }
           mad_free( mad );
         } else {
