@@ -6,6 +6,14 @@
 #include <stdlib.h>
 #include <nfc/nfc.h>
 
+/*
+ * This implementation was written based on information provided by the
+ * following documents:
+ *
+ * NXP Type MF1K/4K Tag Operation
+ * Storing NFC Forum data in Mifare Standard 1k/4k
+ * Rev. 1.1 - 21 August 2007
+ */
 
 static const MifareClassicKey default_keys[] = {
   { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
@@ -19,10 +27,6 @@ static const MifareClassicKey default_keys[] = {
 };
 
 static const MifareClassicKey default_key_b = {
-  0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7
-};
-
-static const MifareClassicKey default_key_a = {
   0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7
 };
 
@@ -111,37 +115,40 @@ void
 NfcTarget::checkAvailableContent()
 {
   _accessLock->lock();
-  QByteArray data;
   int resConnect = -1;
+
+  QByteArray ndefContent;
 
   enum mifare_tag_type type = freefare_get_tag_type( _tag );
   switch ( type ) {
     case CLASSIC_1K:
     case CLASSIC_4K:
-
       resConnect = mifare_classic_connect( _tag );
       if ( 0 == resConnect ) {
 
         Mad mad = mad_read( _tag );
-        MadAid aid;
-        aid.function_cluster_code = 0xE1;
-        aid.application_code = 0x03;
-
         if ( mad != NULL ) {
-          char buffer[MIFARE_CONTENT_BUFFER_SIZE];
-          ssize_t ret = mad_application_read (_tag, mad, aid, buffer, MIFARE_CONTENT_BUFFER_SIZE, default_key_a, MFC_KEY_A);
-          if( ret > 0 ) {
-            data.append( buffer );
+          uint8_t* buffer = (uint8_t*) malloc(MIFARE_CONTENT_BUFFER_SIZE * sizeof(uint8_t));
+          ssize_t readed_bytes = mad_application_read (_tag, mad, mad_nfcforum_aid, buffer, MIFARE_CONTENT_BUFFER_SIZE, mifare_classic_nfcforum_public_key_a, MFC_KEY_A);
+          if( readed_bytes > 0 ) {
+            uint8_t type;
+            uint16_t size;
+            uint8_t* content = tlv_decode(buffer, &type, &size);
+            free(buffer);
+            if( type == 3 ) { // 3 == NDEF content type
+              ndefContent.append((const char*)content, (int)size);
+            }
+            free( content );
           } else {
-            qDebug( "Unable to fetch content with this AID: fct=0xe1, app=0x03." );
-            return;
+            qDebug( "Unable to fetch content with NFC Forum AID." );
           }
           mad_free( mad );
         } else {
           qDebug( "Unable to read MAD." );
         }
-        if ( mifare_classic_disconnect( _tag ) == 0 )
-          qDebug() << "disconnected";
+        if ( mifare_classic_disconnect( _tag ) != 0 ) {
+          qDebug( "Error while tag disconnect" );
+        }
       } else {
         qDebug() << "Unable to connect to mifare classic tag.";
       }
@@ -157,7 +164,7 @@ NfcTarget::checkAvailableContent()
         for ( pageNum = 0x04; pageNum <= 0x0f; pageNum++ ) {
           mifare_ultralight_read( _tag, pageNum, &( pages[pageNum - 0x04] ) );
         }
-        data.append(( const char * )pages, 12 * sizeof( MifareUltralightPage ) );
+        ndefContent.append(( const char * )pages, 12 * sizeof( MifareUltralightPage ) );
 
         if ( mifare_ultralight_disconnect( _tag ) == 0 )
           qDebug() << "disconnected";
@@ -165,50 +172,11 @@ NfcTarget::checkAvailableContent()
       }
       break;
   }
-  if ( !data.isEmpty() ) {
-    QString hex;
-    //dump
-    /*QDir qd;
-    qd.mkpath(QString("/tmp/nfcd-dumps-") + QString( getlogin() ) );
-    QString path(QString("/tmp/nfcd-dumps-") + QString( getlogin() )
-       + QString("/") + QUuid::createUuid().toString().remove(QRegExp("[{}-]")));
-    QFile f(path);
-    f.open(QIODevice::WriteOnly);
-    qDebug() << f.write(data);*/
-    //pmud
-    for ( int n = 0; n < data.size(); n++ ) {
-      if (( uint8_t ) data.at( n ) < 0x10 )
-        hex = hex + "0";
 
-      hex = hex + QString::number(( uint8_t ) data.at( n ), 16 );
-      if (( n % 16 ) == 15 ) hex = hex + "\n";
-      else hex = hex + " ";
-    }
-
-    qDebug() << hex;
-    // Test if content is an NDEF message
-    // TLV according to "Type 1 Tag Operation Specification" from NFCForum
-
-    uint16_t tlv_len;
-    if (( uint8_t ) data.at( 0 ) == 0x03 ) {
-      if (( uint8_t ) data.at( 1 ) != 0xff ) {
-        // TLV use 1 byte for lenght
-        tlv_len = data.at( 1 );
-        data.remove( 0, 2 );  // Remove the first 2 bytes (corresponding to "Tag" and "Lenght" from TLV format)
-      } else {
-        // TLV use 3 bytes for lenght
-        tlv_len = ( uint8_t ) data.at( 3 );
-        tlv_len |= ((( uint16_t ) data.at( 2 ) ) << 8 );
-        data.remove( 0, 4 );  // Remove the first 4 bytes (corresponding to "Tag" (1 byte) and "Lenght" (3 bytes) from TLV format)
-      }
-
-      data.truncate( tlv_len );
-
+  if ( !ndefContent.isEmpty() ) {
       // Now we can parse it...
-      NDEFMessage msg = NDEFMessage::fromByteArray( data );
-      processNDEFMessage( msg );
-    }
-
+      NDEFMessage ndefMessage = NDEFMessage::fromByteArray( ndefContent );
+      processNDEFMessage( ndefMessage );
   }
 }
 
@@ -264,10 +232,10 @@ int
 NfcTarget::MifareClassicFixMadTrailerBlock( MifareClassicSectorNumber sector, MifareClassicKey key, MifareClassicKeyType key_type )
 {
   MifareClassicBlock block;
-  if ( sector == 0 ) {
+  if ( sector == 0 ) { // MAD Sector
     mifare_classic_trailer_block( &block, mad_public_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
   } else {
-    mifare_classic_trailer_block( &block, default_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
+    mifare_classic_trailer_block( &block, mifare_classic_nfcforum_public_key_a, 0x0, 0x1, 0x1, 0x6, 0x00, default_key_b );
   }
   
   if ( mifare_classic_authenticate( _tag, mifare_classic_sector_last_block( sector ), key, key_type ) < 0 ) {
@@ -419,8 +387,7 @@ NfcTarget::processNDEFMessage( NDEFMessage msg )
         QByteArray record_payload = msg.record( i ).payload();
         if ( !record_payload.isEmpty() ) {
           if ( NDEFRecordType::NDEF_MIME == record.type().id() ) {
-            MimeContentEntry *nc = new
-            MimeContentEntry( i, QString( "(MIME) " ) + record.type().name(), record_payload );
+            MimeContentEntry *nc = new MimeContentEntry( i, QString( "(MIME) " ) + record.type().name(), record_payload );
             _targetContent.append( nc );
           } else if ( NDEFRecordType::NDEF_NfcForumRTD == record.type().id()
                       && record.type().name() == QString( "Sp" ) ) {
