@@ -46,11 +46,14 @@ static byte_t abtFelica[5] = { 0x00, 0xff, 0xff, 0x00, 0x00 };
 #define MAX_DEVICE_COUNT	16
 #define MAX_ATS_LENGTH		32
 
+typedef const char* (*identication_hook)(const nfc_target_info_t nti);
+
 struct iso14443a_tag {
     uint8_t SAK;
     const char *name;
     size_t ATS_length;
     uint8_t ATS[MAX_ATS_LENGTH];
+    identication_hook identication_fct;
 };
 
 /*
@@ -73,41 +76,59 @@ Gemplus 	MPCOS 			00 02 	98
 Innovision R&T 	Jewel 			0C 00
 */
 
-struct iso14443a_tag iso14443a_tags[] = {
-    { 0x00, "NXP MIFARE UltraLight",      0, { 0 } },
-    { 0x00, "NXP MIFARE UltraLight C",    0, { 0 } },
-    { 0x09, "NXP MIFARE Mini",            0, { 0 } },
-    { 0x08, "NXP MIFARE Classic 1k",      0, { 0 } },
-    { 0x18, "NXP MIFARE Classic 4k",      0, { 0 } },
-
-    { 0x08, "NXP MIFARE Plus 1k",         0, { 0 } },
-    { 0x18, "NXP MIFARE Plus 4k",         0, { 0 } },
-    { 0x10, "NXP MIFARE Plus 1k",         0, { 0 } },
-    { 0x11, "NXP MIFARE Plus 4k",         0, { 0 } },
-    { 0x20, "NXP MIFARE Plus 1k",         0, { 0 } },
-    { 0x20, "NXP MIFARE Plus 4k",         0, { 0 } },
-    { 0x20, "NXP MIFARE Plus 1k/4k",     11, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6} },
-    { 0x20, "NXP MIFARE Plus 2k/4k",     11, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6 } },
-
-    { 0x88, "Infineon MIFARE Classic 1k", 0, { 0 } },
-    { 0x38, "Nokia MIFARE Classic 4k (Emulated)", 0, { 0 } },
-    { 0x20, "NXP MIFARE DESFire",         5, { 0x75, 0x77, 0x81, 0x02, 0x80 } },
-    { 0x28, "NXP JCOP31",                 0, { 0 } },
-    /* @todo handle ATS to be able to know which one is it. */
-    { 0x20, "NXP JCOP31 or JCOP41",       0, { 0 } },
-    { 0x28, "NXP JCOP41",                 0, { 0 } },
-    { 0x98, "Gemplus MPCOS",              0, { 0 } },
-    /* @note I'm not sure that Jewel can be detected using this modulation but I haven't Jewel tags to test. */
-    { 0x98, "Innovision R&T Jewel",       0, { 0 } },
-};
-
 void
-print_hex (byte_t * pbtData, size_t szDate)
+print_hex (byte_t * pbtData, size_t szData)
 {
-  for (size_t i = 0; i < szDate; i++) {
+  for (size_t i = 0; i < szData; i++) {
     printf ("%02x", pbtData[i]);
   }
 }
+
+const char* 
+mifare_ultralight_identification(const nfc_target_info_t nti)
+{
+  byte_t abtCmd[2];
+  byte_t abtRx[265];
+  size_t szRxLen;
+
+  abtCmd[0] = 0x30;  // MIFARE Ultralight READ command
+  abtCmd[1] = 0x10;  // block address (1K=0x00..0x39, 4K=0x00..0xff)
+
+  if (!nfc_initiator_transceive_dep_bytes(pnd,abtCmd,2,abtRx,&szRxLen)) {
+    // READ command of 0x10 failed, we consider that Ultralight does have 0x10 address, so it's a "simple" Ultralight (i.e. not a Ultralight C)
+    // When a READ failed, the tag returns in HALT state, so we need to reselect tag
+    nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nti.nai.abtUid, nti.nai.szUidLen, NULL);
+    return "";
+  }
+  return " C";
+}
+
+struct iso14443a_tag iso14443a_tags[] = {
+    { 0x00, "NXP MIFARE UltraLight",      0, { 0 }, mifare_ultralight_identification },
+    { 0x09, "NXP MIFARE Mini",            0, { 0 }, NULL },
+    { 0x08, "NXP MIFARE Classic 1k",      0, { 0 }, NULL },
+    { 0x18, "NXP MIFARE Classic 4k",      0, { 0 }, NULL },
+
+    { 0x08, "NXP MIFARE Plus 1k",         0, { 0 }, NULL },
+    { 0x18, "NXP MIFARE Plus 4k",         0, { 0 }, NULL },
+    { 0x10, "NXP MIFARE Plus 1k",         0, { 0 }, NULL },
+    { 0x11, "NXP MIFARE Plus 4k",         0, { 0 }, NULL },
+    { 0x20, "NXP MIFARE Plus 1k",         0, { 0 }, NULL },
+    { 0x20, "NXP MIFARE Plus 4k",         0, { 0 }, NULL },
+    { 0x20, "NXP MIFARE Plus 1k/4k",     11, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6}, NULL },
+    { 0x20, "NXP MIFARE Plus 2k/4k",     11, { 0x75, 0x77, 0x80, 0x02, 0xc1, 0x05, 0x2f, 0x2f, 0x01, 0xbc, 0xd6 }, NULL },
+
+    { 0x88, "Infineon MIFARE Classic 1k", 0, { 0 }, NULL },
+    { 0x38, "Nokia MIFARE Classic 4k (Emulated)", 0, { 0 }, NULL },
+    { 0x20, "NXP MIFARE DESFire",         5, { 0x75, 0x77, 0x81, 0x02, 0x80 }, NULL },
+    { 0x28, "NXP JCOP31",                 0, { 0 }, NULL },
+    /* @todo handle ATS to be able to know which one is it. */
+    { 0x20, "NXP JCOP31 or JCOP41",       0, { 0 }, NULL },
+    { 0x28, "NXP JCOP41",                 0, { 0 }, NULL },
+    { 0x98, "Gemplus MPCOS",              0, { 0 }, NULL },
+    /* @note I'm not sure that Jewel can be detected using this modulation but I haven't Jewel tags to test. */
+    { 0x98, "Innovision R&T Jewel",       0, { 0 }, NULL },
+};
 
 int
 main (int argc, const char *argv[])
@@ -165,10 +186,15 @@ main (int argc, const char *argv[])
       if (nfc_initiator_select_passive_target (pnd, NM_ISO14443A_106, NULL, 0, &nti)) {
         printf ("  ISO14443A: ");
         const char *tag_name = NULL;
+	const char *additionnal_info = NULL;
 
         for (size_t i = 0; i < sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag); i++) {
             if ( (nti.nai.btSak == iso14443a_tags[i].SAK) ) {
                 // printf("DBG: iso14443a_tags[i].ATS_length = %d , nti.nai.szAtsLen = %d", iso14443a_tags[i].ATS_length, nti.nai.szAtsLen);
+                if ( iso14443a_tags[i].identication_fct != NULL ) {
+                    additionnal_info = iso14443a_tags[i].identication_fct(nti);
+                }
+                
                 if( iso14443a_tags[i].ATS_length == 0 ) {
                     tag_name = (iso14443a_tags[i].name);
                     break;
@@ -183,7 +209,7 @@ main (int argc, const char *argv[])
             }
         }
         if( tag_name != NULL ) {
-            printf("%s (UID=", tag_name);
+            printf("%s%s (UID=", tag_name, additionnal_info);
             print_hex (nti.nai.abtUid, nti.nai.szUidLen);
             printf (")\n");
         } else {
@@ -244,7 +270,9 @@ main (int argc, const char *argv[])
 
     nfc_disconnect (pnd);
   }
-  if (device_count > 1)
-      printf ("Total: %d tag(s) on %d device(s).\n", tag_count, device_count);
+  if (device_count > 1) {
+    printf ("Total: %d tag(s) on %d device(s).\n", tag_count, device_count);
+  }
+
   return EXIT_SUCCESS;
 }
