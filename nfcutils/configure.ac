@@ -1,4 +1,4 @@
-AC_INIT(nfcutils, 0.1.2, rconty@il4p.fr)
+AC_INIT(nfcutils, 0.2.9, rconty@il4p.fr)
 
 AC_CONFIG_HEADER(config.h)
 
