@@ -39,14 +39,14 @@
 #include <nfc/nfc.h>
 
 static nfc_device_t *pnd;
-static byte_t abtFelica[5] = { 0x00, 0xff, 0xff, 0x00, 0x00 };
 
 #define ERR(x, ...) printf("ERROR: " x "\n", __VA_ARGS__ )
 
-#define MAX_DEVICE_COUNT	16
-#define MAX_ATS_LENGTH		32
+#define MAX_DEVICE_COUNT  16
+#define MAX_TARGET_COUNT  16
+#define MAX_ATS_LENGTH    32
 
-typedef const char* (*identication_hook)(const nfc_target_info_t nti);
+typedef const char* (*identication_hook)(const nfc_iso14443a_info_t nai);
 
 struct iso14443a_tag {
     uint8_t SAK;
@@ -56,28 +56,8 @@ struct iso14443a_tag {
     identication_hook identication_fct;
 };
 
-/*
-Theses values comes from http://www.libnfc.org/documentation/hardware/tags/iso14443
-
-Manufacturer	Product			ATQA	SAK	ATS (called ATR for contact smartcards) 
-
-NXP		MIFARE Mini		00 04 	09 	
-		MIFARE Classic 1K 	00 04 	08 	
-		MIFARE Classic 4K 	00 02 	18 	
-		MIFARE Ultralight 	00 44 	00 	
-		MIFARE DESFire		03 44 	20 	06 75 77 81 02 80
-		MIFARE DESFire EV1 	03 44 	20 	06 75 77 81 02 80
-		JCOP31			03 04 	28 	38 77 b1 4a 43 4f 50 33 31
-		JCOP31 v2.4.1		00 48 	20 	78 77 b1 02 4a 43 4f 50 76 32 34 31
-		JCOP41 v2.2		00 48 	20 	38 33 b1 4a 43 4f 50 34 31 56 32 32
-		JCOP41 v2.3.1		00 04 	28 	38 33 b1 4a 43 4f 50 34 31 56 32 33 31
-Infineon 	MIFARE Classic 1K 	00 04 	88 	
-Gemplus 	MPCOS 			00 02 	98
-Innovision R&T 	Jewel 			0C 00
-*/
-
 void
-print_hex (byte_t * pbtData, size_t szData)
+print_hex (const byte_t* pbtData, size_t szData)
 {
   for (size_t i = 0; i < szData; i++) {
     printf ("%02x", pbtData[i]);
@@ -85,7 +65,7 @@ print_hex (byte_t * pbtData, size_t szData)
 }
 
 const char* 
-mifare_ultralight_identification(const nfc_target_info_t nti)
+mifare_ultralight_identification(const nfc_iso14443a_info_t nai)
 {
   byte_t abtCmd[2];
   byte_t abtRx[265];
@@ -94,13 +74,20 @@ mifare_ultralight_identification(const nfc_target_info_t nti)
   abtCmd[0] = 0x30;  // MIFARE Ultralight READ command
   abtCmd[1] = 0x10;  // block address (1K=0x00..0x39, 4K=0x00..0xff)
 
-  if (!nfc_initiator_transceive_dep_bytes(pnd,abtCmd,2,abtRx,&szRxLen)) {
-    // READ command of 0x10 failed, we consider that Ultralight does have 0x10 address, so it's a "simple" Ultralight (i.e. not a Ultralight C)
-    // When a READ failed, the tag returns in HALT state, so we need to reselect tag
-    nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nti.nai.abtUid, nti.nai.szUidLen, NULL);
+  if(nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nai.abtUid, nai.szUidLen, NULL) ) {
+    if (nfc_initiator_transceive_dep_bytes(pnd,abtCmd,2,abtRx,&szRxLen)) {
+      // READ command of 0x10 success, we consider that Ultralight does have 0x10 address, so it's a Ultralight C
+      return " C";
+    } else {
+      // When a READ failed, the tag returns in HALT state, so we don't need to deselect tag
+      return "";
+    }
+  } else {
+    // Unable to reselect Ultralight tag
     return "";
   }
-  return " C";
+  nfc_initiator_deselect_target(pnd);
+  return "";
 }
 
 struct iso14443a_tag iso14443a_tags[] = {
@@ -108,7 +95,8 @@ struct iso14443a_tag iso14443a_tags[] = {
     { 0x09, "NXP MIFARE Mini",            0, { 0 }, NULL },
     { 0x08, "NXP MIFARE Classic 1k",      0, { 0 }, NULL },
     { 0x18, "NXP MIFARE Classic 4k",      0, { 0 }, NULL },
-
+    { 0x20, "NXP MIFARE DESFire",         5, { 0x75, 0x77, 0x81, 0x02, 0x80 }, NULL },
+    
     { 0x08, "NXP MIFARE Plus 1k",         0, { 0 }, NULL },
     { 0x18, "NXP MIFARE Plus 4k",         0, { 0 }, NULL },
     { 0x10, "NXP MIFARE Plus 1k",         0, { 0 }, NULL },
@@ -120,7 +108,6 @@ struct iso14443a_tag iso14443a_tags[] = {
 
     { 0x88, "Infineon MIFARE Classic 1k", 0, { 0 }, NULL },
     { 0x38, "Nokia MIFARE Classic 4k (Emulated)", 0, { 0 }, NULL },
-    { 0x20, "NXP MIFARE DESFire",         5, { 0x75, 0x77, 0x81, 0x02, 0x80 }, NULL },
     { 0x28, "NXP JCOP31",                 0, { 0 }, NULL },
     /* @todo handle ATS to be able to know which one is it. */
     { 0x20, "NXP JCOP31 or JCOP41",       0, { 0 }, NULL },
@@ -129,6 +116,57 @@ struct iso14443a_tag iso14443a_tags[] = {
     /* @note I'm not sure that Jewel can be detected using this modulation but I haven't Jewel tags to test. */
     { 0x98, "Innovision R&T Jewel",       0, { 0 }, NULL },
 };
+
+void
+print_iso14443a_name(const nfc_iso14443a_info_t nai)
+{
+  const char *tag_name = NULL;
+  const char *additionnal_info = NULL;
+  
+  for (size_t i = 0; i < sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag); i++) {
+    if ( (nai.btSak == iso14443a_tags[i].SAK) ) {
+      // printf("DBG: iso14443a_tags[i].ATS_length = %d , nai.szAtsLen = %d", iso14443a_tags[i].ATS_length, nai.szAtsLen);
+      if ( iso14443a_tags[i].identication_fct != NULL ) {
+        additionnal_info = iso14443a_tags[i].identication_fct(nai);
+      }
+      
+      if( iso14443a_tags[i].ATS_length == 0 ) {
+        tag_name = (iso14443a_tags[i].name);
+        break;
+      }
+      
+      if( iso14443a_tags[i].ATS_length == nai.szAtsLen ) {
+        if ( memcmp( nai.abtAts, iso14443a_tags[i].ATS, iso14443a_tags[i].ATS_length ) == 0 ) {
+          tag_name = (iso14443a_tags[i].name);
+          break;
+        }
+      }
+    }
+  }
+  
+  if( tag_name != NULL ) {
+    if( additionnal_info != NULL ) {
+      printf("%s%s (UID=", tag_name, additionnal_info);
+    } else {
+      printf("%s (UID=", tag_name);
+    }
+    print_hex (nai.abtUid, nai.szUidLen);
+    printf (")\n");
+  } else {
+    printf ("Unknown ISO14443A tag type: ");
+    printf ("ATQA (SENS_RES): ");
+    print_hex (nai.abtAtqa, 2);
+    printf (", UID (NFCID%c): ", (nai.abtUid[0] == 0x08 ? '3' : '1'));
+    print_hex (nai.abtUid, nai.szUidLen);
+    printf (", SAK (SEL_RES): ");
+    print_hex (&nai.btSak, 1);
+    if (nai.szAtsLen) {
+      printf (", ATS (ATR): ");
+      print_hex (nai.abtAts, nai.szAtsLen);
+    }
+    printf ("\n");
+  }
+}
 
 int
 main (int argc, const char *argv[])
@@ -139,8 +177,9 @@ main (int argc, const char *argv[])
   uint8_t tag_count = 0;	// total
 
   nfc_device_desc_t *pnddDevices;
-  size_t szFound;
-
+  size_t szDeviceFound;
+  size_t szTargetFound;
+  
   (void)(argc, argv);
 
   // Try to open the NFC device
@@ -149,15 +188,16 @@ main (int argc, const char *argv[])
     return EXIT_FAILURE;
   }
 
-  nfc_list_devices (pnddDevices, MAX_DEVICE_COUNT, &szFound);
+  nfc_list_devices (pnddDevices, MAX_DEVICE_COUNT, &szDeviceFound);
 
-  if (szFound == 0) {
+  if (szDeviceFound == 0) {
     ERR ("%s", "No device found.");
   }
 
-  for (size_t i = 0; i < szFound; i++) {
+  for (size_t i = 0; i < szDeviceFound; i++) {
     pnd = nfc_connect (&(pnddDevices[i]));
-
+    nfc_target_info_t anti[MAX_TARGET_COUNT];
+    
     device_count++;
     device_tag_count = 0;
 
@@ -182,63 +222,18 @@ main (int argc, const char *argv[])
 
     bool no_more_tag = false;
     printf ("device = %s\n", pnd->acName);
-    do {
-      if (nfc_initiator_select_passive_target (pnd, NM_ISO14443A_106, NULL, 0, &nti)) {
-        printf ("  ISO14443A: ");
-        const char *tag_name = NULL;
-	const char *additionnal_info = NULL;
-
-        for (size_t i = 0; i < sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag); i++) {
-            if ( (nti.nai.btSak == iso14443a_tags[i].SAK) ) {
-                // printf("DBG: iso14443a_tags[i].ATS_length = %d , nti.nai.szAtsLen = %d", iso14443a_tags[i].ATS_length, nti.nai.szAtsLen);
-                if ( iso14443a_tags[i].identication_fct != NULL ) {
-                    additionnal_info = iso14443a_tags[i].identication_fct(nti);
-                }
-                
-                if( iso14443a_tags[i].ATS_length == 0 ) {
-                    tag_name = (iso14443a_tags[i].name);
-                    break;
-                }
-
-                if( iso14443a_tags[i].ATS_length == nti.nai.szAtsLen ) {
-                    if ( memcmp( nti.nai.abtAts, iso14443a_tags[i].ATS, iso14443a_tags[i].ATS_length ) == 0 ) {
-                        tag_name = (iso14443a_tags[i].name);
-                        break;
-                    }
-                }
-            }
-        }
-        if( tag_name != NULL ) {
-            printf("%s%s (UID=", tag_name, additionnal_info);
-            print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-            printf (")\n");
-        } else {
-          printf ("Unknown ISO14443A tag type: ");
-          printf ("ATQA (SENS_RES): ");
-          print_hex (nti.nai.abtAtqa, 2);
-          printf (", UID (NFCID%c): ", (nti.nai.abtUid[0] == 0x08 ? '3' : '1'));
-          print_hex (nti.nai.abtUid, nti.nai.szUidLen);
-          printf (", SAK (SEL_RES): ");
-          print_hex (&nti.nai.btSak, 1);
-          if (nti.nai.szAtsLen) {
-            printf (", ATS (ATR): ");
-            print_hex (nti.nai.abtAts, nti.nai.szAtsLen);
-          }
-          printf ("\n");
-        }
-        nfc_initiator_deselect_target (pnd);
-        device_tag_count++;
-      } else if (nfc_initiator_select_passive_target (pnd, NM_FELICA_212, abtFelica, 5, &nti)
-                 || nfc_initiator_select_passive_target (pnd, NM_FELICA_424, abtFelica, 5, &nti)) {
-        printf ("  Felica: ");
-        printf ("ID (NFCID2): ");
-        print_hex (nti.nfi.abtId, 8);
-        printf (", Parameter (PAD): ");
-        print_hex (nti.nfi.abtPad, 8);
-        printf ("\n");
-        nfc_initiator_deselect_target (pnd);
-        device_tag_count++;
-      } else if (nfc_initiator_select_passive_target (pnd, NM_ISO14443B_106, (byte_t *) "\x00", 1, &nti)) {
+    
+    if (nfc_initiator_list_passive_targets(pnd, NM_ISO14443A_106, anti, MAX_TARGET_COUNT, &szTargetFound )) {
+      size_t n;
+      for(n=0; n<szTargetFound; n++) {
+        print_iso14443a_name (anti[n].nai);
+      }
+    }
+    device_tag_count += szTargetFound;
+    
+    if (nfc_initiator_list_passive_targets(pnd, NM_ISO14443B_106, anti, MAX_TARGET_COUNT, &szTargetFound )) {
+      size_t n;
+      for(n=0; n<szTargetFound; n++) {
         printf ("  ISO14443B: ");
         printf ("ATQB: ");
         print_hex (nti.nbi.abtAtqb, 12);
@@ -252,17 +247,11 @@ main (int argc, const char *argv[])
         printf (", PARAMS: %02x %02x %02x %02x", nti.nbi.btParam1, nti.nbi.btParam2, nti.nbi.btParam3,
                 nti.nbi.btParam4);
         printf ("\n");
-        nfc_initiator_deselect_target (pnd);
-        device_tag_count++;
-      } else if (nfc_initiator_select_passive_target (pnd, NM_JEWEL_106, NULL, 0, &nti)) {
-        printf ("  Jewel: No test results yet");
-        nfc_initiator_deselect_target (pnd);
-        device_tag_count++;
-      } else {
-        no_more_tag = true;
       }
-    } while (no_more_tag != true);
-    printf ("%d tag(s) on device.\n\n", device_tag_count);
+    }
+    device_tag_count += szTargetFound;
+    
+    printf ("%d tag(s) on device.\n", device_tag_count);
     tag_count += device_tag_count;
 
     // Disable field 
