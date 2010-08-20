@@ -78,7 +78,7 @@ nfcauth_get_targets (char **targets[])
 
 	    nfc_target_info_t target;
 
-	    while (nfc_initiator_select_tag (initiator, NM_ISO14443A_106, NULL, 0, &target)) {
+	    while (nfc_initiator_select_passive_target (initiator, NM_ISO14443A_106, NULL, 0, &target)) {
 
 		if ((*targets)[ret] = malloc (2 * target.nai.szUidLen + 1)) {
 		    int n;
@@ -89,7 +89,7 @@ nfcauth_get_targets (char **targets[])
 		    ret++;
 		}
 
-		nfc_initiator_deselect_tag (initiator);
+		nfc_initiator_deselect_target (initiator);
 	    }
 
 	    nfc_disconnect (initiator);
