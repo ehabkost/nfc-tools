@@ -54,7 +54,7 @@ AC_MSG_RESULT($enable_debug)
  
 if test x"$enable_debug" = "xyes"
 then
-  CFLAGS="$CFLAGS -g3 -Wall -DDEBUG -pedantic"
+  CFLAGS="$CFLAGS -O0 -g3 -Wall -DDEBUG -pedantic"
 fi
 AC_SUBST([DEBUG_CFLAGS])
 

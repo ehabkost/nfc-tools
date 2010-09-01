@@ -29,6 +29,7 @@
  * ISO14443 tags list
  *  http://www.libnfc.org/documentation/hardware/tags/iso14443
  */
+#include "config.h"
 
 #include <stdio.h>
 #include <stddef.h>
@@ -46,7 +47,7 @@ static nfc_device_t *pnd;
 #define MAX_TARGET_COUNT  16
 #define MAX_ATS_LENGTH    32
 
-typedef const char* (*identication_hook)(const nfc_iso14443a_info_t nai);
+typedef char* (*identication_hook)(const nfc_iso14443a_info_t nai);
 
 struct iso14443a_tag {
     uint8_t SAK;
@@ -64,7 +65,7 @@ print_hex (const byte_t* pbtData, size_t szData)
   }
 }
 
-const char* 
+char* 
 mifare_ultralight_identification(const nfc_iso14443a_info_t nai)
 {
   byte_t abtCmd[2];
@@ -75,19 +76,58 @@ mifare_ultralight_identification(const nfc_iso14443a_info_t nai)
   abtCmd[1] = 0x10;  // block address (1K=0x00..0x39, 4K=0x00..0xff)
 
   if(nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nai.abtUid, nai.szUidLen, NULL) ) {
-    if (nfc_initiator_transceive_dep_bytes(pnd,abtCmd,2,abtRx,&szRxLen)) {
+    if (nfc_initiator_transceive_dep_bytes(pnd, abtCmd,sizeof(abtCmd), abtRx, &szRxLen)) {
       // READ command of 0x10 success, we consider that Ultralight does have 0x10 address, so it's a Ultralight C
-      return " C";
+      return strdup(" C");
     } else {
       // When a READ failed, the tag returns in HALT state, so we don't need to deselect tag
-      return "";
+      return NULL;
     }
   } else {
     // Unable to reselect Ultralight tag
-    return "";
+    return NULL;
   }
   nfc_initiator_deselect_target(pnd);
-  return "";
+  return NULL;
+}
+
+/*
+Document used to code this function:
+   NXP Semiconductors
+   AN094533
+   DESFire EV1- Features and Hints
+*/
+char*
+mifare_desfire_identification(const nfc_iso14443a_info_t nai)
+{
+  byte_t abtCmd[] = { 0x60 }; // MIFARE DESFire GetVersion command
+  byte_t abtRx[265];
+  size_t szRxLen;
+  byte_t abtDESFireVersion[14];
+  char* res = NULL;
+  
+  if(nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nai.abtUid, nai.szUidLen, NULL) ) {
+    if (nfc_initiator_transceive_dep_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen)) {
+      // MIFARE DESFire GetVersion command success, decoding...
+      if( szRxLen == 8 ) { // GetVersion should reply 8 bytes
+        memcpy( abtDESFireVersion, abtRx + 1, 7 );
+        abtCmd[0] = 0xAF; // ask for GetVersion next bytes
+        if (nfc_initiator_transceive_dep_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen)) {
+          if( szRxLen == 8 ) { // GetVersion should reply 8 bytes
+            memcpy( abtDESFireVersion + 7, abtRx + 1, 7 );
+            res = malloc(16); // We can alloc res: we will be able to provide information
+            bool bEV1 = ( ( abtDESFireVersion[3] == 0x01 ) && ( abtDESFireVersion[10] == 0x01 ) ); // Hardware major version and software major version should be equals to 1 to be an DESFire EV1
+            snprintf(res, 16, " %s%dk", bEV1 ? "EV1 " : "", (uint16_t)(1 << ((abtDESFireVersion[5] >> 1) - 10)));
+          }
+        }
+      }
+    }
+  } else {
+    // Select failed, tag may have been removed, so we can't provide more info and we don't have to deselect tag
+    return res;
+  }
+  nfc_initiator_deselect_target(pnd);
+  return res;
 }
 
 struct iso14443a_tag iso14443a_tags[] = {
@@ -95,7 +135,7 @@ struct iso14443a_tag iso14443a_tags[] = {
     { 0x09, "NXP MIFARE Mini",            0, { 0 }, NULL },
     { 0x08, "NXP MIFARE Classic 1k",      0, { 0 }, NULL },
     { 0x18, "NXP MIFARE Classic 4k",      0, { 0 }, NULL },
-    { 0x20, "NXP MIFARE DESFire",         5, { 0x75, 0x77, 0x81, 0x02, 0x80 }, NULL },
+    { 0x20, "NXP MIFARE DESFire",         5, { 0x75, 0x77, 0x81, 0x02, 0x80 }, mifare_desfire_identification },
     
     { 0x08, "NXP MIFARE Plus 1k",         0, { 0 }, NULL },
     { 0x18, "NXP MIFARE Plus 4k",         0, { 0 }, NULL },
@@ -121,7 +161,7 @@ void
 print_iso14443a_name(const nfc_iso14443a_info_t nai)
 {
   const char *tag_name = NULL;
-  const char *additionnal_info = NULL;
+  char *additionnal_info = NULL;
   
   for (size_t i = 0; i < sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag); i++) {
     if ( (nai.btSak == iso14443a_tags[i].SAK) ) {
@@ -147,6 +187,7 @@ print_iso14443a_name(const nfc_iso14443a_info_t nai)
   if( tag_name != NULL ) {
     if( additionnal_info != NULL ) {
       printf("%s%s (UID=", tag_name, additionnal_info);
+      free(additionnal_info);
     } else {
       printf("%s (UID=", tag_name);
     }
@@ -180,7 +221,8 @@ main (int argc, const char *argv[])
   size_t szDeviceFound;
   size_t szTargetFound;
   
-  (void)(argc, argv);
+  (void)(argc);
+  (void)(argv);
 
   // Try to open the NFC device
   if (!(pnddDevices = malloc (MAX_DEVICE_COUNT * sizeof (*pnddDevices)))) {
@@ -220,7 +262,6 @@ main (int argc, const char *argv[])
     // Enable field so more power consuming cards can power themselves up
     nfc_configure (pnd, NDO_ACTIVATE_FIELD, true);
 
-    bool no_more_tag = false;
     printf ("device = %s\n", pnd->acName);
     
     if (nfc_initiator_list_passive_targets(pnd, NM_ISO14443A_106, anti, MAX_TARGET_COUNT, &szTargetFound )) {
