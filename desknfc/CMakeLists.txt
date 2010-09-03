@@ -41,8 +41,6 @@ include(UseDoxygen)
 
 # Sources files
 set(desknfc_SRCS
-#  main.cpp
-#  NfcUiManager.cpp
   Content.cpp
   NfcTarget.cpp
   NfcDevice.cpp
