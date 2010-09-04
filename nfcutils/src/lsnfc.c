@@ -76,7 +76,7 @@ mifare_ultralight_identification(const nfc_iso14443a_info_t nai)
   abtCmd[1] = 0x10;  // block address (1K=0x00..0x39, 4K=0x00..0xff)
 
   if(nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nai.abtUid, nai.szUidLen, NULL) ) {
-    if (nfc_initiator_transceive_dep_bytes(pnd, abtCmd,sizeof(abtCmd), abtRx, &szRxLen)) {
+    if (nfc_initiator_transceive_bytes(pnd, abtCmd,sizeof(abtCmd), abtRx, &szRxLen)) {
       // READ command of 0x10 success, we consider that Ultralight does have 0x10 address, so it's a Ultralight C
       return strdup(" C");
     } else {
@@ -107,12 +107,12 @@ mifare_desfire_identification(const nfc_iso14443a_info_t nai)
   char* res = NULL;
   
   if(nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nai.abtUid, nai.szUidLen, NULL) ) {
-    if (nfc_initiator_transceive_dep_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen)) {
+    if (nfc_initiator_transceive_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen)) {
       // MIFARE DESFire GetVersion command success, decoding...
       if( szRxLen == 8 ) { // GetVersion should reply 8 bytes
         memcpy( abtDESFireVersion, abtRx + 1, 7 );
         abtCmd[0] = 0xAF; // ask for GetVersion next bytes
-        if (nfc_initiator_transceive_dep_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen)) {
+        if (nfc_initiator_transceive_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen)) {
           if( szRxLen == 8 ) { // GetVersion should reply 8 bytes
             memcpy( abtDESFireVersion + 7, abtRx + 1, 7 );
             res = malloc(16); // We can alloc res: we will be able to provide information
