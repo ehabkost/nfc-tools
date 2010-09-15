@@ -14,15 +14,8 @@ AC_CHECK_LIB(dl, main)
 
 #----------------------------------------------------------------------
 # libnfc Checks
-AC_CHECK_HEADER(nfc/nfc.h, [], have_nfc=no)
-if test "$have_nfc" = "no"; then
-	AC_MSG_ERROR("The libnfc headers are missing")
-fi
-AC_CHECK_LIB(nfc, nfc_connect, [], have_nfc=no)
-if test "$have_nfc" = "no"; then
-	AC_MSG_ERROR("The libnfc library is missing")
-fi
-
+LIBNFC_REQUIRED_VERSION=1.3.9
+PKG_CHECK_MODULES([libnfc], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], [AC_MSG_ERROR([libnfc >= $LIBNFC_REQUIRED_VERSION is mandatory.])])
 #----------------------------------------------------------------------
 # PAM Checks
 AC_CHECK_HEADER(security/pam_modules.h,

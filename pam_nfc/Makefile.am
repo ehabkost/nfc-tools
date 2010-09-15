@@ -3,7 +3,8 @@
 #libnfc_access_la_SOURCES = \
 #	nfc-access.c
 
-AM_CFLAGS = -DSYSCONFDIR="\"${sysconfdir}\""
+AM_CFLAGS = -DSYSCONFDIR="\"${sysconfdir}\"" @libnfc_CFLAGS@
+AM_LDFLAGS = @libnfc_LIBS@
 ACLOCAL_AMFLAGS = -I m4
 
 libnfcauthdir = ${libdir}
@@ -22,7 +23,7 @@ pam_nfc_la_LDFLAGS = \
 	-module -avoid-version
 
 pam_nfc_la_LIBADD = \
-	-lnfcauth
+	-lnfcauth \
 	-lpam
 
 bin_PROGRAMS = pam-nfc-add
