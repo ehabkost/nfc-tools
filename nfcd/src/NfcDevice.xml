@@ -15,11 +15,11 @@
 			<arg type="s" name="tgUid" direction="in" />
 			<arg type="s" name="path" direction="out" />
 		</method>
-		<signal name="targetFieldEntered">
+		<signal name="targetAdded">
 			<arg type="s" name="uid" direction="out"/>
 			<arg type="s" name="name" direction="out"/>
 		</signal>
-		<signal name="targetFieldLeft">
+		<signal name="targetRemoved">
 			<arg type="s" name="uid" direction="out"/>
 			<arg type="s" name="name" direction="out"/>
 		</signal>

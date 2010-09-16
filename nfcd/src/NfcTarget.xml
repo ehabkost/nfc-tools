@@ -11,21 +11,5 @@
 		<method name="getUuid">
 			<arg type="s" name="uuid" direction="out" />
 		</method>
-
-		<method name="getContentListStrings">
-			<arg type="as" name="contentList" direction="out" />
-		</method>
-		<method name="getContentById">
-			<arg type="i" name="id" direction="in" />
-			<arg type="ay" name="content" direction="out" />
-		</method>
-		<method name="putMimeContent">
-			<arg type="s" name="type" direction="in" />
-			<arg type="ay" name="qb" direction="in" />
-		</method>
-		<signal name="newContentAvailable">
-			<arg type="i" name="id" />
-			<arg type="s" name="type" />
-		</signal>      
 	</interface>
 </node>

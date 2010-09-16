@@ -9,6 +9,8 @@
 
 #include <nfc/nfc.h>
 #include <freefare.h>
+#include "iso14443b.h"
+
 
 class NfcTarget;
 
@@ -22,7 +24,7 @@ class NfcDevice : public QObject
     Q_OBJECT
 
 public:
-  
+
   NfcDevice(const uchar, const nfc_device_desc_t, QMutex*);
 
 
@@ -47,10 +49,10 @@ public Q_SLOTS:
 Q_SIGNALS:
 
   /// signal emitted when a target enter the field
-  void targetFieldEntered(QString uid, QString name);
+  void targetAdded(QString uid, QString name);
 
   /// signal emitted when a target leave the field
-  void targetFieldLeft(QString uid, QString name);
+  void targetRemoved(QString uid, QString name);
 
 protected:
 
@@ -75,7 +77,7 @@ protected:
   void timerEvent(QTimerEvent *event);
 
   /// register a new target
-  void registerTarget(MifareTag tag);
+  void registerTarget(NfcTarget* target);
 
   /// unregister a target
   void unregisterTarget(NfcTarget* target);

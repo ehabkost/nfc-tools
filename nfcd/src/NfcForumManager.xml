@@ -1,0 +1,18 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+        "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/nfc_tools/nfcd">
+        <interface name="org.nfc_tools.nfcd.NfcForumManager">
+                <method name="getNfcForumTagList">
+                        <arg type="as" name="nfcForumTags" direction="out" />
+                </method>
+                <signal name="ndefContentDetected">
+                        <arg type="ay" name="qb" />
+                </signal>
+                <signal name="nfcForumTagAdded">
+                        <arg type="s" name="uid" direction="out"/>
+                </signal>
+                <signal name="nfcForumTagRemoved">
+                        <arg type="s" name="uid" direction="out"/>
+                </signal>
+        </interface>
+</node>

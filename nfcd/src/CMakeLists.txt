@@ -1,30 +1,28 @@
 # Sources files
 set(nfcd_SOURCES
-  main.cpp
+  NFCd.cpp
   NfcDevice.cpp
   NfcDeviceManager.cpp
+  NfcForumManager.cpp
+  NfcForumTag.cpp
   NfcTarget.cpp
-  Entry.cpp 
-  MimeContentEntry.cpp
-  Content.cpp
-  UriEntry.cpp
-  TitleEntry.cpp
+  iso14443b.c
+  nfcforum_tag.c
 )
 
 # Generate D-Bus adaptor
 qt4_add_dbus_adaptor(nfcd_SOURCES NfcDeviceManager.xml NfcDeviceManager.h NfcDeviceManager )
 qt4_add_dbus_adaptor(nfcd_SOURCES NfcDevice.xml NfcDevice.h NfcDevice )
-qt4_add_dbus_adaptor(nfcd_SOURCES NfcTarget.xml NfcTarget.h NfcTarget ) 
+qt4_add_dbus_adaptor(nfcd_SOURCES NfcTarget.xml NfcTarget.h NfcTarget )
+qt4_add_dbus_adaptor(nfcd_SOURCES NfcForumManager.xml NfcForumManager.h NfcForumManager )
+qt4_add_dbus_adaptor(nfcd_SOURCES NfcForumTag.xml NfcForumTag.h NfcForumTag )
 
 set(nfcd_MOCABLE_HEADERS
   NfcDevice.h
   NfcDeviceManager.h
   NfcTarget.h
-  Entry.h
-  MimeContentEntry.h
-  Content.h
-  UriEntry.h
-  TitleEntry.h
+  NfcForumManager.h
+  NfcForumTag.h
 )
 
 # Qt Definitions
@@ -39,7 +37,6 @@ target_link_libraries( nfcd
   ${QT_LIBRARIES}
   ${LIBNFC_LIBRARIES}
   ${LIBFREEFARE_LIBRARIES}
-  -lndef
 )
 
 install( PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/nfcd DESTINATION bin )
