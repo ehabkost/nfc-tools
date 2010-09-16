@@ -1,7 +1,6 @@
 #include "NfcTarget.h"
 
 #include <QDebug>
-#include <ndef/ndefrecordtype.h>
 
 #include <stdlib.h>
 #include <nfc/nfc.h>
