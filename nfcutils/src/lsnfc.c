@@ -212,7 +212,6 @@ print_iso14443a_name(const nfc_iso14443a_info_t nai)
 int
 main (int argc, const char *argv[])
 {
-  nfc_target_info_t nti;
   uint8_t device_count = 0;
   uint8_t device_tag_count = 0;	// per device
   uint8_t tag_count = 0;	// total
@@ -278,16 +277,15 @@ main (int argc, const char *argv[])
       for(n=0; n<szTargetFound; n++) {
         printf ("  ISO14443B: ");
         printf ("ATQB: ");
-        print_hex (nti.nbi.abtAtqb, 12);
+        print_hex (anti[n].nbi.abtAtqb, 12);
         printf (", ID: ");
-        print_hex (nti.nbi.abtId, 4);
-        printf (", CID: %02x", nti.nbi.btCid);
-        if (nti.nbi.szInfLen > 0) {
+        print_hex (anti[n].nbi.abtId, 4);
+        printf (", CID: %02x", anti[n].nbi.btCid);
+        if (anti[n].nbi.szInfLen > 0) {
           printf (", INF: ");
-          print_hex (nti.nbi.abtInf, nti.nbi.szInfLen);
+          print_hex (anti[n].nbi.abtInf, anti[n].nbi.szInfLen);
         }
-        printf (", PARAMS: %02x %02x %02x %02x", nti.nbi.btParam1, nti.nbi.btParam2, nti.nbi.btParam3,
-                nti.nbi.btParam4);
+        printf (", PARAMS: %02x %02x %02x %02x", anti[n].nbi.btParam1, anti[n].nbi.btParam2, anti[n].nbi.btParam3, anti[n].nbi.btParam4);
         printf ("\n");
       }
     }
