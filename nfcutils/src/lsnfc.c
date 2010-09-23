@@ -278,14 +278,6 @@ main (int argc, const char *argv[])
         printf ("  ISO14443B: ");
         printf ("ATQB: ");
         print_hex (anti[n].nbi.abtAtqb, 12);
-        printf (", ID: ");
-        print_hex (anti[n].nbi.abtId, 4);
-        printf (", CID: %02x", anti[n].nbi.btCid);
-        if (anti[n].nbi.szInfLen > 0) {
-          printf (", INF: ");
-          print_hex (anti[n].nbi.abtInf, anti[n].nbi.szInfLen);
-        }
-        printf (", PARAMS: %02x %02x %02x %02x", anti[n].nbi.btParam1, anti[n].nbi.btParam2, anti[n].nbi.btParam3, anti[n].nbi.btParam4);
         printf ("\n");
       }
     }
