@@ -276,8 +276,12 @@ main (int argc, const char *argv[])
       size_t n;
       for(n=0; n<szTargetFound; n++) {
         printf ("  ISO14443B: ");
-        printf ("ATQB: ");
-        print_hex (anti[n].nbi.abtAtqb, 12);
+        printf ("PUPI: ");
+        print_hex (anti[n].nbi.abtPupi, 4);
+        printf (" Application Data: ");
+        print_hex (anti[n].nbi.abtApplicationData, 4);
+        printf (" Protocol Info: ");
+        print_hex (anti[n].nbi.abtProtocolInfo, 3);
         printf ("\n");
       }
     }
