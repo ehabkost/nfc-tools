@@ -272,7 +272,7 @@ ned_select_tag(nfc_device_t* nfc_device, tag_t* tag) {
   if ( tag == NULL ) {
       // We are looking for any tag.
       // Poll for a ISO14443A (MIFARE) tag
-      if ( nfc_initiator_select_tag ( nfc_device, NM_ISO14443A_106, NULL, 0, &ti ) ) {
+      if ( nfc_initiator_select_passive_target ( nfc_device, NM_ISO14443A_106, NULL, 0, &ti ) ) {
           rv = malloc(sizeof(tag_t));
           rv->ti = ti;
           rv->modulation = NM_ISO14443A_106;
@@ -280,13 +280,13 @@ ned_select_tag(nfc_device_t* nfc_device, tag_t* tag) {
   } else {
       // tag is not NULL, we are looking for specific tag
       // debug_print_tag(tag);
-      if ( nfc_initiator_select_tag ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
+      if ( nfc_initiator_select_passive_target ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
           rv = tag;
       }
   }
 
   if (rv != NULL) {
-      nfc_initiator_deselect_tag ( nfc_device );
+      nfc_initiator_deselect_target ( nfc_device );
   }
 
   return rv;
@@ -343,7 +343,7 @@ ned_poll_for_tag(nfc_device_t* nfc_device, tag_t* tag)
               rv = malloc(sizeof(tag_t));
               rv->ti = antTargets[0].nti;
               rv->modulation = NM_ISO14443A_106;
-              nfc_initiator_deselect_tag ( nfc_device );
+              nfc_initiator_deselect_target ( nfc_device );
               return rv;
             }
           }

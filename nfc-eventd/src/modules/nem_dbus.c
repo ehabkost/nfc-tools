@@ -34,7 +34,7 @@ tag_get_uid(const nfc_device_t* nfc_device, const tag_t* tag, char **dest) {
     debug_print_tag(tag);
     /// @TODO We don't need to reselect tag to get his UID: tag_t contains this data.
     // Poll for a ISO14443A (MIFARE) tag
-    if ( nfc_initiator_select_tag ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
+    if ( nfc_initiator_select_passive_target ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
         /*
                         printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
                         printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.nai.abtAtqa,2 );
@@ -55,7 +55,7 @@ tag_get_uid(const nfc_device_t* nfc_device, const tag_t* tag, char **dest) {
         }
         pcUid[0]='\0';
         DBG( "ISO14443A (MIFARE) tag found: uid=0x%s", *dest );
-        nfc_initiator_deselect_tag ( nfc_device );
+        nfc_initiator_deselect_target ( nfc_device );
     } else {
         *dest = NULL;
         DBG("%s", "ISO14443A (MIFARE) tag not found" );
