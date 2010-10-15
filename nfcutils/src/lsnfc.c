@@ -75,7 +75,11 @@ mifare_ultralight_identification(const nfc_iso14443a_info_t nai)
   abtCmd[0] = 0x30;  // MIFARE Ultralight READ command
   abtCmd[1] = 0x10;  // block address (1K=0x00..0x39, 4K=0x00..0xff)
 
-  if(nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nai.abtUid, nai.szUidLen, NULL) ) {
+  nfc_modulation_t nm = {
+    .nmt = NMT_ISO14443A,
+    .nbr = NBR_106
+  };
+  if(nfc_initiator_select_passive_target(pnd, nm, nai.abtUid, nai.szUidLen, NULL) ) {
     if (nfc_initiator_transceive_bytes(pnd, abtCmd,sizeof(abtCmd), abtRx, &szRxLen)) {
       // READ command of 0x10 success, we consider that Ultralight does have 0x10 address, so it's a Ultralight C
       return strdup(" C");
@@ -106,7 +110,11 @@ mifare_desfire_identification(const nfc_iso14443a_info_t nai)
   byte_t abtDESFireVersion[14];
   char* res = NULL;
   
-  if(nfc_initiator_select_passive_target(pnd, NM_ISO14443A_106, nai.abtUid, nai.szUidLen, NULL) ) {
+  nfc_modulation_t nm = {
+    .nmt = NMT_ISO14443A,
+    .nbr = NBR_106
+  };
+  if(nfc_initiator_select_passive_target(pnd, nm, nai.abtUid, nai.szUidLen, NULL) ) {
     if (nfc_initiator_transceive_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen)) {
       // MIFARE DESFire GetVersion command success, decoding...
       if( szRxLen == 8 ) { // GetVersion should reply 8 bytes
@@ -237,7 +245,7 @@ main (int argc, const char *argv[])
 
   for (size_t i = 0; i < szDeviceFound; i++) {
     pnd = nfc_connect (&(pnddDevices[i]));
-    nfc_target_info_t anti[MAX_TARGET_COUNT];
+    nfc_target_t ant[MAX_TARGET_COUNT];
     
     device_count++;
     device_tag_count = 0;
@@ -264,24 +272,29 @@ main (int argc, const char *argv[])
 
     printf ("device = %s\n", pnd->acName);
     
-    if (nfc_initiator_list_passive_targets(pnd, NM_ISO14443A_106, anti, MAX_TARGET_COUNT, &szTargetFound )) {
+    nfc_modulation_t nm = {
+      .nmt = NMT_ISO14443A,
+      .nbr = NBR_106
+    };
+    if (nfc_initiator_list_passive_targets(pnd, nm, ant, MAX_TARGET_COUNT, &szTargetFound )) {
       size_t n;
       for(n=0; n<szTargetFound; n++) {
-        print_iso14443a_name (anti[n].nai);
+        print_iso14443a_name (ant[n].nti.nai);
       }
     }
     device_tag_count += szTargetFound;
     
-    if (nfc_initiator_list_passive_targets(pnd, NM_ISO14443B_106, anti, MAX_TARGET_COUNT, &szTargetFound )) {
+    nm.nmt = NMT_ISO14443B;
+    if (nfc_initiator_list_passive_targets(pnd, nm, ant, MAX_TARGET_COUNT, &szTargetFound )) {
       size_t n;
       for(n=0; n<szTargetFound; n++) {
         printf ("  ISO14443B: ");
         printf ("PUPI: ");
-        print_hex (anti[n].nbi.abtPupi, 4);
+        print_hex (ant[n].nti.nbi.abtPupi, 4);
         printf (" Application Data: ");
-        print_hex (anti[n].nbi.abtApplicationData, 4);
+        print_hex (ant[n].nti.nbi.abtApplicationData, 4);
         printf (" Protocol Info: ");
-        print_hex (anti[n].nbi.abtProtocolInfo, 3);
+        print_hex (ant[n].nti.nbi.abtProtocolInfo, 3);
         printf ("\n");
       }
     }
