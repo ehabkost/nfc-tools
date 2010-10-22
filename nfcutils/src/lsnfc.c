@@ -72,26 +72,29 @@ mifare_ultralight_identification(const nfc_iso14443a_info_t nai)
   byte_t abtRx[265];
   size_t szRxLen;
 
-  abtCmd[0] = 0x30;  // MIFARE Ultralight READ command
-  abtCmd[1] = 0x10;  // block address (1K=0x00..0x39, 4K=0x00..0xff)
+  abtCmd[0] = 0x1A;  // MIFARE UltralightC Auth command
+  abtCmd[1] = 0x00;  //
 
   nfc_modulation_t nm = {
     .nmt = NMT_ISO14443A,
     .nbr = NBR_106
   };
   if(nfc_initiator_select_passive_target(pnd, nm, nai.abtUid, nai.szUidLen, NULL) ) {
+    nfc_configure (pnd, NDO_EASY_FRAMING, false);
     if (nfc_initiator_transceive_bytes(pnd, abtCmd,sizeof(abtCmd), abtRx, &szRxLen)) {
-      // READ command of 0x10 success, we consider that Ultralight does have 0x10 address, so it's a Ultralight C
+      // AUTH step1 command success, so it's a Ultralight C
+      nfc_configure (pnd, NDO_EASY_FRAMING, true);
+      nfc_initiator_deselect_target(pnd);
       return strdup(" C");
     } else {
-      // When a READ failed, the tag returns in HALT state, so we don't need to deselect tag
+      // When a Auth failed, the tag returns in HALT state, so we don't need to deselect tag
+      nfc_configure (pnd, NDO_EASY_FRAMING, true);
       return NULL;
     }
   } else {
     // Unable to reselect Ultralight tag
     return NULL;
   }
-  nfc_initiator_deselect_target(pnd);
   return NULL;
 }
 
