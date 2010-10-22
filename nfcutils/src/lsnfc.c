@@ -171,39 +171,48 @@ struct iso14443a_tag iso14443a_tags[] = {
 void
 print_iso14443a_name(const nfc_iso14443a_info_t nai)
 {
-  const char *tag_name = NULL;
-  char *additionnal_info = NULL;
+  const char *tag_name[sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag)];
+  int matches=0;
+  char *additionnal_info[sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag)];
   
   for (size_t i = 0; i < sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag); i++) {
     if ( (nai.btSak == iso14443a_tags[i].SAK) ) {
       // printf("DBG: iso14443a_tags[i].ATS_length = %d , nai.szAtsLen = %d", iso14443a_tags[i].ATS_length, nai.szAtsLen);
       if ( iso14443a_tags[i].identication_fct != NULL ) {
-        additionnal_info = iso14443a_tags[i].identication_fct(nai);
+        additionnal_info[matches] = iso14443a_tags[i].identication_fct(nai);
+      } else {
+        additionnal_info[matches] = NULL;
       }
       
       if( iso14443a_tags[i].ATS_length == 0 ) {
-        tag_name = (iso14443a_tags[i].name);
-        break;
+        tag_name[matches++] = (iso14443a_tags[i].name);
+        continue;
       }
       
       if( iso14443a_tags[i].ATS_length == nai.szAtsLen ) {
         if ( memcmp( nai.abtAts, iso14443a_tags[i].ATS, iso14443a_tags[i].ATS_length ) == 0 ) {
-          tag_name = (iso14443a_tags[i].name);
-          break;
+          tag_name[matches++] = (iso14443a_tags[i].name);
+          continue;
         }
       }
     }
   }
-  
-  if( tag_name != NULL ) {
-    if( additionnal_info != NULL ) {
-      printf("%s%s (UID=", tag_name, additionnal_info);
-      free(additionnal_info);
-    } else {
-      printf("%s (UID=", tag_name);
-    }
+  int i;
+  if (matches != 0) {
+    printf("UID=");
     print_hex (nai.abtUid, nai.szUidLen);
-    printf (")\n");
+    printf ("\n");
+    if (matches > 1) {
+      printf ("Several possible matches:\n");
+    }
+    for (i = 0; i < matches; i++ ) {
+      printf("* %s", tag_name[i]);
+      if( additionnal_info[i] != NULL ) {
+        printf("%s", additionnal_info[i]);
+        free(additionnal_info[i]);
+      }
+      printf ("\n");
+    }
   } else {
     printf ("Unknown ISO14443A tag type: ");
     printf ("ATQA (SENS_RES): ");
