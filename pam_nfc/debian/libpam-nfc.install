@@ -1,0 +1,3 @@
+debian/tmp/lib/libnfcauth.so*
+debian/tmp/lib/security/pam_nfc.so*
+debian/tmp/usr/bin/pam-nfc-add
