@@ -274,11 +274,6 @@ main (int argc, const char *argv[])
     // Let the reader only try once to find a tag
     nfc_configure (pnd, NDO_INFINITE_SELECT, false);
 
-    // Configure the CRC and Parity settings
-    nfc_configure (pnd, NDO_HANDLE_CRC, true);
-    nfc_configure (pnd, NDO_HANDLE_PARITY, true);
-    nfc_configure (pnd, NDO_AUTO_ISO14443_4, true);
-
     // Enable field so more power consuming cards can power themselves up
     nfc_configure (pnd, NDO_ACTIVATE_FIELD, true);
 
@@ -309,6 +304,8 @@ main (int argc, const char *argv[])
         print_hex (ant[n].nti.nbi.abtProtocolInfo, 3);
         printf ("\n");
       }
+    } else {
+      nfc_perror (pnd, "nfc_initiator_list_passive_targets");
     }
     device_tag_count += szTargetFound;
     
