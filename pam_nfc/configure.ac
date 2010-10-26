@@ -1,4 +1,4 @@
-AC_INIT(pam_nfc, 0.1.1)
+AC_INIT(pam_nfc, 0.1.3)
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -14,7 +14,7 @@ AC_CHECK_LIB(dl, main)
 
 #----------------------------------------------------------------------
 # libnfc Checks
-LIBNFC_REQUIRED_VERSION=1.3.9
+LIBNFC_REQUIRED_VERSION=1.4.0
 PKG_CHECK_MODULES([libnfc], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], [AC_MSG_ERROR([libnfc >= $LIBNFC_REQUIRED_VERSION is mandatory.])])
 #----------------------------------------------------------------------
 # PAM Checks

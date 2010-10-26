@@ -57,34 +57,25 @@ nfcauth_get_targets (char **targets[])
 
     nfc_list_devices(devices, MAX_DEVICES, &device_count);
 
+    nfc_modulation_t nm = {
+        .nmt = NMT_ISO14443A,
+        .nbr = NBR_UNDEFINED
+    };
+
     for (i = 0; i < device_count; i++) {
 	nfc_device_t* initiator = nfc_connect (&(devices[i]));
 	if (initiator) {
 	    nfc_initiator_init (initiator);
 
+	    nfc_target_t target;
 
-	    // Drop the field for a while
-	    nfc_configure (initiator, NDO_ACTIVATE_FIELD, false);
+	    while (nfc_initiator_select_passive_target (initiator, nm, NULL, 0, &target)) {
 
-	    // Let the reader only try once to find a tag
-	    nfc_configure (initiator, NDO_INFINITE_SELECT, false);
-
-	    // Configure the CRC and Parity settings
-	    nfc_configure (initiator, NDO_HANDLE_CRC, true);
-	    nfc_configure (initiator, NDO_HANDLE_PARITY, true);
-
-	    // Enable field so more power consuming cards can power themselves up
-	    nfc_configure (initiator, NDO_ACTIVATE_FIELD, true);
-
-	    nfc_target_info_t target;
-
-	    while (nfc_initiator_select_passive_target (initiator, NM_ISO14443A_106, NULL, 0, &target)) {
-
-		if ((*targets)[ret] = malloc (2 * target.nai.szUidLen + 1)) {
+		if ((*targets)[ret] = malloc (2 * target.nti.nai.szUidLen + 1)) {
 		    int n;
 		    (*targets)[ret][0] = '\0';
-		    for (n = 0; n < target.nai.szUidLen; n++) {
-		    	sprintf ((*targets)[ret] + 2 * n, "%02x", target.nai.abtUid[n]);
+		    for (n = 0; n < target.nti.nai.szUidLen; n++) {
+		    	sprintf ((*targets)[ret] + 2 * n, "%02x", target.nti.nai.abtUid[n]);
 		    }
 		    ret++;
 		}
