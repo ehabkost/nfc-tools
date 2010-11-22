@@ -27,12 +27,12 @@ static nfcconf_block* _nem_dbus_config_block;
 static char * _tag_uid = NULL;
 
 void
-tag_get_uid(const nfc_device_t* nfc_device, const tag_t* tag, char **dest) {
+tag_get_uid(const nfc_device_t* nfc_device, const nfc_target_t* tag, char **dest) {
   DBG("tag_get_uid(%08x, %08x, %08x)", nfc_device, tag, dest);
 
     nfc_target_info_t ti;
     debug_print_tag(tag);
-    /// @TODO We don't need to reselect tag to get his UID: tag_t contains this data.
+    /// @TODO We don't need to reselect tag to get his UID: nfc_target_t contains this data.
     // Poll for a ISO14443A (MIFARE) tag
     if ( nfc_initiator_select_passive_target ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
         /*
@@ -222,7 +222,7 @@ nem_dbus_init( nfcconf_context *module_context, nfcconf_block* module_block ) {
 }
 
 int
-nem_dbus_event_handler(const nfc_device_t* nfc_device, const tag_t* tag, const nem_event_t event) {
+nem_dbus_event_handler(const nfc_device_t* nfc_device, const nfc_target_t* tag, const nem_event_t event) {
     switch (event) {
     case EVENT_TAG_INSERTED:
         // action = "tag_insert";

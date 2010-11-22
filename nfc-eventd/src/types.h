@@ -9,9 +9,4 @@ typedef enum {
   EVENT_EXPIRE_TIME
 } nem_event_t;
 
-typedef struct {
-  nfc_modulation_t modulation;
-  nfc_target_info_t ti;
-} tag_t;
-
 #endif

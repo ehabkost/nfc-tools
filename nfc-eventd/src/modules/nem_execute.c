@@ -80,30 +80,17 @@ nem_execute_init( nfcconf_context *module_context, nfcconf_block* module_block )
 }
 
 void
-tag_get_uid(const nfc_device_t* nfc_device, const tag_t* tag, char **dest) {
-  nfc_target_info_t ti;
-
+tag_get_uid(nfc_device_t* nfc_device, nfc_target_t* tag, char **dest) {
   debug_print_tag(tag);
 
-  /// @TODO We don't need to reselect tag to get his UID: tag_t contains this data.
+  /// @TODO We don't need to reselect tag to get his UID: nfc_target_t contains this data.
   // Poll for a ISO14443A (MIFARE) tag
-  if ( nfc_initiator_select_passive_target ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
-      /*
-                      printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
-                      printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.nai.abtAtqa,2 );
-                      printf ( "       UID (NFCID%c): ", ( ti.nai.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.nai.abtUid,ti.nai.szUidLen );
-                      printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.nai.btSak,1 );
-                      if ( ti.nai.uiAtsLen )
-                      {
-                              printf ( "          ATS (ATR): " );
-                              print_hex ( ti.nai.abtAts,ti.nai.uiAtsLen );
-                      }
-      */
-      *dest = malloc(ti.nai.szUidLen*sizeof(char)*2+1);
+  if ( nfc_initiator_select_passive_target ( nfc_device, tag->nm, tag->nti.nai.abtUid, tag->nti.nai.szUidLen, tag ) ) {
+      *dest = malloc(tag->nti.nai.szUidLen*sizeof(char)*2+1);
       size_t szPos;
       char *pcUid = *dest;
-      for (szPos=0; szPos < ti.nai.szUidLen; szPos++) {
-          sprintf(pcUid, "%02x",ti.nai.abtUid[szPos]);
+      for (szPos=0; szPos < tag->nti.nai.szUidLen; szPos++) {
+          sprintf(pcUid, "%02x",tag->nti.nai.abtUid[szPos]);
           pcUid += 2;
       }
       pcUid[0]='\0';
@@ -117,7 +104,7 @@ tag_get_uid(const nfc_device_t* nfc_device, const tag_t* tag, char **dest) {
 }
 
 int
-    nem_execute_event_handler(const nfc_device_t* nfc_device, const tag_t* tag, const nem_event_t event) {
+nem_execute_event_handler(nfc_device_t* nfc_device, nfc_target_t* tag, const nem_event_t event) {
     int onerr;
     const char *onerrorstr;
     const nfcconf_list *actionlist;

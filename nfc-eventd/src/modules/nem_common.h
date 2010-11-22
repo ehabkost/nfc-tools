@@ -9,7 +9,7 @@
 #include "../types.h"
 
 typedef void (*module_init_fct_t)(nfcconf_context*, nfcconf_block*);
-typedef int (*module_event_handler_fct_t)( const nfc_device_t*, const tag_t*, const nem_event_t );
+typedef int (*module_event_handler_fct_t)( const nfc_device_t*, const nfc_target_t*, const nem_event_t );
 
 #endif /* __NEM_COMMON__ */
 

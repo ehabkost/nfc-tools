@@ -1,6 +1,9 @@
 /*
- * PKCS #11 PAM Login Module
- * Copyright (C) 2003 Mario Strasser <mast@gmx.net>,
+ * debug routines for nfc-eventd
+ * Copyright (C) 2010 Romuald Conty <rconty@il4p.fr>,
+ * 
+ *  based on PKCS #11 PAM Login Module
+ *  Copyright (C) 2003 Mario Strasser <mast@gmx.net>,
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -12,20 +15,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * $Id: debug.h 246 2007-04-12 10:09:12Z ludovic.rousseau $
  */
 
 /**
-*@def DEBUG
-* This module contains macros for generate debugging messages
-* Will be compiled an linked only when -DDEBUG CFLAG is used
-*/
+ *@def DEBUG
+ * This module contains macros for generate debugging messages
+ * Will be compiled an linked only when -DDEBUG CFLAG is used
+ */
 
 #ifndef __DEBUG_H_
 #define __DEBUG_H_
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+  #include <config.h>
 #endif
 
 #define ERR(x,...) debug_print(-1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
@@ -74,7 +76,7 @@ DEBUG_EXTERN void debug_print(int level, const char *file, int line, const char 
 
 #ifdef DEBUG
 #include "../types.h"
-  void _debug_print_tag(const tag_t* tag);
+  void _debug_print_tag(const nfc_target_t* tag);
 #define debug_print_tag( X ) \
          printf("%s:%s:%d: ", "\033[34mDEBUG", __FILE__, __LINE__); \
          _debug_print_tag( X ); \

@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include "../types.h"
+#include "nfc-utils.h"
 
 /* current debug level */
 static int debug_level = 0;
@@ -76,36 +77,7 @@ void debug_print(int level, const char *file, int line, const char *format, ...)
     }
 }
 
-void _debug_print_tag(const tag_t* tag)
+void _debug_print_tag(const nfc_target_t* tag)
 {
-  switch (tag->modulation) {
-    case NM_ISO14443A_106: {
-        /*
-      printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
-      printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.nai.abtAtqa,2 );
-      printf ( "       UID (NFCID%c): ", ( ti.nai.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.nai.abtUid,ti.nai.szUidLen );
-      printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.nai.btSak,1 );
-      if ( ti.nai.uiAtsLen )
-      {
-      printf ( "          ATS (ATR): " );
-      print_hex ( ti.nai.abtAts,ti.nai.uiAtsLen );
-    }
-        */
-      uint32_t uiPos;
-      char *uid = malloc(tag->ti.nai.szUidLen*sizeof(char));
-      char *uid_ptr = uid;
-      for (uiPos=0; uiPos < tag->ti.nai.szUidLen; uiPos++) {
-        sprintf(uid_ptr, "%02x",tag->ti.nai.abtUid[uiPos]);
-        uid_ptr += 2;
-      }
-      uid_ptr[0]='\0';
-
-      printf( "ISO14443A (MIFARE) tag with uid=%s", uid );
-      free(uid);
-    }
-    break;
-    default:
-      DBG( "%s", "Debug this kind of modulation is not yet supported." );
-      
-  }
+  print_nfc_target(*tag, false);
 }

@@ -126,7 +126,7 @@ static int load_module( void ) {
 /**
  * @brief Execute NEM function that handle events
  */
-static int execute_event ( const nfc_device_t *nfc_device, const tag_t* tag, const nem_event_t event ) {
+static int execute_event ( const nfc_device_t *nfc_device, const nfc_target_t* tag, const nem_event_t event ) {
     return (*module_event_handler_fct_ptr)( nfc_device, tag, event );
 }
 
@@ -264,29 +264,32 @@ static int parse_args ( int argc, char *argv[] ) {
  * @brief try to find a valid tag
  * @return pointer on a valid tag or NULL.
  */
-tag_t*
-ned_select_tag(nfc_device_t* nfc_device, tag_t* tag) {
-  nfc_target_info_t ti;
-  tag_t* rv = NULL;
+nfc_target_t*
+ned_select_tag(nfc_device_t* nfc_device, nfc_target_t* tag) {
+  nfc_target_t* rv = malloc( sizeof(nfc_target_t) );
+  nfc_modulation_t nm = {
+    .nmt = NMT_ISO14443A,
+    .nbr = NBR_106
+  };
 
   if ( tag == NULL ) {
-      // We are looking for any tag.
-      // Poll for a ISO14443A (MIFARE) tag
-      if ( nfc_initiator_select_passive_target ( nfc_device, NM_ISO14443A_106, NULL, 0, &ti ) ) {
-          rv = malloc(sizeof(tag_t));
-          rv->ti = ti;
-          rv->modulation = NM_ISO14443A_106;
-      }
+    // We are looking for any tag.
+    // Poll for a ISO14443A (MIFARE) tag
+    if ( !nfc_initiator_select_passive_target ( nfc_device, nm, NULL, 0, rv ) ) {
+      free (rv);
+      rv = NULL;
+    }
   } else {
-      // tag is not NULL, we are looking for specific tag
-      // debug_print_tag(tag);
-      if ( nfc_initiator_select_passive_target ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
-          rv = tag;
-      }
+    // tag is not NULL, we are looking for specific tag
+    // debug_print_tag(tag);
+    if ( !nfc_initiator_select_passive_target ( nfc_device, tag->nm, tag->nti.nai.abtUid, tag->nti.nai.szUidLen, rv ) ) {
+      free (rv);
+      rv = NULL;
+    }
   }
 
   if (rv != NULL) {
-      nfc_initiator_deselect_target ( nfc_device );
+    nfc_initiator_deselect_target ( nfc_device );
   }
 
   return rv;
@@ -297,13 +300,13 @@ typedef enum {
   NFC_POLL_SOFTWARE,
 } nfc_poll_mode;
 
-tag_t*
-ned_poll_for_tag(nfc_device_t* nfc_device, tag_t* tag)
+nfc_target_t*
+ned_poll_for_tag(nfc_device_t* nfc_device, nfc_target_t* tag)
 {
   static nfc_poll_mode mode = NFC_POLL_HARDWARE;
 
   if((mode == NFC_POLL_HARDWARE) && (nfc_device->nc == NC_PN531)) {
-    DBG("%s doesn't support hardware polling, falling back to software polling");
+    DBG("%s doesn't support hardware polling, falling back to software polling", nfc_device->acName);
     mode = NFC_POLL_SOFTWARE;
   }
 
@@ -315,8 +318,7 @@ ned_poll_for_tag(nfc_device_t* nfc_device, tag_t* tag)
     case NFC_POLL_HARDWARE: {
         byte_t btPollNr;
         const byte_t btPeriod = 2; /* 2 x 150 ms = 300 ms */
-        const nfc_target_type_t nttMifare = NTT_MIFARE;
-        const size_t szTargetTypes = 1;
+        const nfc_modulation_t nm[1] = { { .nmt = NMT_ISO14443A, .nbr = NBR_106 } };
   
         if( tag != NULL ) {
   	/* We are looking for a previous tag */
@@ -330,19 +332,17 @@ ned_poll_for_tag(nfc_device_t* nfc_device, tag_t* tag)
         nfc_target_t antTargets[2];
         size_t szTargetFound;
   
-        bool res = nfc_initiator_poll_targets (nfc_device, &nttMifare, 1, btPollNr, btPeriod, antTargets, &szTargetFound);
+        bool res = nfc_initiator_poll_targets (nfc_device, nm, 1, btPollNr, btPeriod, antTargets, &szTargetFound);
         if (res) {
           DBG ("%ld target(s) have been found.\n", (unsigned long) szTargetFound);
           if( szTargetFound < 1 ) {
             return NULL;
           } else {
-            if( (tag != NULL) && (memcmp(tag->ti.nai.abtUid, antTargets[0].nti.nai.abtUid, tag->ti.nai.szUidLen) == 0 ) ) {
+            if ( (tag != NULL) && (0 == memcmp(tag->nti.nai.abtUid, antTargets[0].nti.nai.abtUid, antTargets[0].nti.nai.szUidLen)) ) {
               return tag;
             } else {
-              tag_t* rv;
-              rv = malloc(sizeof(tag_t));
-              rv->ti = antTargets[0].nti;
-              rv->modulation = NM_ISO14443A_106;
+              nfc_target_t* rv = malloc(sizeof(nfc_target_t));
+              memcpy(rv, &antTargets[0], sizeof(nfc_target_t));
               nfc_initiator_deselect_target ( nfc_device );
               return rv;
             }
@@ -358,8 +358,8 @@ ned_poll_for_tag(nfc_device_t* nfc_device, tag_t* tag)
 
 int
 main ( int argc, char *argv[] ) {
-    tag_t* old_tag = NULL;
-    tag_t* new_tag;
+    nfc_target_t* old_tag = NULL;
+    nfc_target_t* new_tag;
 
     int expire_count = 0;
 
