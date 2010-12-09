@@ -7,7 +7,7 @@
 #include <nfc/nfc.h>
 #include "NFCd.h"
 #include "NfcForumTag.h"
-#include "nfcforum_tag.h"
+#include "nfcforum_type4_tag.h"
 
 /*
  * This implementation was written based on information provided by the

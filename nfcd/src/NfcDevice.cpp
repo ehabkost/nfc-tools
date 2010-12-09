@@ -97,8 +97,9 @@ void NfcDevice::checkAvailableTargets()
     mifareTags = freefare_get_tags (_device_connect);
 
     ISO14443bTag *iso14443bTags = NULL;
+/* FIXME Enable ISO14443B
     iso14443bTags = iso14443b_get_tags(_device_connect);
-
+*/
     if ((mifareTags != NULL) && (iso14443bTags != NULL)) {
       int i = 0;
       MifareTag mifareTag;

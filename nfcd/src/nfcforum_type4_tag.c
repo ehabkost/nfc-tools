@@ -24,13 +24,6 @@
 #define _BSD_SOURCE
 #include <endian.h>
 
-#ifdef HAVE_LIBUSB
-#  ifdef DEBUG
-#    include <sys/param.h>
-#    include <usb.h>
-#  endif
-#endif
-
 #include <err.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -40,22 +33,21 @@
 #include <nfc/nfc.h>
 #include <nfc/nfc-messages.h>
 
-#include "nfcforum_tag.h"
-
-// XXX This is really a dirty macro, please clean up
-#define check_status_word() do if (!(( dataOut[(*pszDataOut)-2]==0x90) && ( dataOut[(*pszDataOut)-1]==0x00 ))) { printf("error not 90 00\n"); return false;} while (0)
+#include "nfcforum_type4_tag.h"
 
 #define CLEAR_TEXT    0x00
 #define SELECT        0xa4
 #define READ_BINARY   0xb0
 
+// FIXME Remove me
 #define BUF_SIZE 4096
 
 
 bool
-transceive(nfc_device_t* pnd, const byte_t* dataIn, const size_t szDataIn, byte_t* dataOut, size_t* pszDataOut)
+nfcforum_type4_transceive(nfc_device_t* pnd, const byte_t* dataIn, const size_t szDataIn, byte_t* dataOut, size_t* pszDataOut)
 {
   bool locally_malloced = false;
+  bool res = false;
 
   if( (!dataOut) || (!pszDataOut) ) {
     dataOut = malloc(BUF_SIZE);
@@ -64,15 +56,15 @@ transceive(nfc_device_t* pnd, const byte_t* dataIn, const size_t szDataIn, byte_
   }
 
   if ( nfc_initiator_transceive_bytes (pnd, dataIn, szDataIn, dataOut, pszDataOut)){
-
-    check_status_word();
-
-    if( locally_malloced ) { free(dataOut); free(pszDataOut); }
-      return true;
-  } else {
-    if( locally_malloced ) { free(dataOut); free(pszDataOut); }
-      return false;
+    if ( (dataOut[(*pszDataOut)-2] == 0x90) && (dataOut[(*pszDataOut)-1] == 0x00) ) {
+      res = true;
+    }
   }
+  if( locally_malloced ) {
+    free(dataOut);
+    free(pszDataOut);
+  }
+  return res;
 }
 
 bool
@@ -82,10 +74,10 @@ nfcforum_type4_read(nfc_device_t* pnd, uint16_t offset, const uint8_t length, by
   offset = htobe16(offset);
   memcpy(read_binary_cmd + 2, &offset, sizeof (offset));
   memcpy(read_binary_cmd + 4, &length, sizeof (length));
-  static byte_t SW[4096];
+  static byte_t SW[BUF_SIZE];
   static size_t szSWLen;
 
-  if(!transceive(pnd, read_binary_cmd, sizeof(read_binary_cmd), SW, &szSWLen) ) return false;
+  if(!nfcforum_type4_transceive(pnd, read_binary_cmd, sizeof(read_binary_cmd), SW, &szSWLen) ) return false;
   // Save the received byte count
   *szData = szSWLen-2;
 
@@ -99,7 +91,7 @@ bool
 nfcforum_type4_ndef_tag_application_select(nfc_device_t* pnd)
 {
   byte_t ndef_tag_application_select_cmd[] = { CLEAR_TEXT, SELECT, 0x04, 0x00, 0x07, 0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00 }; // See NFC Forum Type 4 tag document
-  return transceive(pnd,ndef_tag_application_select_cmd, sizeof(ndef_tag_application_select_cmd), NULL, NULL);
+  return nfcforum_type4_transceive(pnd,ndef_tag_application_select_cmd, sizeof(ndef_tag_application_select_cmd), NULL, NULL);
 }
 
 bool
@@ -107,5 +99,5 @@ nfcforum_type4_select(nfc_device_t* pnd, const byte_t fileID[2])
 {
   byte_t select_cmd[] = { CLEAR_TEXT, SELECT, 0x00, 0x00, 0x02, 0x00, 0x00 };
   memcpy(select_cmd + 5, fileID, sizeof(fileID));
-  return transceive(pnd, select_cmd,sizeof(select_cmd), NULL, NULL);
+  return nfcforum_type4_transceive(pnd, select_cmd,sizeof(select_cmd), NULL, NULL);
 }

@@ -7,7 +7,7 @@ set(nfcd_SOURCES
   NfcForumTag.cpp
   NfcTarget.cpp
   iso14443b.c
-  nfcforum_tag.c
+  nfcforum_type4_tag.c
 )
 
 # Generate D-Bus adaptor
