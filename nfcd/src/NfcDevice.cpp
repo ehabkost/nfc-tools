@@ -100,87 +100,87 @@ void NfcDevice::checkAvailableTargets()
 /* FIXME Enable ISO14443B
     iso14443bTags = iso14443b_get_tags(_device_connect);
 */
-    if ((mifareTags != NULL) && (iso14443bTags != NULL)) {
-      int i = 0;
-      MifareTag mifareTag;
-      ISO14443bTag iso14443bTag;
+    int i = 0;
+    MifareTag mifareTag;
+    ISO14443bTag iso14443bTag;
 
-      /* Look for disapeared devices */
-      for(i = 0; i < targets.size(); i++) {
-        bool still_here = false;
-        int j = 0;
-        if(targets.at(i)->getType() == MIFARE) {
-          while(mifareTag = mifareTags[j]) {
-            char* u = freefare_get_tag_uid(mifareTag);
-            QString uid(u);
-            free(u);
+    /* Look for disapeared devices */
+    for(i = 0; i < targets.size(); i++) {
+      bool still_here = false;
+      int j = 0;
+      if ((mifareTags != NULL) && (targets.at(i)->getType() == MIFARE)) {
+        while(mifareTag = mifareTags[j]) {
+          char* u = freefare_get_tag_uid(mifareTag);
+          QString uid(u);
+          free(u);
 
-            if(targets.at(i)->getUid() == uid) {
-              still_here = true;
-              break;
-            }
-            j++;
+          if(targets.at(i)->getUid() == uid) {
+            still_here = true;
+            break;
           }
-        } else if (targets.at(i)->getType() == ISO14443B) {
-          // While ISO
-          while(iso14443bTag = iso14443bTags[j]) {
-            char* u = iso14443b_get_tag_uid(iso14443bTag);
-            QString uid(u);
-            free(u);
+          j++;
+        }
+      } else if ((iso14443bTags != NULL) && (targets.at(i)->getType() == ISO14443B)) {
+        // While ISO
+        while(iso14443bTag = iso14443bTags[j]) {
+          char* u = iso14443b_get_tag_uid(iso14443bTag);
+          QString uid(u);
+          free(u);
 
-            if(targets.at(i)->getUid() == uid) {
-              still_here = true;
-              break;
-            }
-            j++;
+          if(targets.at(i)->getUid() == uid) {
+            still_here = true;
+            break;
           }
+          j++;
         }
-        if(!still_here) {
-          unregisterTarget(targets.at(i));
-        }
+      }
+      if(!still_here) {
+        unregisterTarget(targets.at(i));
       }
 
       /* Look for new devices */
       i = 0;
       // MIFARE
-      while((mifareTag = mifareTags[i])) {
-        char* u = freefare_get_tag_uid(mifareTag);
-        QString uid(u);
-        free(u);
-
-        bool already_known = false;
-        for(int j=0; j < targets.size(); j++) {
-          if(targets.at(j)->getUid() == uid) {
-            already_known = true;
-            break;
+      if (mifareTags != NULL) {
+        while((mifareTag = mifareTags[i])) {
+          char* u = freefare_get_tag_uid(mifareTag);
+          QString uid(u);
+          free(u);
+  
+          bool already_known = false;
+          for(int j=0; j < targets.size(); j++) {
+            if(targets.at(j)->getUid() == uid) {
+              already_known = true;
+              break;
+            }
           }
+          if(!already_known) {
+            registerTarget(new NfcTarget(mifareTag, _device_connect, _accessLock));
+          }
+          i++;
         }
-        if(!already_known) {
-          registerTarget(new NfcTarget(mifareTag, _device_connect, _accessLock));
-        }
-        i++;
       }
-      // ISO14443B
       i = 0;
-      while((iso14443bTag = iso14443bTags[i])) {
-        char* u = iso14443b_get_tag_uid(iso14443bTag);
-        QString uid(u);
-        free(u);
-
-        bool already_known = false;
-        for(int j=0; j < targets.size(); j++) {
-          if(targets.at(j)->getUid() == uid) {
-            already_known = true;
-            break;
+      // ISO14443B
+      if (iso14443bTags != NULL) {
+        while((iso14443bTag = iso14443bTags[i])) {
+          char* u = iso14443b_get_tag_uid(iso14443bTag);
+          QString uid(u);
+          free(u);
+  
+          bool already_known = false;
+          for(int j=0; j < targets.size(); j++) {
+            if(targets.at(j)->getUid() == uid) {
+              already_known = true;
+              break;
+            }
           }
+          if(!already_known) {
+            registerTarget(new NfcTarget(iso14443bTag, _device_connect, _accessLock));
+          }
+          i++;
         }
-        if(!already_known) {
-          registerTarget(new NfcTarget(iso14443bTag, _device_connect, _accessLock));
-        }
-        i++;
       }
-    } else {
-      qDebug() << "Error while retrieving targets list (MIFARE or ISO14443B).";
     }
   }
   _accessLock->unlock();
