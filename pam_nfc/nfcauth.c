@@ -53,6 +53,7 @@ nfcauth_get_targets (char **targets[])
     *targets = malloc (MAX_TARGET * sizeof (char *));
     nfc_device_desc_t devices[MAX_DEVICES];
     size_t device_count;
+    size_t target_count;
     int i;
 
     nfc_list_devices(devices, MAX_DEVICES, &device_count);
@@ -66,18 +67,20 @@ nfcauth_get_targets (char **targets[])
         nfc_device_t* initiator = nfc_connect (&(devices[i]));
         if (initiator) {
             nfc_initiator_init (initiator);
-            nfc_target_t target;
+            nfc_target_t ant[MAX_TARGET];
 
-            while (nfc_initiator_select_passive_target (initiator, nm, NULL, 0, &target)) {
-                if ((*targets)[ret] = malloc (2 * target.nti.nai.szUidLen + 1)) {
-                    int n;
-                    (*targets)[ret][0] = '\0';
-                    for (n = 0; n < target.nti.nai.szUidLen; n++) {
-                        sprintf ((*targets)[ret] + 2 * n, "%02x", target.nti.nai.abtUid[n]);
+            if (nfc_initiator_list_passive_targets (initiator, nm, ant, MAX_TARGET, &target_count)) {
+                size_t  iTarget;
+                for (iTarget = 0; iTarget < target_count; iTarget++) {
+                    if ((*targets)[ret] = malloc (2 * ant[iTarget].nti.nai.szUidLen + 1)) {
+                        int n;
+                        (*targets)[ret][0] = '\0';
+                        for (n = 0; n < ant[iTarget].nti.nai.szUidLen; n++) {
+                            sprintf ((*targets)[ret] + 2 * n, "%02x", ant[iTarget].nti.nai.abtUid[n]);
+                        }
+                        ret++;
                     }
-                    ret++;
                 }
-                nfc_initiator_deselect_target (initiator);
             }
             nfc_disconnect (initiator);
         }
