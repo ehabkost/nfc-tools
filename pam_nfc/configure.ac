@@ -1,4 +1,4 @@
-AC_INIT(pam_nfc, 0.1.3)
+AC_INIT(pam_nfc, 0.1.4)
 
 AC_CONFIG_MACRO_DIR([m4])
 
