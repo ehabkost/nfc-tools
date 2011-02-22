@@ -19,8 +19,8 @@
 #define MAX_DEVICES 8
 #define MAX_TARGET 32
 
-extern int	 nfcauth_is_authorized (const char *user, char *target);
-extern int	 nfcauth_get_targets (char **targets[]);
+extern int     nfcauth_is_authorized (const char *user, char *target);
+extern int     nfcauth_get_targets (char **targets[]);
 
 int
 nfcauth_authorize (const char *user)
@@ -32,14 +32,14 @@ nfcauth_authorize (const char *user)
 
     target_count = nfcauth_get_targets(&targets);
     for (i = 0; i < target_count; i++) {
-	if (nfcauth_is_authorized (user, targets[i])) {
-	    grant_access = 1;
-	    break;
-	}
+    if (nfcauth_is_authorized (user, targets[i])) {
+        grant_access = 1;
+        break;
+    }
     }
 
     for (i = 0; i < target_count; i++) {
-	free (targets[i]);
+    free (targets[i]);
     }
     free (targets);
 
@@ -63,29 +63,24 @@ nfcauth_get_targets (char **targets[])
     };
 
     for (i = 0; i < device_count; i++) {
-	nfc_device_t* initiator = nfc_connect (&(devices[i]));
-	if (initiator) {
-	    nfc_initiator_init (initiator);
+        nfc_device_t* initiator = nfc_connect (&(devices[i]));
+        if (initiator) {
+            nfc_initiator_init (initiator);
+            nfc_target_t target;
 
-	    nfc_target_t target;
-
-	    while (nfc_initiator_select_passive_target (initiator, nm, NULL, 0, &target)) {
-
-		if ((*targets)[ret] = malloc (2 * target.nti.nai.szUidLen + 1)) {
-		    int n;
-		    (*targets)[ret][0] = '\0';
-		    for (n = 0; n < target.nti.nai.szUidLen; n++) {
-		    	sprintf ((*targets)[ret] + 2 * n, "%02x", target.nti.nai.abtUid[n]);
-		    }
-		    ret++;
-		}
-
-		nfc_initiator_deselect_target (initiator);
-	    }
-
-	    nfc_disconnect (initiator);
-	}
+            while (nfc_initiator_select_passive_target (initiator, nm, NULL, 0, &target)) {
+                if ((*targets)[ret] = malloc (2 * target.nti.nai.szUidLen + 1)) {
+                    int n;
+                    (*targets)[ret][0] = '\0';
+                    for (n = 0; n < target.nti.nai.szUidLen; n++) {
+                        sprintf ((*targets)[ret] + 2 * n, "%02x", target.nti.nai.abtUid[n]);
+                    }
+                    ret++;
+                }
+                nfc_initiator_deselect_target (initiator);
+            }
+            nfc_disconnect (initiator);
+        }
     }
-
     return ret;
 }
