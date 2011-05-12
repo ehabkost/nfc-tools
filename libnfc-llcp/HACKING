@@ -1,0 +1,42 @@
+Hello hackers!
+
+General remarks about contributing
+----------------------------------
+
+Contributions to the libnfc-llcp are welcome!  Here are some directions to get
+you started:
+
+  1. Install Cutter
+     Cutter is a cool unit test framework for C code.  You will need it to run
+     the regression tests suite (`make check') and ensure that your code does
+     not break other features.
+     http://cutter.sourceforge.net/
+
+  2. Follow style conventions
+     The source code of the library trend to follow some conventions so that it
+     is consistent in style and thus easier to read.  Basically, it follows
+     FreeBSD's style(9); adding 4-space indentation and 8-space tabs (which you
+     should configure in your editor, e.g. `:set sw=4 ts=8 sts=4' in vim).  You
+     are also advised to `:set cinoptions=t0(0:0` so that you don't have to
+     care about indentation anymore. For more details, please read the style(9)
+     man page from FreeBSD's website:
+     http://www.freebsd.org/cgi/man.cgi?query=style
+
+  3. Write tests
+     I told you cutter is lovely in #1 so you really should use it!  If you
+     want to contribute code, write test: only code with appropriate tests will
+     be considered.  And remember that TDD (Test Driven Development) is cool
+     and writing all tests at the end deeply depressing, so test early, test
+     often!
+
+
+Various guidelines
+------------------
+
+  - To ease up maintainability, please respect the following policy for
+    functions return values: functions returning pointers SHALL return NULL in
+    case of failures, and all other functions SHOULD return a negative number
+    in case of failure.  Consequently, C99 booleans SHALL not be used as return
+    values of any function since `true' and `false' or both greater or equal to
+    0.
+
