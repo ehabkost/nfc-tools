@@ -1,0 +1,37 @@
+msc {
+    hscale = "1.5";
+
+    ll [label="Local LLC"], lm [label="Local MAC"], rm [label="Remote MAC"], rl [label="Remote LLC"];
+
+    ll note ll [label="Version = 1.7\nLocal MIU = 128\nRemote MIU = 128"], rl note rl [label="Version = 2.3\nLocal MIU = 128\nRemote MIU = 128"];
+
+    rm -> rm [label="New LLCP device detected"];
+    rm => lm [label="MAC link activate([parameters])"];
+    lm >> rm [label="MAC link activated([parameters])"];
+    lm -> ll [label="LLCP Capable device detected"];
+
+    --- [label="Exchange of PAX PDU"];
+
+    ll note lm [label="Operating as target"];
+    * <= rl [label="PAX(Version=2.3, MIUX=256)"];
+
+    --- [label="LLCP Version Number Agreement Procedure"];
+
+    ll => ll  [label="parameters[Version]=2.3"];
+
+    --- [label="Link MIU Determination Procedure"];
+
+    ll => ll [label="parameters[MIUX]=256"];
+
+    --- [label="Link activation success"];
+
+    ll >>*  [label="PAX(Version=1.7)"];
+    ...;
+
+    ll note ll [label="Version = 1.7\nLocal MIU = 128\nRemote MIU = 256"], rl note rl [label="Version = 1.7\nLocal MIU = 256\nRemote MIU = 128"];
+    ll => ll  [label="Enter normal operation"];
+
+    --- [label="Link activation failure"];
+
+    ll >> lm [label="Link activation failed"];
+}

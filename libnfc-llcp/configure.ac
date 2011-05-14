@@ -25,6 +25,11 @@ AC_TYPE_UINT8_T
 
 CFLAGS="$CFLAGS -std=c99"
 
+# Checks for mscgen
+AC_PATH_PROG([MSCGEN], [mscgen])
+AC_SUBST(MSCGEN)
+AM_CONDITIONAL(HAS_MSCGEN, [test x"$MSCGEN" != x""])
+
 # Checks for pkg-config modules.
 LIBNFC_REQUIRED_VERSION="1.4.0"
 PKG_CHECK_MODULES([LIBNFC], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], [AC_MSG_ERROR([libnfc >= $LIBNFC_REQUIRED_VERSION is mandatory.])])
@@ -49,6 +54,7 @@ fi
 
 AC_OUTPUT([
 	   Makefile
+	   doc/Makefile
 	   libnfc-llcp/Makefile
 	   test/Makefile
 	   ])
