@@ -44,7 +44,7 @@ parameter_encode_version (uint8_t buffer[], size_t buffer_len,
     if (buffer_len < 3)
 	return -1;
 
-    buffer[0] = 0x01;
+    buffer[0] = LLCP_PARAMETER_VERSION;
     buffer[1] = 0x01;
     buffer[2] = ((version.major & 0x0F) << 4) | (version.minor & 0x0F);
     return 3;
@@ -58,7 +58,7 @@ parameter_decode_version (const uint8_t buffer[], size_t buffer_len,
 	return -1;
     if (!version)
 	return -1;
-    if ((buffer[0] != 0x01) ||
+    if ((buffer[0] != LLCP_PARAMETER_VERSION) ||
 	(buffer[1] != 0x01))
 	return -1;
 
@@ -76,7 +76,7 @@ parameter_encode_miux (uint8_t buffer[], size_t buffer_len, uint16_t miux)
     if (miux > 0x07FF)
 	return -1;
 
-    buffer[0] = 0x02;
+    buffer[0] = LLCP_PARAMETER_MIUX;
     buffer[1] = 0x02;
     buffer[2] = miux >> 8;
     buffer[3] = miux;
@@ -91,7 +91,7 @@ parameter_decode_miux (const uint8_t buffer[], size_t buffer_len, uint16_t *miux
 	return -1;
     if (!miux)
 	return -1;
-    if ((buffer[0] != 0x02) ||
+    if ((buffer[0] != LLCP_PARAMETER_MIUX) ||
 	(buffer[1] != 0x02))
 	return -1;
 
@@ -108,7 +108,7 @@ parameter_encode_wks (uint8_t buffer[], size_t buffer_len, uint16_t wks)
 
     wks |= 0x01;
 
-    buffer[0] = 0x03;
+    buffer[0] = LLCP_PARAMETER_WKS;
     buffer[1] = 0x02;
     buffer[2] = wks >> 8;
     buffer[3] = wks;
@@ -123,7 +123,7 @@ parameter_decode_wks (const uint8_t buffer[], size_t buffer_len, uint16_t *wks)
 	return -1;
     if (!wks)
 	return -1;
-    if ((buffer[0] != 0x03) ||
+    if ((buffer[0] != LLCP_PARAMETER_WKS) ||
 	(buffer[1] != 0x02))
 	return -1;
 
@@ -140,7 +140,7 @@ parameter_encode_lto (uint8_t buffer[], size_t buffer_len, uint8_t lto)
     if (buffer_len < 3)
 	return -1;
 
-    buffer[0] = 0x04;
+    buffer[0] = LLCP_PARAMETER_LTO;
     buffer[1] = 0x01;
     buffer[2] = lto;
 
@@ -154,7 +154,7 @@ parameter_decode_lto (const uint8_t buffer[], size_t buffer_len, uint8_t *lto)
 	return -1;
     if (!lto)
 	return -1;
-    if ((buffer[0] != 0x04) ||
+    if ((buffer[0] != LLCP_PARAMETER_LTO) ||
 	(buffer[1] != 0x01))
 	return -1;
 
@@ -171,7 +171,7 @@ parameter_encode_rw (uint8_t buffer[], size_t buffer_len, uint8_t rw)
     if (rw > 0x0F)
 	return -1;
 
-    buffer[0] = 0x05;
+    buffer[0] = LLCP_PARAMETER_RW;
     buffer[1] = 0x01;
     buffer[2] = rw;
 
@@ -185,7 +185,7 @@ parameter_decode_rw (const uint8_t buffer[], size_t buffer_len, uint8_t *rw)
 	return -1;
     if (!rw)
 	return -1;
-    if ((buffer[0] != 0x05) ||
+    if ((buffer[0] != LLCP_PARAMETER_RW) ||
 	(buffer[1] != 0x01))
 	return -1;
 
@@ -203,7 +203,7 @@ parameter_encode_sn (uint8_t buffer[], size_t buffer_len, const char *sn)
     if (sn_len > UINT8_MAX)
 	return -1;
 
-    buffer[0] = 0x06;
+    buffer[0] = LLCP_PARAMETER_SN;
     buffer[1] = sn_len;
     memcpy (buffer + 2, sn, sn_len);
 
@@ -218,7 +218,7 @@ parameter_decode_sn (const uint8_t buffer[], size_t buffer_len, char *sn,
 	return -1;
     if (!sn)
 	return -1;
-    if (buffer[0] != 0x06)
+    if (buffer[0] != LLCP_PARAMETER_SN)
 	return -1;
     if (buffer_len != 2u + buffer[1])
 	return -1;
@@ -239,7 +239,7 @@ parameter_encode_opt (uint8_t buffer[], size_t buffer_len, uint8_t opt)
     if (opt > 0x03)
 	return -1;
 
-    buffer[0] = 0x07;
+    buffer[0] = LLCP_PARAMETER_OPT;
     buffer[1] = 0x01;
     buffer[2] = opt;
 
@@ -253,7 +253,7 @@ parameter_decode_opt (const uint8_t buffer[], size_t buffer_len, uint8_t *opt)
 	return -1;
     if (!opt)
 	return -1;
-    if ((buffer[0] != 0x07) ||
+    if ((buffer[0] != LLCP_PARAMETER_OPT) ||
 	(buffer[1] != 0x01))
 	return -1;
 

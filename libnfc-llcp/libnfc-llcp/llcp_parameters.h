@@ -26,6 +26,14 @@
 
 #include "llcp.h"
 
+#define LLCP_PARAMETER_VERSION 0x01
+#define LLCP_PARAMETER_MIUX    0x02
+#define LLCP_PARAMETER_WKS     0x03
+#define LLCP_PARAMETER_LTO     0x04
+#define LLCP_PARAMETER_RW      0x05
+#define LLCP_PARAMETER_SN      0x06
+#define LLCP_PARAMETER_OPT     0x07
+
 int	 parameter_encode_version (uint8_t buffer[], size_t buffer_len, struct llcp_version version);
 int	 parameter_decode_version (const uint8_t buffer[], size_t buffer_len, struct llcp_version *version);
 int	 parameter_encode_miux (uint8_t buffer[], size_t buffer_len, uint16_t miux);
