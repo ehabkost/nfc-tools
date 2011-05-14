@@ -13,3 +13,6 @@ all-am: $(message_sequence_charts)
 
 CLEANFILES = $(message_sequence_charts)
 endif
+
+EXTRA_DIST = link-activation-as-initiator.msc \
+	     link-activation-as-target.msc
