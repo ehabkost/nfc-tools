@@ -12,7 +12,13 @@ you started:
      not break other features.
      http://cutter.sourceforge.net/
 
-  2. Follow style conventions
+  2. Install log4c
+     Log4c is a logging library for C programs inspired by log4j library.  It
+     provides higly customizable and flexible logging.  While not a replacement
+     for a debugger, it can help to diagnose quickly what's going wrong.
+     http://log4c.sourceforge.net/
+
+  3. Follow style conventions
      The source code of the library trend to follow some conventions so that it
      is consistent in style and thus easier to read.  Basically, it follows
      FreeBSD's style(9); adding 4-space indentation and 8-space tabs (which you
@@ -22,7 +28,7 @@ you started:
      man page from FreeBSD's website:
      http://www.freebsd.org/cgi/man.cgi?query=style
 
-  3. Write tests
+  4. Write tests
      I told you cutter is lovely in #1 so you really should use it!  If you
      want to contribute code, write test: only code with appropriate tests will
      be considered.  And remember that TDD (Test Driven Development) is cool
