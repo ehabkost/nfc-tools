@@ -48,6 +48,8 @@ test_llcp_link_activate_as_initiator (void)
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x0001, link->remote_wks, cut_message ("Wrong remote WKS"));
+    cut_assert_equal_int (0, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
+    cut_assert_equal_int (100000000, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO sec"));
 
     llc_link_deactivate (link);
 
@@ -60,6 +62,8 @@ test_llcp_link_activate_as_initiator (void)
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x0001, link->remote_wks, cut_message ("Wrong remote WKS"));
+    cut_assert_equal_int (0, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
+    cut_assert_equal_int (100000000, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO sec"));
 
     llc_link_deactivate (link);
 
@@ -72,10 +76,12 @@ test_llcp_link_activate_as_initiator (void)
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
     cut_assert_equal_int (419, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x0001, link->remote_wks, cut_message ("Wrong remote WKS"));
+    cut_assert_equal_int (0, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
+    cut_assert_equal_int (100000000, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO sec"));
 
     llc_link_deactivate (link);
 
-    uint8_t parameters3[] = { 0x01, 0x01, 0x10, 0x42, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x01, 0x23, 0x03, 0x02, 0x12, 0x34 };
+    uint8_t parameters3[] = { 0x01, 0x01, 0x10, 0x42, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x01, 0x23, 0x03, 0x02, 0x12, 0x34, 0x04, 0x01, 0x64 };
 
     link = llc_link_activate (LLC_INITIATOR, parameters3, sizeof (parameters3));
     cut_assert_not_null (link, cut_message ("llc_link_activate()"));
@@ -84,6 +90,8 @@ test_llcp_link_activate_as_initiator (void)
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
     cut_assert_equal_int (419, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x1235, link->remote_wks, cut_message ("Wrong remote WKS"));
+    cut_assert_equal_int (1, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
+    cut_assert_equal_int (0, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO sec"));
 
     llc_link_deactivate (link);
 
@@ -104,6 +112,9 @@ test_llcp_link_activate_as_target (void)
     cut_assert_equal_int (LLCP_VERSION_MINOR, link->version.minor, cut_message ("Wrong minor version"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->remote_miu, cut_message ("Wrong remote MIU"));
+    cut_assert_equal_int (0x0001, link->remote_wks, cut_message ("Wrong remote WKS"));
+    cut_assert_equal_int (0, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
+    cut_assert_equal_int (100000000, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO sec"));
 
     llc_link_deactivate (link);
 }

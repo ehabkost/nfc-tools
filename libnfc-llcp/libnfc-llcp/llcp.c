@@ -96,6 +96,10 @@ llc_link_activate (uint8_t role, const uint8_t *parameters, size_t length)
 	link->remote_miu = LLC_DEFAULT_MIU;
 	link->local_wks  = 0x0001; /* FIXME: This has to be generated */
 	link->remote_wks = 0x0001;
+	link->local_lto.tv_sec = 0;
+	link->local_lto.tv_nsec = 100000000;
+	link->remote_lto.tv_sec = 0;
+	link->remote_lto.tv_nsec = 100000000;
 
 	link->llc_up   = (mqd_t)-1;
 	link->llc_down = (mqd_t)-1;
@@ -121,8 +125,9 @@ llc_link_activate (uint8_t role, const uint8_t *parameters, size_t length)
 int
 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length)
 {
-    uint16_t miux;
     struct llcp_version version;
+    uint16_t miux;
+    uint8_t lto;
 
     size_t offset = 0;
     while (offset < length) {
@@ -157,6 +162,15 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid WKS TLV parameter");
 		return -1;
 	    }
+	    break;
+	case LLCP_PARAMETER_LTO:
+	    if (parameter_decode_lto (parameters + offset, 2 + parameters[offset+1], &lto) < 0) {
+		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid LTO TLV parameter");
+		return -1;
+	    }
+	    link->remote_lto.tv_sec = (lto * 10 * 1000000) / 1000000000;
+	    link->remote_lto.tv_nsec = (lto * 10 * 1000000) % 1000000000;
+	    break;
 	}
 	offset += 2 + parameters[offset+1];
     }

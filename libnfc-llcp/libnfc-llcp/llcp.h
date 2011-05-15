@@ -76,6 +76,8 @@ struct llc_link {
     uint16_t remote_miu;
     uint16_t local_wks;
     uint16_t remote_wks;
+    struct timespec local_lto;
+    struct timespec remote_lto;
 
     pthread_t llcp_thread;
     mqd_t llc_up;
