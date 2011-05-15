@@ -90,10 +90,12 @@ llc_link_activate (uint8_t role, const uint8_t *parameters, size_t length)
 
     if ((link = malloc (sizeof (*link)))) {
 	link->role = role;
-	link->local_miu  = LLC_DEFAULT_MIU;
-	link->remote_miu = LLC_DEFAULT_MIU;
 	link->version.major = LLCP_VERSION_MAJOR;
 	link->version.minor = LLCP_VERSION_MINOR;
+	link->local_miu  = LLC_DEFAULT_MIU;
+	link->remote_miu = LLC_DEFAULT_MIU;
+	link->local_wks  = 0x0001; /* FIXME: This has to be generated */
+	link->remote_wks = 0x0001;
 
 	link->llc_up   = (mqd_t)-1;
 	link->llc_down = (mqd_t)-1;
@@ -150,6 +152,11 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 	    }
 	    link->remote_miu = miux + 128;
 	    break;
+	case LLCP_PARAMETER_WKS:
+	    if (parameter_decode_wks (parameters + offset, 2 + parameters[offset+1], &link->remote_wks) < 0) {
+		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid WKS TLV parameter");
+		return -1;
+	    }
 	}
 	offset += 2 + parameters[offset+1];
     }

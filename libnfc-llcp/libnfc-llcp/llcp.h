@@ -71,9 +71,11 @@ int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version
 
 struct llc_link {
     uint8_t role;
+    struct llcp_version version;
     uint16_t local_miu;
     uint16_t remote_miu;
-    struct llcp_version version;
+    uint16_t local_wks;
+    uint16_t remote_wks;
 
     pthread_t llcp_thread;
     mqd_t llc_up;
