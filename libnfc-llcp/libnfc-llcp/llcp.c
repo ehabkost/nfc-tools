@@ -39,6 +39,8 @@
 #define LLC_LINK_MSG(priority, message) llcp_log_log (LOG_LLC_LINK, priority, "%s", message)
 #define LLC_LINK_LOG(priority, format, ...) llcp_log_log (LOG_LLC_LINK, priority, format, __VA_ARGS__)
 
+#define MIN(a, b) ((a < b) ? a : b)
+
 int
 llcp_init (void)
 {
@@ -118,6 +120,7 @@ int
 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length)
 {
     uint16_t miux;
+    struct llcp_version version;
 
     size_t offset = 0;
     while (offset < length) {
@@ -131,8 +134,12 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 	}
 	switch (parameters[offset]) {
 	case LLCP_PARAMETER_VERSION:
-	    if (parameter_decode_version (parameters + offset, 2 + parameters[offset+1], &link->version) < 0) {
+	    if (parameter_decode_version (parameters + offset, 2 + parameters[offset+1], &version) < 0) {
 		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid Version TLV parameter");
+		return -1;
+	    }
+	    if (llcp_version_agreement (link, version) < 0) {
+		LLC_LINK_MSG (LLC_PRIORITY_WARN, "LLCP Version Agreement Procedure failed");
 		return -1;
 	    }
 	    break;
@@ -153,9 +160,33 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
     return 0;
 }
 
+int
+llcp_version_agreement (struct llc_link *link, struct llcp_version version)
+{
+    int res = -1;
+
+    if (link->version.major == version.major) {
+	link->version.minor = MIN (link->version.minor, version.minor);
+	res = 0;
+    } else if (link->version.major > version.major) {
+	if (version.major >= 1) {
+	    link->version = version;
+	    res = 0;
+	}
+    } else {
+	/* Let the remote LLC component perform version agreement */
+	res = 0;
+    }
+
+    return res;
+}
+
 void
 llc_link_deactivate (struct llc_link *link)
 {
+    if (!link)
+	return;
+
     pthread_cancel (link->llcp_thread);
     pthread_join (link->llcp_thread, NULL);
 

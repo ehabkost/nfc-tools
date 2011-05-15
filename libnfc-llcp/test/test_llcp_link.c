@@ -54,8 +54,8 @@ test_llcp_link_activate_as_initiator (void)
 
     link = llc_link_activate (LLC_INITIATOR, parameters, sizeof (parameters));
     cut_assert_not_null (link, cut_message ("llc_link_activate()"));
-    cut_assert_equal_int (2, link->version.major, cut_message ("Wrong major version"));
-    cut_assert_equal_int (3, link->version.minor, cut_message ("Wrong minor version"));
+    cut_assert_equal_int (LLCP_VERSION_MAJOR, link->version.major, cut_message ("Wrong major version"));
+    cut_assert_equal_int (LLCP_VERSION_MINOR, link->version.minor, cut_message ("Wrong minor version"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->remote_miu, cut_message ("Wrong remote MIU"));
 
@@ -72,16 +72,21 @@ test_llcp_link_activate_as_initiator (void)
 
     llc_link_deactivate (link);
 
-    uint8_t parameters3[] = { 0x01, 0x01, 0x23, 0x42, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x01, 0x23 };
+    uint8_t parameters3[] = { 0x01, 0x01, 0x10, 0x42, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x01, 0x23 };
 
     link = llc_link_activate (LLC_INITIATOR, parameters3, sizeof (parameters3));
     cut_assert_not_null (link, cut_message ("llc_link_activate()"));
-    cut_assert_equal_int (2, link->version.major, cut_message ("Wrong major version"));
-    cut_assert_equal_int (3, link->version.minor, cut_message ("Wrong minor version"));
+    cut_assert_equal_int (1, link->version.major, cut_message ("Wrong major version"));
+    cut_assert_equal_int (0, link->version.minor, cut_message ("Wrong minor version"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
     cut_assert_equal_int (419, link->remote_miu, cut_message ("Wrong remote MIU"));
 
     llc_link_deactivate (link);
+
+    uint8_t parameters4[] = { 0x01, 0x01, 0x09 };
+
+    link = llc_link_activate (LLC_INITIATOR, parameters4, sizeof (parameters4));
+    cut_assert_null (link, cut_message ("llc_link_activate()"));
 }
 
 void

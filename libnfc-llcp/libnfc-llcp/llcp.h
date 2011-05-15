@@ -66,6 +66,8 @@ struct llc_link	*llc_link_activate (uint8_t mode, const uint8_t *parameters, siz
 int		 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length);
 void		 llc_link_deactivate (struct llc_link *link);
 
+int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version);
+
 
 struct llc_link {
     uint8_t role;
