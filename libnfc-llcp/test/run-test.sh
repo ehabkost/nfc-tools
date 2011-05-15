@@ -10,7 +10,13 @@ if test -z "$CUTTER"; then
     CUTTER="`make -s -C "$BASE_DIR" echo-cutter`"
 fi
 
-"$CUTTER" --keep-opening-modules -s "$BASE_DIR" "$@" "$BASE_DIR"
+CUTTER_FLAGS=""
+
+case $TERM in
+    rxvt) CUTTER_FLAGS="$CUTTER_FLAGS --color=yes" ;;
+esac
+
+"$CUTTER" --keep-opening-modules $CUTTER_FLAGS -s "$BASE_DIR" "$@" "$BASE_DIR"
 #         ^^^^^^^^^^^^^^^^^^^^^^
 # FIXME: Remove this workaround once cutter has been fixed upstream.
 # Bug report:

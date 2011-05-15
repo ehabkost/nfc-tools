@@ -25,6 +25,18 @@ AC_TYPE_UINT8_T
 
 CFLAGS="$CFLAGS -std=c99"
 
+# Checks for log4c
+AC_PATH_PROG([LOG4C_CONFIG], [log4c-config])
+if test x"$LOG4C_CONFIG" != x""; then
+    log4c_CFLAGS=`$LOG4C_CONFIG --cflags`
+    log4c_LIBS=`$LOG4C_CONFIG --libs`
+    AC_SUBST([log4c_CFLAGS])
+    AC_SUBST([log4c_LIBS])
+    AC_DEFINE([HAS_LOG4C], [1], [Define to 1 if log4c is available.])
+fi
+AM_CONDITIONAL(HAS_LOG4C, [test x"$LOG4C_CONFIG" != x""])
+
+
 # Checks for mscgen
 AC_PATH_PROG([MSCGEN], [mscgen])
 AC_SUBST(MSCGEN)
@@ -36,7 +48,6 @@ PKG_CHECK_MODULES([LIBNFC], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], [AC_MSG_ER
 
 PKG_CONFIG_REQUIRES="libnfc"
 AC_SUBST([PKG_CONFIG_REQUIRES])
-
 
 # Checks for cutter unit tests framework
 CUTTER_REQUIRED_VERSION=1.1.2

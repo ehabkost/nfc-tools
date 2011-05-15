@@ -1,0 +1,169 @@
+/*-
+ * Copyright (C) 2011, Romain Tartière
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+
+/*
+ * $Id$
+ */
+
+#include "config.h"
+
+#include <sys/types.h>
+
+#include <mqueue.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "llcp.h"
+#include "llcp_log.h"
+#include "llcp_parameters.h"
+#include "llcp_pdu.h"
+
+#define LOG_LLC_LINK "libnfc-llcp.llc.link"
+#define LLC_LINK_MSG(priority, message) llcp_log_log (LOG_LLC_LINK, priority, "%s", message)
+#define LLC_LINK_LOG(priority, format, ...) llcp_log_log (LOG_LLC_LINK, priority, format, __VA_ARGS__)
+
+int
+llcp_init (void)
+{
+    return llcp_log_init ();
+}
+
+int
+llcp_fini (void)
+{
+    return llcp_log_fini ();
+}
+
+void llcp_thread_cleanup (void *arg);
+void
+llcp_thread_cleanup (void *arg)
+{
+    (void)arg;
+    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%p) Link deactivating", (void *)pthread_self ());
+    LLC_LINK_LOG (LLC_PRIORITY_INFO, "(%p) Link deactivated", (void *)pthread_self ());
+}
+
+void *
+llcp_thread (void *arg)
+{
+    //struct llc_link *link = (struct llc_link *)arg;
+
+    pthread_cleanup_push (llcp_thread_cleanup, arg);
+    LLC_LINK_LOG (LLC_PRIORITY_INFO, "(%p) Link activated", (void *)pthread_self ());
+    for (;;) {
+	sleep (1);
+	//struct pdu *pdu;
+	//uint8_t data[BUFSIZ];
+	// Wait for data from MAC layer
+	// pdu = ...
+
+	//pdu = pdu_unpack (data, BUFSIZ);
+	//pdu_dispatch (pdu);
+    }
+    pthread_cleanup_pop (1);
+    return NULL;
+}
+
+struct llc_link *
+llc_link_activate (uint8_t role, const uint8_t *parameters, size_t length)
+{
+    struct llc_link *link;
+
+    if ((link = malloc (sizeof (*link)))) {
+	link->role = role;
+	link->local_miu  = LLC_DEFAULT_MIU;
+	link->remote_miu = LLC_DEFAULT_MIU;
+	link->version.major = LLCP_VERSION_MAJOR;
+	link->version.minor = LLCP_VERSION_MINOR;
+
+	link->llc_up   = (mqd_t)-1;
+	link->llc_down = (mqd_t)-1;
+
+	if (llc_link_configure (link, parameters, length) < 0) {
+	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Link configuration failed");
+	    llc_link_deactivate (link);
+	    return NULL;
+	}
+
+	switch (role) {
+	case LLC_INITIATOR:
+	case LLC_TARGET:
+	    break;
+	}
+
+	pthread_create (&link->llcp_thread, NULL, llcp_thread, link);
+    }
+
+    return link;
+}
+
+int
+llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length)
+{
+    uint16_t miux;
+
+    size_t offset = 0;
+    while (offset < length) {
+	if (offset > length - 2) {
+	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Incomplete TLV field in parameters list");
+	    return -1;
+	}
+	if (offset + 2 + parameters[offset+1] > length) {
+	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Incomplete TLV value in parameters list");
+	    return -1;
+	}
+	switch (parameters[offset]) {
+	case LLCP_PARAMETER_VERSION:
+	    if (parameter_decode_version (parameters + offset, 2 + parameters[offset+1], &link->version) < 0) {
+		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid Version TLV parameter");
+		return -1;
+	    }
+	    break;
+	case LLCP_PARAMETER_MIUX:
+	    if (parameter_decode_miux (parameters + offset, 2 + parameters[offset+1], &miux) < 0) {
+		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid MIUX TLV parameter");
+		return -1;
+	    }
+	    link->remote_miu = miux + 128;
+	    break;
+	}
+	offset += 2 + parameters[offset+1];
+    }
+    if (offset != length) {
+	LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Unprocessed TLV parameters");
+	return -1;
+    }
+    return 0;
+}
+
+void
+llc_link_deactivate (struct llc_link *link)
+{
+    pthread_cancel (link->llcp_thread);
+    pthread_join (link->llcp_thread, NULL);
+
+    if (link->llc_up != (mqd_t)-1)
+	mq_close (link->llc_up);
+    if (link->llc_down != (mqd_t)-1)
+	mq_close (link->llc_down);
+
+    free (link);
+}
+

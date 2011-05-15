@@ -22,6 +22,8 @@
 #ifndef _LLCP_H
 #define _LLCP_H
 
+#include <mqueue.h>
+
 /*
  * Logical Link Control Protocol
  * Technical Specification
@@ -52,5 +54,33 @@ struct data_link_connection_parameters {
     uint8_t rwl;    /* Local Receive Window Size */
     uint8_t rwr;    /* Remote Receive Window Size */
 };
+
+struct data_link_connection {
+    struct data_link_connection_state state;
+    struct data_link_connection_parameters parameters;
+};
+
+int		 llcp_init (void);
+int		 llcp_fini (void);
+struct llc_link	*llc_link_activate (uint8_t mode, const uint8_t *parameters, size_t length);
+int		 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length);
+void		 llc_link_deactivate (struct llc_link *link);
+
+
+struct llc_link {
+    uint8_t role;
+    uint16_t local_miu;
+    uint16_t remote_miu;
+    struct llcp_version version;
+
+    pthread_t llcp_thread;
+    mqd_t llc_up;
+    mqd_t llc_down;
+};
+/* LLC Operating modes */
+#define LLC_INITIATOR 0
+#define LLC_TARGET    1
+
+#define LLC_DEFAULT_MIU 128
 
 #endif /* !_LLCP_H */

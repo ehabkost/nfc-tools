@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "llcp.h"
 #include "llcp_pdu.h"
 
 struct pdu *sample_i_pdu;
@@ -39,6 +40,9 @@ uint8_t sample_a_pdu_payload[] = {
 void
 cut_setup()
 {
+    if (llcp_init ())
+	cut_fail ("llcp_init() failed");
+
     if (!(sample_a_pdu = malloc (sizeof (*sample_a_pdu)))) {
 	cut_fail ("Cannot allocate sample_a_pdu");
     }
@@ -68,6 +72,8 @@ cut_teardown (void)
 {
     pdu_free (sample_a_pdu);
     pdu_free (sample_i_pdu);
+
+    llcp_fini ();
 }
 
 void

@@ -25,6 +25,19 @@
 #include "llcp_parameters.h"
 
 void
+cut_setup (void)
+{
+    if (llcp_init ())
+	cut_fail ("llcp_init() failed");
+}
+
+void
+cut_teardown (void)
+{
+    llcp_fini ();
+}
+
+void
 test_llcp_parameter_version (void)
 {
     struct llcp_version version = { 1, 0 };

@@ -19,13 +19,20 @@
  * $Id$
  */
 
+#include "config.h"
+
 #include <sys/endian.h>
 #include <sys/types.h>
 
 #include <stdlib.h>
 #include <string.h>
 
+#include "llcp_log.h"
 #include "llcp_pdu.h"
+
+#define LOG_LLC_PDU "libnfc-llcp.llc.pdu"
+#define LLC_PDU_MSG(priority, message) llcp_log_log (LOG_LLC_PDU, priority, "%s", message)
+#define LLC_PDU_LOG(priority, format, ...) llcp_log_log (LOG_LLC_PDU, priority, format, __VA_ARGS__)
 
 uint8_t _pdu_ptype_sequence_field[] = {
     0, /* PDU_SYMM */
@@ -51,8 +58,10 @@ uint8_t _pdu_ptype_sequence_field[] = {
 int
 pdu_pack (const struct pdu *pdu, uint8_t *buffer, size_t len)
 {
-    if (len < 2 + (pdu_has_sequence_field(pdu) ? 1 : 0) + pdu->payload_size)
+    if (len < 2 + (pdu_has_sequence_field(pdu) ? 1 : 0) + pdu->payload_size) {
+	LLC_PDU_MSG (LLC_PRIORITY_ERROR, "Insuficient buffer space");
 	return -1;
+    }
 
     int n = 0;
     buffer[n++] = (pdu->dsap << 2) | (pdu->ptype >> 2);
@@ -148,15 +157,19 @@ pdu_dispatch (struct pdu *pdu)
 {
     struct pdu **pdus = NULL;
 
-    if ((pdu->ssap != 0) || (pdu->ptype != PDU_AGF) || (pdu->dsap != 0))
+    if ((pdu->ssap != 0) || (pdu->ptype != PDU_AGF) || (pdu->dsap != 0)) {
+	LLC_PDU_MSG (LLC_PRIORITY_ERROR, "Invalid AGF PDU");
 	return NULL;
+    }
 
     size_t pdu_count = 0;
     size_t offset = 0;
 
     while (offset < pdu->payload_size) {
-	if (offset + 2 > pdu->payload_size)
+	if (offset + 2 > pdu->payload_size) {
+	    LLC_PDU_MSG (LLC_PRIORITY_ERROR, "Incomplete TLV field");
 	    return NULL;
+	}
 
 	uint16_t pdu_length = be16toh (*(uint16_t *)(pdu->payload + offset));
 	offset += 2;
@@ -164,9 +177,10 @@ pdu_dispatch (struct pdu *pdu)
 	pdu_count++;
     }
 
-    if (offset != pdu->payload_size)
+    if (offset != pdu->payload_size) {
+	LLC_PDU_MSG (LLC_PRIORITY_ERROR, "Unprocessed TLV parameters");
 	return NULL;
-
+    }
 
     pdus = malloc ((pdu_count + 1) * sizeof (*pdus));
     offset = 0;
