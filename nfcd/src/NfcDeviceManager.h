@@ -8,6 +8,8 @@
 
 #include "NfcDevice.h"
 
+#include <QDBusObjectPath>
+
 /// NfcDeviceManager
 /**
   * This class manage the NFC Devices connected to the computer
@@ -25,11 +27,14 @@ public Q_SLOTS:
   /// get the list of the devices
   QStringList getDeviceList();
 
-  /// get the device with the given name
-  QString getDevicePathByName(QString);
+  /// get the DBus device path with the given name
+  QDBusObjectPath getDevicePathByName(const QString&);
 
-  /// get the device with the given id
-  QString getDevicePathById(uchar);
+  /// get the DBus device path with the given id
+  QDBusObjectPath getDevicePathById(const uchar);
+
+  // get the default device DBus object path
+  const QDBusObjectPath getDefaultDevicePath();
 
 Q_SIGNALS:
 
@@ -59,7 +64,6 @@ private:
 
   /// unregister a device
   void unregisterDevice(uchar id, QString device);
-
 
   /// QList containing the devices
   QList<NfcDevice*> _devices;

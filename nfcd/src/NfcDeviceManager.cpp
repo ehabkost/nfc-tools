@@ -24,20 +24,22 @@ QStringList NfcDeviceManager::getDeviceList()
   return devicesName;
 }
 
-QString NfcDeviceManager::getDevicePathByName(QString deviceName) {
-	QString devicePath = "";
+QDBusObjectPath NfcDeviceManager::getDevicePathByName(const QString& deviceName) {
+  QDBusObjectPath devicePath;
   for(int i=0; i<_devices.size(); i++) {
-    if(deviceName == _devices.at(i)->getName()) 
-		devicePath = _devices.at(i)->getPath();
+    if(deviceName == _devices.at(i)->getName()) {
+      devicePath = _devices.at(i)->getPath();
+    }
   }
   return devicePath;
 }
 
-QString NfcDeviceManager::getDevicePathById(uchar id) {
-  QString devicePath = "";
+QDBusObjectPath NfcDeviceManager::getDevicePathById(const uchar id) {
+  QDBusObjectPath devicePath;
   for(int i=0; i<_devices.size(); i++) {
-    if(id  == _devices.at(i)->getId()) 
-		devicePath = _devices.at(i)->getPath();
+    if(id  == _devices.at(i)->getId()) {
+      devicePath = _devices.at(i)->getPath();
+    }
   }
   return devicePath;
 }
@@ -117,13 +119,12 @@ void NfcDeviceManager::registerDevice(uchar id, nfc_device_desc_t device)
   new NfcDeviceAdaptor(nfcDevice);
 
   QDBusConnection connection = QDBusConnection::systemBus();
-  QString path = QString("/nfcd") + QString("/device") 
-	+ nfcDevice->getUuid().toString().remove(QRegExp("[{}-]"));
+  QString path = QString("/nfcd") + QString("/device") + nfcDevice->getUuid().toString().remove(QRegExp("[{}-]"));
   qDebug() << "Trying to register \"" << deviceName << "\" at path: \"" << path << "\".";
-  	if( connection.registerObject(path, nfcDevice) ) {
-  	  qDebug() << "Device \"" << deviceName << "\" is D-Bus registred (" << path << ").";
-    nfcDevice->setPath(path);
- 	 emit devicePlugged(id, deviceName);
+  if( connection.registerObject(path, nfcDevice) ) {
+    qDebug() << "Device \"" << deviceName << "\" is D-Bus registred (" << path << ").";
+    nfcDevice->setPath(QDBusObjectPath(path));
+    emit devicePlugged(id, deviceName);
   } else {
     qDebug() << connection.lastError().message();
     qFatal("Unable to register a new device on D-Bus.");
@@ -137,10 +138,9 @@ void NfcDeviceManager::unregisterDevice(uchar id, QString device)
     if(_devices.at(i)->getId() == id) {
       NfcDevice* nfcDevice = _devices.takeAt(i);
       QDBusConnection connection = QDBusConnection::systemBus();
-      QString path = QString("/nfcd") + QString("/device") 
-        + nfcDevice->getUuid().toString().remove(QRegExp("[{}-]"));
+      QString path = QString("/nfcd") + QString("/device_") + nfcDevice->getUuid().toString().remove(QRegExp("[{}-]"));
       connection.unregisterObject(path);
-		nfcDevice->setPath("");
+      nfcDevice->setPath(QDBusObjectPath());
       qDebug() << "Device \"" << device << "\" is D-Bus unregistred (" << path << ").";
       delete(nfcDevice);
       break;
@@ -148,3 +148,13 @@ void NfcDeviceManager::unregisterDevice(uchar id, QString device)
   }
   emit deviceUnplugged (id, device);
 }
+
+const QDBusObjectPath NfcDeviceManager::getDefaultDevicePath()
+{
+  qDebug() << "getDefaultDevicePath()";
+  if (_devices.count()) {
+    return _devices.at(0)->getPath();
+  }
+  return QDBusObjectPath();
+}
+

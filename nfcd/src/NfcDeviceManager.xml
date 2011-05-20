@@ -5,13 +5,16 @@
 		<method name="getDeviceList">
 			<arg type="as" name="devices" direction="out" />
 		</method>
+		<method name="getDefaultDevicePath">
+			<arg type="o" name="devicePath" direction="out" />
+		</method>
 		<method name="getDevicePathByName">
 			<arg type="s" name="deviceName" direction="in" />
-			<arg type="s" name="devicePath" direction="out" />
+			<arg type="o" name="devicePath" direction="out" />
 		</method>
 		<method name="getDevicePathById">
 			<arg type="y" name="id" direction="in" />
-			<arg type="s" name="device" direction="out" />
+			<arg type="o" name="device" direction="out" />
 		</method>
 		<signal name="devicePlugged">
 			<arg type="y" name="id" direction="out"/>

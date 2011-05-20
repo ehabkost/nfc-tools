@@ -21,17 +21,17 @@
 NfcDevice::NfcDevice(const uchar deviceId, const nfc_device_desc_t device,
   QMutex* accessLock) : _id (deviceId)
 {
-  _device = device;
-  _device_connect = nfc_connect(&_device);
+  _nfc_device_desc = device;
+  _nfc_device = nfc_connect(&_nfc_device_desc);
   _uuid = QUuid::createUuid();
-  _dbusPath = "";
+  _dBusObjectPath = QDBusObjectPath("");
   _accessLock = accessLock;
 }
 
 /// get device name
 const QString NfcDevice::getName()
 {
-  return QString(_device.acDevice);
+  return QString(_nfc_device_desc.acDevice);
 }
 
 /// getter for _uuid
@@ -39,9 +39,9 @@ const QUuid NfcDevice::getUuid() {
   return _uuid;
 }
 
-/// getter for _dbusPath
-const QString NfcDevice::getPath() {
-	return _dbusPath;
+/// return DBus path of this object
+const QDBusObjectPath NfcDevice::getPath() {
+  return _dBusObjectPath;
 }
 
 /// getter for _id
@@ -62,11 +62,11 @@ QString NfcDevice::getTargetPathByUid(QString tgUid)
 }
 
 /** 
- * @brief setter for _dbusPath
- * @param s new D-Bus path
+ * @brief setter for _dBusObjectPath
+ * @param new D-Bus object path
  */
-void NfcDevice::setPath(QString s) {
-	_dbusPath = s;
+void NfcDevice::setPath(const QDBusObjectPath& path) {
+  _dBusObjectPath = path;
 } 
 
 /// get the target list for this device
@@ -87,99 +87,58 @@ void NfcDevice::timerEvent(QTimerEvent *event)
   qDebug ("NfcDevice::timerEvent");
 }
 
+#define MAX_TARGET_COUNT 8
 /// checking for new targets or missing targets
 void NfcDevice::checkAvailableTargets()
 {
   _accessLock->lock();
-  if(_device_connect) {
+  if(_nfc_device) {
     /* We are connected to NFC device */
-    MifareTag *mifareTags = NULL;
-    mifareTags = freefare_get_tags (_device_connect);
+    nfc_target_t nfc_targets[MAX_TARGET_COUNT];
+    // List ISO14443A targets
+    nfc_modulation_t nfc_modulation_iso14443a;
+    nfc_modulation_iso14443a.nmt = NMT_ISO14443A;
+    nfc_modulation_iso14443a.nbr = NBR_106;
 
-    ISO14443bTag *iso14443bTags = NULL;
-/* FIXME Enable ISO14443B
-    iso14443bTags = iso14443b_get_tags(_device_connect);
-*/
-    int i = 0;
-    MifareTag mifareTag;
-    ISO14443bTag iso14443bTag;
+    size_t targets_found_count;
+    if (nfc_initiator_list_passive_targets (_nfc_device, nfc_modulation_iso14443a, nfc_targets, MAX_TARGET_COUNT, &targets_found_count)) {
+      qDebug() << targets_found_count << "target(s) found.";
+    } else {
+      nfc_perror (_nfc_device, "nfc_initiator_list_passive_targets");
+    }
 
+    /* FIXME How to handle random UID ? */
     /* Look for disapeared devices */
-    for(i = 0; i < targets.size(); i++) {
+    for(int i = 0; i < targets.size(); i++) {
       bool still_here = false;
       int j = 0;
-      if ((mifareTags != NULL) && (targets.at(i)->getType() == MIFARE)) {
-        while(mifareTag = mifareTags[j]) {
-          char* u = freefare_get_tag_uid(mifareTag);
-          QString uid(u);
-          free(u);
+      for (size_t n = 0; n < targets_found_count; n++) {
+        QString uid(QByteArray ((const char*)nfc_targets[n].nti.nai.abtUid, nfc_targets[n].nti.nai.szUidLen).toHex());
 
-          if(targets.at(i)->getUid() == uid) {
-            still_here = true;
-            break;
-          }
-          j++;
+        if(targets.at(i)->getUid() == uid) {
+          still_here = true;
+          break;
         }
-      } else if ((iso14443bTags != NULL) && (targets.at(i)->getType() == ISO14443B)) {
-        // While ISO
-        while(iso14443bTag = iso14443bTags[j]) {
-          char* u = iso14443b_get_tag_uid(iso14443bTag);
-          QString uid(u);
-          free(u);
-
-          if(targets.at(i)->getUid() == uid) {
-            still_here = true;
-            break;
-          }
-          j++;
-        }
+        j++;
       }
       if(!still_here) {
         unregisterTarget(targets.at(i));
       }
+    }
 
-      /* Look for new devices */
-      i = 0;
-      // MIFARE
-      if (mifareTags != NULL) {
-        while((mifareTag = mifareTags[i])) {
-          char* u = freefare_get_tag_uid(mifareTag);
-          QString uid(u);
-          free(u);
+    /* Look for new devices */
+    for (size_t n = 0; n < targets_found_count; n++) {
+      QString uid(QByteArray ((const char*)nfc_targets[n].nti.nai.abtUid, nfc_targets[n].nti.nai.szUidLen).toHex());
   
-          bool already_known = false;
-          for(int j=0; j < targets.size(); j++) {
-            if(targets.at(j)->getUid() == uid) {
-              already_known = true;
-              break;
-            }
-          }
-          if(!already_known) {
-            registerTarget(new NfcTarget(mifareTag, _device_connect, _accessLock));
-          }
-          i++;
+      bool already_known = false;
+      for(int j=0; j < targets.size(); j++) {
+        if(targets.at(j)->getUid() == uid) {
+          already_known = true;
+          break;
         }
       }
-      i = 0;
-      // ISO14443B
-      if (iso14443bTags != NULL) {
-        while((iso14443bTag = iso14443bTags[i])) {
-          char* u = iso14443b_get_tag_uid(iso14443bTag);
-          QString uid(u);
-          free(u);
-  
-          bool already_known = false;
-          for(int j=0; j < targets.size(); j++) {
-            if(targets.at(j)->getUid() == uid) {
-              already_known = true;
-              break;
-            }
-          }
-          if(!already_known) {
-            registerTarget(new NfcTarget(iso14443bTag, _device_connect, _accessLock));
-          }
-          i++;
-        }
+      if(!already_known) {
+        registerTarget(new NfcTarget(nfc_targets[n], this));
       }
     }
   }
@@ -196,13 +155,9 @@ NfcDevice::registerTarget(NfcTarget* target)
   QString path = QString("/nfcd") + QString("/target_") 
 		+ target->getUuid().toString().remove(QRegExp("[{}-]"));
   if( connection.registerObject(path, target) ) {
-    qDebug() << "Target \"" << target->getName() << "\" is D-Bus registred (" << path << ").";
+    qDebug() << "Target \"" << target->getUid() << "\" is D-Bus registred (" << path << ").";
 	 target->setPath(path);
     emit targetAdded(target->getUid(), target->getName());
-    if (target->isNFCForumValidTag()) {
-      NfcForumTag* _nfcForumTag = new NfcForumTag(target);
-      NFCd::getNfcForumManager()->registerNfcForumTag(_nfcForumTag);
-    }
   } else {
 	 qDebug() << connection.lastError().message();
     qFatal("Unable to register a new Target on D-Bus.");
@@ -223,7 +178,7 @@ void NfcDevice::unregisterTarget(NfcTarget* target)
         + nfcTarget->getUuid().toString().remove(QRegExp("[{}-]"));
       connection.unregisterObject(path);
 
-      qDebug() << "Target \"" << name << "\" is D-Bus unregistred (" << path << ").";
+      qDebug() << "Target \"" << uid << "\" is D-Bus unregistred (" << path << ").";
       delete(nfcTarget);
 
       break;

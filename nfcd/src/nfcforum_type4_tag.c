@@ -2,6 +2,7 @@
  * NFCd
  *
  * Copyright (C) 2010, Audrey Diacre
+ * Copyright (C) 2011, Romuald Conty
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,7 +32,6 @@
 #include <string.h>
 
 #include <nfc/nfc.h>
-#include <nfc/nfc-messages.h>
 
 #include "nfcforum_type4_tag.h"
 

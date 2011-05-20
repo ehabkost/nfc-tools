@@ -3,26 +3,26 @@ set(nfcd_SOURCES
   NFCd.cpp
   NfcDevice.cpp
   NfcDeviceManager.cpp
-  NfcForumManager.cpp
-  NfcForumTag.cpp
+#  NfcForumManager.cpp
+#  NfcForumTag.cpp
   NfcTarget.cpp
-  iso14443b.c
-  nfcforum_type4_tag.c
+#  iso14443b.c
+#  nfcforum_type4_tag.c
 )
 
 # Generate D-Bus adaptor
 qt4_add_dbus_adaptor(nfcd_SOURCES NfcDeviceManager.xml NfcDeviceManager.h NfcDeviceManager )
 qt4_add_dbus_adaptor(nfcd_SOURCES NfcDevice.xml NfcDevice.h NfcDevice )
 qt4_add_dbus_adaptor(nfcd_SOURCES NfcTarget.xml NfcTarget.h NfcTarget )
-qt4_add_dbus_adaptor(nfcd_SOURCES NfcForumManager.xml NfcForumManager.h NfcForumManager )
-qt4_add_dbus_adaptor(nfcd_SOURCES NfcForumTag.xml NfcForumTag.h NfcForumTag )
+#qt4_add_dbus_adaptor(nfcd_SOURCES NfcForumManager.xml NfcForumManager.h NfcForumManager )
+#qt4_add_dbus_adaptor(nfcd_SOURCES NfcForumTag.xml NfcForumTag.h NfcForumTag )
 
 set(nfcd_MOCABLE_HEADERS
   NfcDevice.h
   NfcDeviceManager.h
   NfcTarget.h
-  NfcForumManager.h
-  NfcForumTag.h
+#  NfcForumManager.h
+#  NfcForumTag.h
 )
 
 # Qt Definitions

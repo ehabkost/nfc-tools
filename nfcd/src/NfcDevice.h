@@ -5,12 +5,12 @@
 #include <QStringList>
 #include <QUuid>
 #include <QMutex>
-#include <unistd.h>
+#include  <QDBusObjectPath>
 
+// libnfc
 #include <nfc/nfc.h>
+// libfreefare
 #include <freefare.h>
-#include "iso14443b.h"
-
 
 class NfcTarget;
 
@@ -32,9 +32,9 @@ public:
 
   const QUuid getUuid();
 
-  const QString getPath();
+  const QDBusObjectPath getPath();
 
-  void setPath(QString);
+  void setPath(const QDBusObjectPath&);
 
 public Q_SLOTS:
 
@@ -60,16 +60,16 @@ protected:
   uchar _id;
 
   /// descriptor of the device
-  nfc_device_desc_t _device;
+  nfc_device_desc_t _nfc_device_desc;
 
   /// pointer to the device
-  nfc_device_t* _device_connect;
+  nfc_device_t* _nfc_device;
 
   /// uuid of the device
   QUuid _uuid;
 
   /// DBUS path of this object
-  QString _dbusPath;
+  QDBusObjectPath _dBusObjectPath;
 
   /// mutex protecting the access of the device
   QMutex* _accessLock;
