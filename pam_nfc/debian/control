@@ -1,14 +1,17 @@
 Source: libpam-nfc
-Section: devel
+Section: admin
 Priority: optional
 Maintainer: Romuald Conty <rconty@il4p.fr>
-Build-Depends: debhelper (>= 5.0.37.2), libnfc-dev
-Standards-Version: 3.7.3
+Build-Depends: debhelper (>= 7.0.50~), dh-autoreconf, libnfc-dev (>=1.5.0)
+Standards-Version: 3.9.2
 Homepage: http://code.google.com/p/nfc-tools/wiki/pam_nfc
+Vcs-Svn: http://nfc-tools.googlecode.com/svn/trunk/pam_nfc
+Vcs-Browser: http://code.google.com/p/nfc-tools/source/browse/#svn/trunk/pam_nfc
 
 Package: libpam-nfc
 Architecture: any
 Depends: ${shlibs:Depends}, libnfc2 (>= 1.5.0)
 Description: PAM module for using NFC targets
- A Pluggable Authentication Module for NFC based targets (tags, NFC phone, etc). Useful for enabling NFC based user login to a system.
+ A Pluggable Authentication Module for NFC based targets (tags, NFC phone,
+ etc). Useful for enabling NFC based user login to a system.
 
