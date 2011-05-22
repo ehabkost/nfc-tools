@@ -35,6 +35,7 @@
 #include "llcp_log.h"
 #include "llcp_parameters.h"
 #include "llcp_pdu.h"
+#include "llc_service.h"
 
 #define LOG_LLC_LINK "libnfc-llcp.llc.link"
 #define LLC_LINK_MSG(priority, message) llcp_log_log (LOG_LLC_LINK, priority, "%s", message)
@@ -90,6 +91,11 @@ llc_link_new (void)
     struct llc_link *link;
 
     if ((link = malloc (sizeof (*link)))) {
+	memset (link->services, '\0', sizeof (link->services));
+	if (llc_service_new (link, 0, llcp_thread) < 0) {
+	    llc_link_free (link);
+	    link = NULL;
+	}
     }
 
     return link;
@@ -115,9 +121,6 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
 	link->local_lsc  = 3;
 	link->remote_lsc = 3;
 
-	link->llc_up   = (mqd_t)-1;
-	link->llc_down = (mqd_t)-1;
-
 	if (llc_link_configure (link, parameters, length) < 0) {
 	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Link configuration failed");
 	    llc_link_deactivate (link);
@@ -134,7 +137,7 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
 	    /* FIXME: Exchange PAX PDU */
 	}
 
-	pthread_create (&link->llcp_thread, NULL, llcp_thread, link);
+	llc_service_start (link, 0);
 
     return 0;
 }
@@ -232,19 +235,23 @@ llc_link_deactivate (struct llc_link *link)
 {
     assert (link);
 
-    pthread_cancel (link->llcp_thread);
-    pthread_join (link->llcp_thread, NULL);
-
-    if (link->llc_up != (mqd_t)-1)
-	mq_close (link->llc_up);
-    if (link->llc_down != (mqd_t)-1)
-	mq_close (link->llc_down);
+    for (int i = MAX_LLC_LINK_SERVICE; i >= 0; i--) {
+	if (link->services[i]) {
+	    llc_service_stop (link, i);
+	}
+    }
 }
 
 void
 llc_link_free (struct llc_link *link)
 {
     assert (link);
+
+    for (int i = MAX_LLC_LINK_SERVICE; i >= 0; i--) {
+	if (link->services[i]) {
+	    llc_service_free (link, i);
+	}
+    }
 
     free (link);
 }

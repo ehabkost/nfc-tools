@@ -13,11 +13,12 @@ lib_LTLIBRARIES = libnfc-llcp.la
 libnfc_llcp_la_SOURCES = \
 			 llcp.c \
 			 llcp_pdu.c \
-			 llcp_parameters.c
+			 llcp_parameters.c \
+			 llc_service.c
 
 if HAS_LOG4C
 libnfc_llcp_la_SOURCES += llcp_log.c
 endif
 
-EXTRA_DIST = llcp.h llcp_log.h llcp_pdu.h llcp_parameters.h
+EXTRA_DIST = llcp.h llcp_log.h llcp_pdu.h llcp_parameters.h llc_service.h
 CLEANFILES = *.gcno

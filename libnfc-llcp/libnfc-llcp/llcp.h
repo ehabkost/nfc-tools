@@ -70,6 +70,8 @@ void		 llc_link_free (struct llc_link *link);
 
 int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version);
 
+#define MAX_LLC_LINK_SERVICE 0x3F
+
 struct llc_link {
     uint8_t role;
     struct llcp_version version;
@@ -82,9 +84,7 @@ struct llc_link {
     uint8_t local_lsc;
     uint8_t remote_lsc;
 
-    pthread_t llcp_thread;
-    mqd_t llc_up;
-    mqd_t llc_down;
+    struct llc_service *services[MAX_LLC_LINK_SERVICE + 1];
 };
 /* LLC Operating modes */
 #define LLC_INITIATOR 0
