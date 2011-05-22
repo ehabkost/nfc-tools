@@ -43,9 +43,9 @@ static const char *mq_dirction_up = "up";
 static const char *mq_dirction_down = "down";
 
 static inline void
-mq_name (char *name, size_t size, const struct llc_link *link, uint8_t service, const char *direction)
+mq_name (char **name, const struct llc_link *link, uint8_t service, const char *direction)
 {
-    snprintf (name, size, mq_fmt, getpid(), link, service, direction);
+    asprintf (name, mq_fmt, getpid(), link, service, direction);
 }
 
 int
@@ -65,23 +65,21 @@ llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)
     link->services[service]->llc_up = (mqd_t)-1;
     link->services[service]->llc_down = (mqd_t)-1;
 
-    char mq_up[BUFSIZ];
-    char mq_down[BUFSIZ];
+    mq_name (&link->services[service]->mq_up_name, link, service, mq_dirction_up);
+    mq_name (&link->services[service]->mq_down_name, link, service, mq_dirction_down);
 
-    mq_name (mq_up, sizeof (mq_up), link, service, mq_dirction_up);
-    mq_name (mq_down, sizeof (mq_up), link, service, mq_dirction_down);
 
-    LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", mq_up);
-    link->services[service]->llc_up   = mq_open (mq_up, O_CREAT | O_EXCL | O_RDONLY, 0666, NULL);
+    LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->services[service]->mq_up_name);
+    link->services[service]->llc_up   = mq_open (link->services[service]->mq_up_name, O_CREAT | O_EXCL | O_RDONLY, 0666, NULL);
     if (link->services[service]->llc_up == (mqd_t)-1) {
-	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", mq_up);
+	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[service]->mq_up_name);
 	return -1;
     }
 
-    LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", mq_down);
-    link->services[service]->llc_down = mq_open (mq_down, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0666, NULL);
+    LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->services[service]->mq_down_name);
+    link->services[service]->llc_down = mq_open (link->services[service]->mq_down_name, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0666, NULL);
     if (link->services[service]->llc_down == (mqd_t)-1) {
-	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", mq_down);
+	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[service]->mq_down_name);
 	return -1;
     }
 
@@ -123,14 +121,11 @@ llc_service_free (struct llc_link *link, uint8_t service)
     if (link->services[service]->llc_down != (mqd_t)-1)
 	mq_close (link->services[service]->llc_down);
 
-    char mq_up[BUFSIZ];
-    char mq_down[BUFSIZ];
+    mq_unlink (link->services[service]->mq_up_name);
+    mq_unlink (link->services[service]->mq_down_name);
 
-    mq_name (mq_up, sizeof (mq_up), link, service, mq_dirction_up);
-    mq_name (mq_down, sizeof (mq_up), link, service, mq_dirction_down);
-
-    mq_unlink (mq_up);
-    mq_unlink (mq_down);
+    free (link->services[service]->mq_up_name);
+    free (link->services[service]->mq_down_name);
 
     free (link->services[service]);
 }

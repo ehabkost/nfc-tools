@@ -32,6 +32,8 @@ struct llc_service {
     void *(*thread_routine)(void *);
     mqd_t llc_up;
     mqd_t llc_down;
+    char *mq_up_name;
+    char *mq_down_name;
 };
 
 int		 llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)(void *));
