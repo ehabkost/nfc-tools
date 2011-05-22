@@ -112,7 +112,11 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
 	link->version.minor = LLCP_VERSION_MINOR;
 	link->local_miu  = LLC_DEFAULT_MIU;
 	link->remote_miu = LLC_DEFAULT_MIU;
-	link->local_wks  = 0x0001; /* FIXME: This has to be generated */
+	uint16_t wks = 0x0000;
+	for (int i = 0; i < 16; i++) {
+	    wks |= (link->services[i] ? 1 : 0) << i;
+	}
+	link->local_wks  = wks;
 	link->remote_wks = 0x0001;
 	link->local_lto.tv_sec  = 0;
 	link->local_lto.tv_nsec = 100000000;
