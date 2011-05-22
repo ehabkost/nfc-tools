@@ -79,7 +79,7 @@ llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)
     }
 
     LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", mq_down);
-    link->services[service]->llc_down = mq_open (mq_down, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0x666, NULL);
+    link->services[service]->llc_down = mq_open (mq_down, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0666, NULL);
     if (link->services[service]->llc_down == (mqd_t)-1) {
 	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", mq_down);
 	return -1;
