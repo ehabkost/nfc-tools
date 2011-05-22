@@ -62,12 +62,13 @@ struct data_link_connection {
 
 int		 llcp_init (void);
 int		 llcp_fini (void);
-struct llc_link	*llc_link_activate (uint8_t mode, const uint8_t *parameters, size_t length);
+struct llc_link	*llc_link_new (void);
+int		 llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *parameters, size_t length);
 int		 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length);
 void		 llc_link_deactivate (struct llc_link *link);
+void		 llc_link_free (struct llc_link *link);
 
 int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version);
-
 
 struct llc_link {
     uint8_t role;
@@ -88,6 +89,8 @@ struct llc_link {
 /* LLC Operating modes */
 #define LLC_INITIATOR 0
 #define LLC_TARGET    1
+
+#define LLC_PAX_PDU_PROHIBITED 0x02
 
 #define LLC_DEFAULT_MIU 128
 

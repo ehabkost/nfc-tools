@@ -15,6 +15,9 @@ AM_SILENT_RULES([yes])
 # Debug support (default:no)
 AC_ARG_ENABLE([debug],AS_HELP_STRING([--enable-debug],[Enable debug output]),[enable_debug=$enableval],[enable_debug="no"])
 AM_CONDITIONAL(WITH_DEBUG, [test x"$enable_debug" = xyes])
+if test x"$enable_debug" != x"yes"; then
+    CFLAGS="$CFLAGS -DNDEBUG"
+fi
 
 AC_FUNC_MALLOC
 AC_TYPE_OFF_T

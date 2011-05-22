@@ -41,8 +41,10 @@ test_llcp_link_activate_as_initiator (void)
 {
     struct llc_link *link;
 
-    link = llc_link_activate (LLC_INITIATOR, NULL, 0);
-    cut_assert_not_null (link, cut_message ("llc_link_activate()"));
+    link = llc_link_new ();
+    cut_assert_not_null (link, cut_message ("llc_link_new()"));
+    int res = llc_link_activate (link, LLC_INITIATOR, NULL, 0);
+    cut_assert_equal_int (0, res, cut_message ("llc_link_activate()"));
     cut_assert_equal_int (LLCP_VERSION_MAJOR, link->version.major, cut_message ("Wrong major version"));
     cut_assert_equal_int (LLCP_VERSION_MINOR, link->version.minor, cut_message ("Wrong minor version"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
@@ -56,8 +58,8 @@ test_llcp_link_activate_as_initiator (void)
 
     uint8_t parameters[] = { 0x01, 0x01, 0x23 };
 
-    link = llc_link_activate (LLC_INITIATOR, parameters, sizeof (parameters));
-    cut_assert_not_null (link, cut_message ("llc_link_activate()"));
+    res = llc_link_activate (link, LLC_INITIATOR, parameters, sizeof (parameters));
+    cut_assert_equal_int (0, res, cut_message ("llc_link_activate()"));
     cut_assert_equal_int (LLCP_VERSION_MAJOR, link->version.major, cut_message ("Wrong major version"));
     cut_assert_equal_int (LLCP_VERSION_MINOR, link->version.minor, cut_message ("Wrong minor version"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
@@ -71,8 +73,8 @@ test_llcp_link_activate_as_initiator (void)
 
     uint8_t parameters2[] = { 0x02, 0x02, 0x01, 0x23 };
 
-    link = llc_link_activate (LLC_INITIATOR, parameters2, sizeof (parameters2));
-    cut_assert_not_null (link, cut_message ("llc_link_activate()"));
+    res = llc_link_activate (link, LLC_INITIATOR, parameters2, sizeof (parameters2));
+    cut_assert_equal_int (0, res, cut_message ("llc_link_activate()"));
     cut_assert_equal_int (LLCP_VERSION_MAJOR, link->version.major, cut_message ("Wrong major version"));
     cut_assert_equal_int (LLCP_VERSION_MINOR, link->version.minor, cut_message ("Wrong minor version"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
@@ -86,8 +88,8 @@ test_llcp_link_activate_as_initiator (void)
 
     uint8_t parameters3[] = { 0x01, 0x01, 0x10, 0x42, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x01, 0x23, 0x03, 0x02, 0x12, 0x34, 0x04, 0x01, 0x64, 0x07, 0x01, 0x02 };
 
-    link = llc_link_activate (LLC_INITIATOR, parameters3, sizeof (parameters3));
-    cut_assert_not_null (link, cut_message ("llc_link_activate()"));
+    res = llc_link_activate (link, LLC_INITIATOR, parameters3, sizeof (parameters3));
+    cut_assert_equal_int (0, res, cut_message ("llc_link_activate()"));
     cut_assert_equal_int (1, link->version.major, cut_message ("Wrong major version"));
     cut_assert_equal_int (0, link->version.minor, cut_message ("Wrong minor version"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
@@ -101,8 +103,10 @@ test_llcp_link_activate_as_initiator (void)
 
     uint8_t parameters4[] = { 0x01, 0x01, 0x09 };
 
-    link = llc_link_activate (LLC_INITIATOR, parameters4, sizeof (parameters4));
-    cut_assert_null (link, cut_message ("llc_link_activate()"));
+    res = llc_link_activate (link, LLC_INITIATOR, parameters4, sizeof (parameters4));
+    cut_assert_equal_int (-1, res, cut_message ("llc_link_activate()"));
+
+    llc_link_free (link);
 }
 
 void
@@ -110,8 +114,10 @@ test_llcp_link_activate_as_target (void)
 {
     struct llc_link *link;
 
-    link = llc_link_activate (LLC_TARGET, NULL, 0);
-    cut_assert_not_null (link, cut_message ("llc_link_activate()"));
+    link = llc_link_new ();
+    cut_assert_not_null (link, cut_message ("llc_link_new()"));
+    int res = llc_link_activate (link, LLC_TARGET, NULL, 0);
+    cut_assert_equal_int (0, res, cut_message ("llc_link_activate()"));
     cut_assert_equal_int (LLCP_VERSION_MAJOR, link->version.major, cut_message ("Wrong major version"));
     cut_assert_equal_int (LLCP_VERSION_MINOR, link->version.minor, cut_message ("Wrong minor version"));
     cut_assert_equal_int (LLC_DEFAULT_MIU, link->local_miu, cut_message ("Wrong local MIU"));
@@ -122,4 +128,5 @@ test_llcp_link_activate_as_target (void)
     cut_assert_equal_int (3, link->remote_lsc, cut_message ("Wrong remote LSC"));
 
     llc_link_deactivate (link);
+    llc_link_free (link);
 }

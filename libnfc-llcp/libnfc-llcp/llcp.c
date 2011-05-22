@@ -23,6 +23,7 @@
 
 #include <sys/types.h>
 
+#include <assert.h>
 #include <mqueue.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -84,12 +85,23 @@ llcp_thread (void *arg)
 }
 
 struct llc_link *
-llc_link_activate (uint8_t role, const uint8_t *parameters, size_t length)
+llc_link_new (void)
 {
     struct llc_link *link;
 
     if ((link = malloc (sizeof (*link)))) {
-	link->role = role;
+    }
+
+    return link;
+}
+
+int
+llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *parameters, size_t length)
+{
+    assert (link);
+    assert (flags == (flags & 0x03));
+
+	link->role = flags & 0x01;
 	link->version.major = LLCP_VERSION_MAJOR;
 	link->version.minor = LLCP_VERSION_MINOR;
 	link->local_miu  = LLC_DEFAULT_MIU;
@@ -109,19 +121,22 @@ llc_link_activate (uint8_t role, const uint8_t *parameters, size_t length)
 	if (llc_link_configure (link, parameters, length) < 0) {
 	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Link configuration failed");
 	    llc_link_deactivate (link);
-	    return NULL;
+	    return -1;
 	}
 
-	switch (role) {
+	switch (flags & 0x01) {
 	case LLC_INITIATOR:
 	case LLC_TARGET:
 	    break;
 	}
 
-	pthread_create (&link->llcp_thread, NULL, llcp_thread, link);
-    }
+	if (!(flags & LLC_PAX_PDU_PROHIBITED)) {
+	    /* FIXME: Exchange PAX PDU */
+	}
 
-    return link;
+	pthread_create (&link->llcp_thread, NULL, llcp_thread, link);
+
+    return 0;
 }
 
 int
@@ -215,8 +230,7 @@ llcp_version_agreement (struct llc_link *link, struct llcp_version version)
 void
 llc_link_deactivate (struct llc_link *link)
 {
-    if (!link)
-	return;
+    assert (link);
 
     pthread_cancel (link->llcp_thread);
     pthread_join (link->llcp_thread, NULL);
@@ -225,7 +239,12 @@ llc_link_deactivate (struct llc_link *link)
 	mq_close (link->llc_up);
     if (link->llc_down != (mqd_t)-1)
 	mq_close (link->llc_down);
+}
+
+void
+llc_link_free (struct llc_link *link)
+{
+    assert (link);
 
     free (link);
 }
-
