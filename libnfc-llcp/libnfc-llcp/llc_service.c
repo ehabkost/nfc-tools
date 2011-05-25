@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <mqueue.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,7 +106,10 @@ llc_service_stop (struct llc_link *link, uint8_t service)
     assert (link->services[service]);
 
     if (link->services[service]->thread) {
+	/* A thread SHALL not be canceled while logging */
+	sem_wait (log_sem);
 	pthread_cancel (link->services[service]->thread);
+	sem_post (log_sem);
 	pthread_join (link->services[service]->thread, NULL);
 	link->services[service]->thread = NULL;
     }

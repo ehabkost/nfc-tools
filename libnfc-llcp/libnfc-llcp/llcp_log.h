@@ -22,14 +22,16 @@
 #ifndef _LLC_LOG_H
 #define _LLC_LOG_H
 
+#include <semaphore.h>
+
+extern sem_t *log_sem;
+
 #ifdef HAS_LOG4C
 
 #include <log4c.h>
 
 int	 llcp_log_init (void);
 int	 llcp_log_fini (void);
-void	 llcp_log_msg (char *category, int priority, char *message);
-void	 llcp_log_set_appender (char *category, char *appender);
 void	 llcp_log_log (char *category, int priority, char *format, ...);
 
 #define LLC_PRIORITY_FATAL  LOG4C_PRIORITY_FATAL

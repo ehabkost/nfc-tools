@@ -27,13 +27,13 @@
 
 #include "llcp_log.h"
 
-sem_t *sem;
+sem_t *log_sem;
 const char *sem_name = "/libnfc-llcp";
 
 int
 llcp_log_init (void)
 {
-    if ((sem = sem_open (sem_name, O_CREAT, 0666, 1)) == SEM_FAILED) {
+    if ((log_sem = sem_open (sem_name, O_CREAT, 0666, 1)) == SEM_FAILED) {
 	perror ("sem_open");
 	return -1;
     }
@@ -44,7 +44,7 @@ llcp_log_init (void)
 int
 llcp_log_fini (void)
 {
-    sem_close (sem);
+    sem_close (log_sem);
     sem_unlink (sem_name);
     return log4c_fini ();
 }
@@ -52,7 +52,7 @@ llcp_log_fini (void)
 void
 llcp_log_log (char *category, int priority, char *format, ...)
 {
-    sem_wait (sem);
+    sem_wait (log_sem);
 
     const log4c_category_t *cat = log4c_category_get (category);
     if (log4c_category_is_priority_enabled (cat, priority)) {
@@ -61,5 +61,5 @@ llcp_log_log (char *category, int priority, char *format, ...)
 	log4c_category_vlog (cat, priority, format, va);
     }
 
-    sem_post (sem);
+    sem_post (log_sem);
 }

@@ -141,6 +141,7 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
 	    /* FIXME: Exchange PAX PDU */
 	}
 
+	LLC_LINK_LOG (LLC_PRIORITY_INFO, "Starting service %d", 0);
 	llc_service_start (link, 0);
 
     return 0;
@@ -241,6 +242,7 @@ llc_link_deactivate (struct llc_link *link)
 
     for (int i = MAX_LLC_LINK_SERVICE; i >= 0; i--) {
 	if (link->services[i]) {
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping service %d", i);
 	    llc_service_stop (link, i);
 	}
     }
@@ -253,6 +255,7 @@ llc_link_free (struct llc_link *link)
 
     for (int i = MAX_LLC_LINK_SERVICE; i >= 0; i--) {
 	if (link->services[i]) {
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Freeing service %d", i);
 	    llc_service_free (link, i);
 	}
     }
