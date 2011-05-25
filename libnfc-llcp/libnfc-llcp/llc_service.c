@@ -59,6 +59,8 @@ llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)
 	return -1;
     }
 
+    link->services[service]->urn = NULL;
+
     link->services[service]->thread_routine = thread_routine;
     link->services[service]->thread = NULL;
 
@@ -67,7 +69,6 @@ llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)
 
     mq_name (&link->services[service]->mq_up_name, link, service, mq_dirction_up);
     mq_name (&link->services[service]->mq_down_name, link, service, mq_dirction_down);
-
 
     LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->services[service]->mq_up_name);
     link->services[service]->llc_up   = mq_open (link->services[service]->mq_up_name, O_CREAT | O_EXCL | O_RDONLY, 0666, NULL);
@@ -115,6 +116,8 @@ llc_service_free (struct llc_link *link, uint8_t service)
 {
     assert (link);
     assert (service <= MAX_LLC_LINK_SERVICE);
+
+    free (link->services[service]->urn);
 
     if (link->services[service]->llc_up != (mqd_t)-1)
 	mq_close (link->services[service]->llc_up);
