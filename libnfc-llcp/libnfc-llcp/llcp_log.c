@@ -21,41 +21,45 @@
 
 #include "config.h"
 
+#include <fcntl.h>
 #include <log4c.h>
+#include <semaphore.h>
 
 #include "llcp_log.h"
+
+sem_t *sem;
+const char *sem_name = "/libnfc-llcp";
 
 int
 llcp_log_init (void)
 {
+    if ((sem = sem_open (sem_name, O_CREAT, 0666, 1)) == SEM_FAILED) {
+	perror ("sem_open");
+	return -1;
+    }
+
     return log4c_init ();
 }
 
 int
 llcp_log_fini (void)
 {
+    sem_close (sem);
+    sem_unlink (sem_name);
     return log4c_fini ();
-}
-
-void
-llcp_log_msg (char *category, int priority, char *message)
-{
-    log4c_category_log (log4c_category_get (category), priority, message);
-}
-
-void
-llcp_log_set_appender (char *category, char *appender)
-{
-    log4c_category_set_appender (log4c_category_get (category), log4c_appender_get (appender));
 }
 
 void
 llcp_log_log (char *category, int priority, char *format, ...)
 {
+    sem_wait (sem);
+
     const log4c_category_t *cat = log4c_category_get (category);
     if (log4c_category_is_priority_enabled (cat, priority)) {
 	va_list va;
 	va_start (va, format);
 	log4c_category_vlog (cat, priority, format, va);
     }
+
+    sem_post (sem);
 }
