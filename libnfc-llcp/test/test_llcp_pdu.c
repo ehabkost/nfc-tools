@@ -32,7 +32,7 @@ uint8_t sample_i_pdu_packed[] = { 0x23, 0x02, 0x53,
 };
 
 struct pdu *sample_a_pdu;
-uint8_t sample_a_pdu_payload[] = {
+uint8_t sample_a_pdu_information[] = {
     0x00, 0x03, 0x23, 0x42, 0x02,
     0x00, 0x03, 0x43, 0x87, 0x03
 };
@@ -50,9 +50,9 @@ cut_setup()
     sample_a_pdu->dsap = 0;
     sample_a_pdu->ptype = PDU_AGF;
     sample_a_pdu->ssap = 0;
-    sample_a_pdu->payload_size = sizeof (sample_a_pdu_payload);
-    sample_a_pdu->payload = malloc (sizeof (sample_a_pdu_payload));
-    memcpy (sample_a_pdu->payload, sample_a_pdu_payload, sizeof (sample_a_pdu_payload));
+    sample_a_pdu->information_size = sizeof (sample_a_pdu_information);
+    sample_a_pdu->information = malloc (sizeof (sample_a_pdu_information));
+    memcpy (sample_a_pdu->information, sample_a_pdu_information, sizeof (sample_a_pdu_information));
 
     if (!(sample_i_pdu = malloc (sizeof (*sample_i_pdu)))) {
 	cut_fail ("Cannot allocate sample_i_pdu");
@@ -63,8 +63,8 @@ cut_setup()
     sample_i_pdu->ssap = 2;
     sample_i_pdu->n_s = 5;
     sample_i_pdu->n_r = 3;
-    sample_i_pdu->payload_size = 11;
-    sample_i_pdu->payload = (uint8_t *)strdup ("Hello World");
+    sample_i_pdu->information_size = 11;
+    sample_i_pdu->information = (uint8_t *)strdup ("Hello World");
 }
 
 void
@@ -99,8 +99,8 @@ test_llcp_pdu_unpack (void)
     cut_assert_equal_int (sample_i_pdu->ptype, pdu->ptype, cut_message ("Wrong PTYPE"));
     cut_assert_equal_int (sample_i_pdu->n_s, pdu->n_s, cut_message ("Wrong N(S)"));
     cut_assert_equal_int (sample_i_pdu->n_r, pdu->n_r, cut_message ("Wrong N(R)"));
-    cut_assert_equal_int (sample_i_pdu->payload_size, pdu->payload_size, cut_message ("Wrong payload size"));
-    cut_assert_equal_memory (sample_i_pdu->payload, sample_i_pdu->payload_size, pdu->payload, pdu->payload_size, cut_message ("Wrong payload"));
+    cut_assert_equal_int (sample_i_pdu->information_size, pdu->information_size, cut_message ("Wrong information size"));
+    cut_assert_equal_memory (sample_i_pdu->information, sample_i_pdu->information_size, pdu->information, pdu->information_size, cut_message ("Wrong information"));
 
     pdu_free (pdu);
 }
@@ -152,8 +152,8 @@ test_llcp_pdu_dispatch (void)
     cut_assert_equal_int (0x02, pdus[0]->ssap, cut_message ("Wrong SSAP"));
     cut_assert_equal_int (0x00, pdus[0]->n_s, cut_message ("Wrong N(S)"));
     cut_assert_equal_int (0x02, pdus[0]->n_r, cut_message ("Wrong N(R)"));
-    cut_assert_equal_int (0, pdus[0]->payload_size, cut_message ("Wrong payload size"));
-    cut_assert_null (pdus[0]->payload, cut_message ("Wrong payload"));
+    cut_assert_equal_int (0, pdus[0]->information_size, cut_message ("Wrong information size"));
+    cut_assert_null (pdus[0]->information, cut_message ("Wrong information"));
 
     cut_assert_not_null (pdus[1], cut_message ("Second PDU SHALL not be NULL"));
     cut_assert_equal_int (0x10, pdus[1]->dsap, cut_message ("Wrong DSAP"));
@@ -161,8 +161,8 @@ test_llcp_pdu_dispatch (void)
     cut_assert_equal_int (0x07, pdus[1]->ssap, cut_message ("Wrong SSAP"));
     cut_assert_equal_int (0x00, pdus[1]->n_s, cut_message ("Wrong N(S)"));
     cut_assert_equal_int (0x03, pdus[1]->n_r, cut_message ("Wrong N(R)"));
-    cut_assert_equal_int (0, pdus[1]->payload_size, cut_message ("Wrong payload size"));
-    cut_assert_null (pdus[1]->payload, cut_message ("Wrong payload"));
+    cut_assert_equal_int (0, pdus[1]->information_size, cut_message ("Wrong information size"));
+    cut_assert_null (pdus[1]->information, cut_message ("Wrong information"));
 
     cut_assert_null (pdus[2], cut_message ("Third PDU SHALL be NULL"));
 

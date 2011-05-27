@@ -58,7 +58,7 @@ uint8_t _pdu_ptype_sequence_field[] = {
 int
 pdu_pack (const struct pdu *pdu, uint8_t *buffer, size_t len)
 {
-    if (len < 2 + (pdu_has_sequence_field(pdu) ? 1 : 0) + pdu->payload_size) {
+    if (len < 2 + (pdu_has_sequence_field(pdu) ? 1 : 0) + pdu->information_size) {
 	LLC_PDU_MSG (LLC_PRIORITY_ERROR, "Insuficient buffer space");
 	return -1;
     }
@@ -71,8 +71,8 @@ pdu_pack (const struct pdu *pdu, uint8_t *buffer, size_t len)
 	buffer[n++] = (pdu->n_s << 4) | pdu->n_r;
     }
 
-    for (size_t i = 0; i < pdu->payload_size; i++)
-	buffer[n++] = pdu->payload[i];
+    for (size_t i = 0; i < pdu->information_size; i++)
+	buffer[n++] = pdu->information[i];
 
     return n;
 }
@@ -94,16 +94,16 @@ pdu_unpack (const uint8_t *buffer, size_t len)
 	    pdu->n_r = buffer[n++] & 0x0F;
 	}
 
-	pdu->payload_size = len - n;
-	if (pdu->payload_size) {
-	    if (!(pdu->payload = malloc (pdu->payload_size))) {
+	pdu->information_size = len - n;
+	if (pdu->information_size) {
+	    if (!(pdu->information = malloc (pdu->information_size))) {
 		free (pdu);
 		return NULL;
 	    }
 
-	    memcpy (pdu->payload, buffer + n, pdu->payload_size);
+	    memcpy (pdu->information, buffer + n, pdu->information_size);
 	} else {
-	    pdu->payload = NULL;
+	    pdu->information = NULL;
 	}
     }
 
@@ -113,7 +113,7 @@ pdu_unpack (const uint8_t *buffer, size_t len)
 int
 pdu_size (struct pdu *pdu)
 {
-    return 2 + (pdu_has_sequence_field (pdu) ? 1 : 0) + pdu->payload_size;
+    return 2 + (pdu_has_sequence_field (pdu) ? 1 : 0) + pdu->information_size;
 }
 
 struct pdu *
@@ -133,8 +133,8 @@ pdu_aggregate (struct pdu **pdus)
 	res->dsap = 0;
 	res->ptype = PDU_AGF;
 
-	res->payload_size = len;
-	if (!(res->payload = malloc (len))) {
+	res->information_size = len;
+	if (!(res->information = malloc (len))) {
 	    free (res);
 	    return NULL;
 	}
@@ -142,9 +142,9 @@ pdu_aggregate (struct pdu **pdus)
 	off_t offset = 0;
 	pdu = pdus;
 	while (*pdu) {
-	    *(uint16_t *)(res->payload + offset) = htobe16 (pdu_size (*pdu));
+	    *(uint16_t *)(res->information + offset) = htobe16 (pdu_size (*pdu));
 	    offset += 2;
-	    offset += pdu_pack (*pdu, res->payload + offset, len - offset);
+	    offset += pdu_pack (*pdu, res->information + offset, len - offset);
 	    pdu++;
 	}
     }
@@ -165,19 +165,19 @@ pdu_dispatch (struct pdu *pdu)
     size_t pdu_count = 0;
     size_t offset = 0;
 
-    while (offset < pdu->payload_size) {
-	if (offset + 2 > pdu->payload_size) {
+    while (offset < pdu->information_size) {
+	if (offset + 2 > pdu->information_size) {
 	    LLC_PDU_MSG (LLC_PRIORITY_ERROR, "Incomplete TLV field");
 	    return NULL;
 	}
 
-	uint16_t pdu_length = be16toh (*(uint16_t *)(pdu->payload + offset));
+	uint16_t pdu_length = be16toh (*(uint16_t *)(pdu->information + offset));
 	offset += 2;
 	offset += pdu_length;
 	pdu_count++;
     }
 
-    if (offset != pdu->payload_size) {
+    if (offset != pdu->information_size) {
 	LLC_PDU_MSG (LLC_PRIORITY_ERROR, "Unprocessed TLV parameters");
 	return NULL;
     }
@@ -186,10 +186,10 @@ pdu_dispatch (struct pdu *pdu)
     offset = 0;
     pdu_count = 0;
 
-    while (offset < pdu->payload_size) {
-	uint16_t pdu_length = be16toh (*(uint16_t *)(pdu->payload + offset));
+    while (offset < pdu->information_size) {
+	uint16_t pdu_length = be16toh (*(uint16_t *)(pdu->information + offset));
 	offset += 2;
-	pdus[pdu_count++] = pdu_unpack (pdu->payload + offset, pdu_length);
+	pdus[pdu_count++] = pdu_unpack (pdu->information + offset, pdu_length);
 	offset += pdu_length;
     }
 
@@ -201,6 +201,6 @@ pdu_dispatch (struct pdu *pdu)
 void
 pdu_free (struct pdu *pdu)
 {
-    free (pdu->payload);
+    free (pdu->information);
     free (pdu);
 }

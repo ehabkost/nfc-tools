@@ -50,8 +50,8 @@ struct pdu {
     uint8_t n_s, n_r;
 
     // Information filed
-    size_t payload_size;
-    uint8_t *payload;
+    size_t information_size;
+    uint8_t *information;
 };
 
 int		 pdu_pack (const struct pdu *pdu, uint8_t *buffer, size_t len);
