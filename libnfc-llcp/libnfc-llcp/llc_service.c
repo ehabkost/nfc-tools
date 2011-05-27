@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <mqueue.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,14 +73,14 @@ llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)
     mq_name (&link->services[service]->mq_down_name, link, service, mq_dirction_down);
 
     LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->services[service]->mq_up_name);
-    link->services[service]->llc_up   = mq_open (link->services[service]->mq_up_name, O_CREAT | O_EXCL | O_RDONLY, 0666, NULL);
+    link->services[service]->llc_up   = mq_open (link->services[service]->mq_up_name, O_CREAT | O_EXCL | O_WRONLY, 0666, NULL);
     if (link->services[service]->llc_up == (mqd_t)-1) {
 	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[service]->mq_up_name);
 	return -1;
     }
 
     LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->services[service]->mq_down_name);
-    link->services[service]->llc_down = mq_open (link->services[service]->mq_down_name, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0666, NULL);
+    link->services[service]->llc_down = mq_open (link->services[service]->mq_down_name, O_CREAT | O_EXCL | O_RDONLY, 0666, NULL);
     if (link->services[service]->llc_down == (mqd_t)-1) {
 	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[service]->mq_down_name);
 	return -1;
@@ -95,7 +96,10 @@ llc_service_start (struct llc_link *link, uint8_t service)
     assert (service <= MAX_LLC_LINK_SERVICE);
     assert (link->services[service]);
 
-    return pthread_create (&link->services[service]->thread, NULL, link->services[service]->thread_routine, link->services[service]);
+    if (!service)
+	return pthread_create (&link->services[service]->thread, NULL, link->services[service]->thread_routine, link);
+    else
+	return pthread_create (&link->services[service]->thread, NULL, link->services[service]->thread_routine, link->services[service]);
 }
 
 void
@@ -109,6 +113,25 @@ llc_service_stop (struct llc_link *link, uint8_t service)
 	/* A thread SHALL not be canceled while logging */
 	sem_wait (log_sem);
 	pthread_cancel (link->services[service]->thread);
+
+	/*
+	 * Send a signal to the thread
+	 *
+	 * Thread cancellation is not handled by message queue functions so the
+	 * only way to unlock a thread blocked on message operations is by
+	 * sending a signal to it so that it gets a chance to see the
+	 * cancelation state.  However, if send too early in the thread's life,
+	 * the signal may be missed.  So loop on pthread_kill() until it fails.
+	 *
+	 * XXX This is a dirty hack.
+	 */
+	struct timespec delay = {
+	    .tv_sec  = 0,
+	    .tv_nsec = 10000000,
+	};
+	while (0 == pthread_kill (link->services[service]->thread, SIGUSR1)) {
+	    nanosleep (&delay, NULL);
+	}
 	sem_post (log_sem);
 	pthread_join (link->services[service]->thread, NULL);
 	link->services[service]->thread = NULL;

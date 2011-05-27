@@ -24,9 +24,11 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <fcntl.h>
 #include <mqueue.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -43,9 +45,23 @@
 
 #define MIN(a, b) ((a < b) ? a : b)
 
+void
+sigusr1_handler (int x)
+{
+    (void) x;
+    printf ("(%p) SIGUSR1\n", (void *)pthread_self ());
+}
+
 int
 llcp_init (void)
 {
+    struct sigaction sa;
+    sa.sa_handler = sigusr1_handler;
+    sa.sa_flags  = 0;
+    sigemptyset (&sa.sa_mask);
+    if (sigaction (SIGUSR1, &sa, NULL) < 0)
+	return -1;
+
     return llcp_log_init ();
 }
 
@@ -56,30 +72,100 @@ llcp_fini (void)
 }
 
 void llcp_thread_cleanup (void *arg);
+
 void
 llcp_thread_cleanup (void *arg)
 {
-    (void)arg;
-    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%p) Link deactivating", (void *)pthread_self ());
-    LLC_LINK_LOG (LLC_PRIORITY_INFO, "(%p) Link deactivated", (void *)pthread_self ());
+    (void) arg;
+    /*
+     * Beware:
+     * The cleanup routine is called while sem_log is held.  Trying ot log some
+     * information using log4c will lead to a deadlock.
+     */
 }
 
 void *
 llcp_thread (void *arg)
 {
-    //struct llc_link *link = (struct llc_link *)arg;
+    struct llc_link *link = (struct llc_link *)arg;
+    mqd_t llc_up, llc_down;
+
+    int old_cancelstate;
+
+    pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancelstate);
+
+    llc_up = mq_open (link->services[0]->mq_up_name, O_RDONLY);
+    llc_down = mq_open (link->services[0]->mq_down_name, O_WRONLY);
+
+    if (llc_up == (mqd_t)-1)
+	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[0]->mq_up_name);
+    if (llc_down == (mqd_t)-1)
+	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[0]->mq_down_name);
 
     pthread_cleanup_push (llcp_thread_cleanup, arg);
+    pthread_setcancelstate (old_cancelstate, NULL);
     LLC_LINK_LOG (LLC_PRIORITY_INFO, "(%p) Link activated", (void *)pthread_self ());
     for (;;) {
-	sleep (1);
-	//struct pdu *pdu;
-	//uint8_t data[BUFSIZ];
-	// Wait for data from MAC layer
-	// pdu = ...
+	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) sleep+", pthread_self ());
+	    pthread_testcancel();
+	int res = sleep (1);
+	    pthread_testcancel ();
 
-	//pdu = pdu_unpack (data, BUFSIZ);
-	//pdu_dispatch (pdu);
+	if (res) {
+	    pthread_testcancel();
+	}
+	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) mq_send+", pthread_self ());
+	    pthread_testcancel();
+	res = mq_send (llc_down, "\x00\x00", 2, 0);
+	    pthread_testcancel ();
+
+	if (res < 0) {
+	    pthread_testcancel ();
+	}
+
+	char buffer[1024];
+	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) mq_receive+", pthread_self ());
+	    pthread_testcancel ();
+	res = mq_receive (llc_up, buffer, sizeof (buffer), NULL);
+	    pthread_testcancel ();
+	if (res < 0) {
+	    pthread_testcancel ();
+	}
+
+	struct pdu *pdu;
+	struct pdu **pdus, **p;
+	pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancelstate);
+	pdu = pdu_unpack ((uint8_t *) buffer, res);
+	switch (pdu->ptype) {
+	case PDU_SYMM:
+	    assert (!pdu->dsap);
+	    assert (!pdu->ssap);
+	    break;
+	case PDU_PAX:
+	    assert (!pdu->dsap);
+	    assert (!pdu->ssap);
+	    assert (0 == llc_link_configure (link, pdu->information, pdu->information_size));
+	    break;
+	case PDU_AGF:
+	    assert (!pdu->dsap);
+	    assert (!pdu->ssap);
+	    p = pdus = pdu_dispatch (pdu);
+	    while (*p) {
+		mq_send (link->services[0]->llc_up, (char *) (*p)->information, (*p)->information_size, 1);
+		pdu_free (*p);
+		p++;
+	    }
+
+	    free (pdus);
+	    break;
+	case PDU_UI:
+	    assert (link->services[pdu->dsap]);
+	    mq_send (link->services[pdu->dsap]->llc_up, (char *) pdu->information, pdu->information_size, 0);
+	    break;
+
+	}
+	pdu_free (pdu);
+	pthread_setcancelstate (old_cancelstate, NULL);
     }
     pthread_cleanup_pop (1);
     return NULL;
@@ -141,8 +227,12 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
 	    /* FIXME: Exchange PAX PDU */
 	}
 
-	LLC_LINK_LOG (LLC_PRIORITY_INFO, "Starting service %d", 0);
-	llc_service_start (link, 0);
+    for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
+	if (link->services[i]) {
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Starting service %d", i);
+	    llc_service_start (link, i);
+	}
+    }
 
     return 0;
 }
