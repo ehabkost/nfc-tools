@@ -107,17 +107,17 @@ llcp_thread (void *arg)
     LLC_LINK_LOG (LLC_PRIORITY_INFO, "(%p) Link activated", (void *)pthread_self ());
     for (;;) {
 	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) sleep+", pthread_self ());
-	    pthread_testcancel();
+	pthread_testcancel();
 	int res = sleep (1);
-	    pthread_testcancel ();
+	pthread_testcancel ();
 
 	if (res) {
 	    pthread_testcancel();
 	}
 	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) mq_send+", pthread_self ());
-	    pthread_testcancel();
+	pthread_testcancel();
 	res = mq_send (llc_down, "\x00\x00", 2, 0);
-	    pthread_testcancel ();
+	pthread_testcancel ();
 
 	if (res < 0) {
 	    pthread_testcancel ();
@@ -125,9 +125,9 @@ llcp_thread (void *arg)
 
 	char buffer[1024];
 	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) mq_receive+", pthread_self ());
-	    pthread_testcancel ();
+	pthread_testcancel ();
 	res = mq_receive (llc_up, buffer, sizeof (buffer), NULL);
-	    pthread_testcancel ();
+	pthread_testcancel ();
 	if (res < 0) {
 	    pthread_testcancel ();
 	}
@@ -193,39 +193,39 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     assert (link);
     assert (flags == (flags & 0x03));
 
-	link->role = flags & 0x01;
-	link->version.major = LLCP_VERSION_MAJOR;
-	link->version.minor = LLCP_VERSION_MINOR;
-	link->local_miu  = LLC_DEFAULT_MIU;
-	link->remote_miu = LLC_DEFAULT_MIU;
-	uint16_t wks = 0x0000;
-	for (int i = 0; i < 16; i++) {
-	    wks |= (link->services[i] ? 1 : 0) << i;
-	}
-	link->local_wks  = wks;
-	link->remote_wks = 0x0001;
-	link->local_lto.tv_sec  = 0;
-	link->local_lto.tv_nsec = 100000000;
-	link->remote_lto.tv_sec  = 0;
-	link->remote_lto.tv_nsec = 100000000;
-	link->local_lsc  = 3;
-	link->remote_lsc = 3;
+    link->role = flags & 0x01;
+    link->version.major = LLCP_VERSION_MAJOR;
+    link->version.minor = LLCP_VERSION_MINOR;
+    link->local_miu  = LLC_DEFAULT_MIU;
+    link->remote_miu = LLC_DEFAULT_MIU;
+    uint16_t wks = 0x0000;
+    for (int i = 0; i < 16; i++) {
+	wks |= (link->services[i] ? 1 : 0) << i;
+    }
+    link->local_wks  = wks;
+    link->remote_wks = 0x0001;
+    link->local_lto.tv_sec  = 0;
+    link->local_lto.tv_nsec = 100000000;
+    link->remote_lto.tv_sec  = 0;
+    link->remote_lto.tv_nsec = 100000000;
+    link->local_lsc  = 3;
+    link->remote_lsc = 3;
 
-	if (llc_link_configure (link, parameters, length) < 0) {
-	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Link configuration failed");
-	    llc_link_deactivate (link);
-	    return -1;
-	}
+    if (llc_link_configure (link, parameters, length) < 0) {
+	LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Link configuration failed");
+	llc_link_deactivate (link);
+	return -1;
+    }
 
-	switch (flags & 0x01) {
-	case LLC_INITIATOR:
-	case LLC_TARGET:
-	    break;
-	}
+    switch (flags & 0x01) {
+    case LLC_INITIATOR:
+    case LLC_TARGET:
+	break;
+    }
 
-	if (!(flags & LLC_PAX_PDU_PROHIBITED)) {
-	    /* FIXME: Exchange PAX PDU */
-	}
+    if (!(flags & LLC_PAX_PDU_PROHIBITED)) {
+	/* FIXME: Exchange PAX PDU */
+    }
 
     for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
 	if (link->services[i]) {
