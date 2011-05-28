@@ -85,6 +85,9 @@ struct llc_link {
     uint8_t remote_lsc;
 
     struct llc_service *services[MAX_LLC_LINK_SERVICE + 1];
+
+    /* Unit tests metadata */
+    void *cut_test_context;
 };
 /* LLC Operating modes */
 #define LLC_INITIATOR 0

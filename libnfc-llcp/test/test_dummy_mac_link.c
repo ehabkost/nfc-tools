@@ -66,8 +66,13 @@ echo_service (void *arg)
     int old_cancelstate;
     pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancelstate);
 
+    cut_set_current_test_context (service->cut_test_context);
+
     mqd_t llc_up = mq_open (service->mq_up_name, O_RDONLY);
+    cut_assert_false (llc_up == (mqd_t)-1, cut_message ("Can't open llc_up mqueue for reading"));
+
     mqd_t llc_down = mq_open (service->mq_down_name, O_WRONLY);
+    cut_assert_false (llc_down == (mqd_t)-1, cut_message ("Can't open llc_down mqueue for writing"));
 
     pthread_setcancelstate (PTHREAD_CANCEL_ENABLE, NULL);
 
@@ -75,11 +80,9 @@ echo_service (void *arg)
 	char buffer[1024];
 	int res = mq_receive (llc_up, buffer, sizeof (buffer), NULL);
 	pthread_testcancel ();
-	if (res == 5 && 0 == memcmp (buffer, "Hello", 5)) {
-	    sem_post (sem_cutter);
-	}
-	mq_send (llc_down, buffer, res, 0);
-	pthread_testcancel ();
+	cut_assert_equal_int (5, res, cut_message ("Invalid message length"));
+	cut_assert_equal_memory (buffer, res, "Hello", 5, cut_message ("Invalid message data"));
+	sem_post (sem_cutter);
     }
 }
 
@@ -121,6 +124,8 @@ test_dummy_mac_link (void)
     cut_assert_not_null (initiator, cut_message ("llc_link_new()"));
     target = llc_link_new ();
     cut_assert_not_null (target, cut_message ("llc_link_new()"));
+
+    initiator->cut_test_context = cut_get_current_test_context ();
 
     res = llc_service_new (initiator, 1, echo_service);
     cut_assert_equal_int (0, res, cut_message ("llc_service_new()"));

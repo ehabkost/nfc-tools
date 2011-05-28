@@ -178,6 +178,7 @@ llc_link_new (void)
 
     if ((link = malloc (sizeof (*link)))) {
 	memset (link->services, '\0', sizeof (link->services));
+	link->cut_test_context = NULL;
 	if (llc_service_new (link, 0, llcp_thread) < 0) {
 	    llc_link_free (link);
 	    link = NULL;

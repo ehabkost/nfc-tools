@@ -86,6 +86,8 @@ llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)
 	return -1;
     }
 
+    link->services[service]->cut_test_context = link->cut_test_context;
+
     return 0;
 }
 

@@ -34,6 +34,9 @@ struct llc_service {
     mqd_t llc_down;
     char *mq_up_name;
     char *mq_down_name;
+
+    /* Unit tests metadata */
+    void *cut_test_context;
 };
 
 int		 llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)(void *));
