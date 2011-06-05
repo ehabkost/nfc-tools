@@ -66,6 +66,12 @@
 #   ffff880010d31240 3985521284 S Bi:7:045:4 -115 256 <
 #   ffff880010d31240 3985522430 C Bi:7:045:4 0 13 = 0000ff06 fad50333 020707e5 00
 
+if [ "$1" == "--bus" ]; then
+    shift
+    USBBUS=$1
+    shift
+fi
+
 # I try to detect devices in the following order:
 DEVICES="pn53x_usb touchatag"
 
@@ -79,9 +85,14 @@ do
     elif [ "$DEVICE" == "pn53x_usb" ]
     then
         # USB identifier string PN531/PN533
-        DEVID="(054c:0193|04cc:0531|04cc:2533|04e6:5591)"
+        DEVID="(054c:0193|04cc:0531|04cc:2533|04e6:5591|1fd3:0608|054c:02e1)"
     fi
-    USBBUS=$(lsusb|egrep -m 1 "$DEVID"|cut -d ' ' -f2|sed 's/^0\+//')
+    if [ "$USBBUS" != "" ]
+    then
+        USBBUS=$(lsusb|egrep "$DEVID"|cut -d ' ' -f2|sed 's/^0\+//'|grep -m 1 "$USBBUS")
+    else
+        USBBUS=$(lsusb|egrep -m 1 "$DEVID"|cut -d ' ' -f2|sed 's/^0\+//')
+    fi
     if [ "$USBBUS" != "" ]
     then
         echo "Found $DEVICE on bus $USBBUS" >&2
@@ -102,7 +113,7 @@ FILTER1=true
 DECODE=true
 OUTPUT=--only-matching
 
-case $1 in
+case "$1" in
     "--nodecode")
         DECODE=false
     ;;
