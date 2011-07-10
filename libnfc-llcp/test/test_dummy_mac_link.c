@@ -82,8 +82,8 @@ echo_service (void *arg)
 	char buffer[1024];
 	int res = mq_receive (llc_up, buffer, sizeof (buffer), NULL);
 	pthread_testcancel ();
-	cut_assert_equal_int (5, res, cut_message ("Invalid message length"));
-	cut_assert_equal_memory (buffer, res, "Hello", 5, cut_message ("Invalid message data"));
+	cut_assert_equal_int (7, res, cut_message ("Invalid message length"));
+	cut_assert_equal_memory (buffer, res, "\x40\xc0Hello", 7, cut_message ("Invalid message data"));
 	sem_post (sem_cutter);
 	pthread_testcancel ();
     }
