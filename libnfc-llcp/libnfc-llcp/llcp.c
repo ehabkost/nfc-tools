@@ -183,6 +183,8 @@ llc_link_new (void)
     struct llc_link *link;
 
     if ((link = malloc (sizeof (*link)))) {
+	link->version.major = LLCP_VERSION_MAJOR;
+	link->version.minor = LLCP_VERSION_MINOR;
 	memset (link->services, '\0', sizeof (link->services));
 	link->cut_test_context = NULL;
 
