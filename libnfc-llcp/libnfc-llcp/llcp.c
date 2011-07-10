@@ -291,6 +291,17 @@ llc_link_service_unbind (struct llc_link *link, uint8_t sap)
     }
 }
 
+uint16_t
+llc_link_get_wks (const struct llc_link *link)
+{
+    uint16_t wks = 0x0000;
+    for (int i = 0; i < 16; i++) {
+	wks |= (link->services[i] ? 1 : 0) << i;
+    }
+
+    return wks;
+}
+
 int
 llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *parameters, size_t length)
 {
@@ -302,11 +313,6 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     link->version.minor = LLCP_VERSION_MINOR;
     link->local_miu  = LLC_DEFAULT_MIU;
     link->remote_miu = LLC_DEFAULT_MIU;
-    uint16_t wks = 0x0000;
-    for (int i = 0; i < 16; i++) {
-	wks |= (link->services[i] ? 1 : 0) << i;
-    }
-    link->local_wks  = wks;
     link->remote_wks = 0x0001;
     link->local_lto.tv_sec  = 0;
     link->local_lto.tv_nsec = 100000000;
@@ -420,6 +426,38 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 	return -1;
     }
     return 0;
+}
+
+int
+llc_link_encode_parameters (const struct llc_link *link, uint8_t *parameters, size_t length)
+{
+    int n;
+    uint8_t *parameter = parameters;
+
+    if ((n = parameter_encode_version (parameter, length, link->version)) < 0)
+	return -1;
+    parameter += n; length -= n;
+
+    if ((n = parameter_encode_miux (parameter, length, link->local_miu)) < 0)
+	return -1;
+    parameter += n; length -= n;
+
+    if ((n = parameter_encode_wks (parameter, length, llc_link_get_wks(link))) < 0)
+	return -1;
+    parameter += n; length -= n;
+
+    uint8_t lto = link->local_lto.tv_sec * 100 + link->local_lto.tv_nsec / 10000000;
+    if ((n = parameter_encode_lto (parameter, length, lto)) < 0)
+	return -1;
+    parameter += n; length -= n;
+
+#if 0
+    if ((n = parameter_encode_opt (parameter, length, link->opt)) < 0)
+	return -1;
+    parameter += n; length -= n;
+#endif
+
+    return parameter - parameters;
 }
 
 int

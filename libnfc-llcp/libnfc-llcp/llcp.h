@@ -69,6 +69,7 @@ int		 llc_link_service_bind (struct llc_link *link, struct llc_service *service,
 void		 llc_link_service_unbind (struct llc_link *link, uint8_t sap);
 int		 llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *parameters, size_t length);
 int		 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length);
+int		 llc_link_encode_parameters (const struct llc_link *link, uint8_t *parameters, size_t length);
 void		 llc_link_deactivate (struct llc_link *link);
 void		 llc_link_free (struct llc_link *link);
 
@@ -82,7 +83,6 @@ struct llc_link {
     struct llcp_version version;
     uint16_t local_miu;
     uint16_t remote_miu;
-    uint16_t local_wks;
     uint16_t remote_wks;
     struct timespec local_lto;
     struct timespec remote_lto;

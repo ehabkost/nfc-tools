@@ -130,3 +130,19 @@ test_llcp_link_activate_as_target (void)
     llc_link_deactivate (link);
     llc_link_free (link);
 }
+
+void
+test_llcp_link_encode_parameters (void)
+{
+    struct llc_link *link;
+
+    link = llc_link_new ();
+    cut_assert_not_null (link, cut_message ("llc_link_new()"));
+
+    uint8_t buffer[1024];
+    int res = llc_link_encode_parameters (link, buffer, sizeof (buffer));
+    cut_assert_not_equal_int (-1, res, cut_message ("llc_link_encode_parameters()"));
+
+    res = llc_link_configure (link, buffer, res);
+    cut_assert_equal_int (0, res, cut_message ("llc_link_configure()"));
+}
