@@ -268,10 +268,8 @@ llc_link_service_bind (struct llc_link *link, struct llc_service *service, int8_
     assert (sap <= MAX_LLC_LINK_SERVICE);
 
     if (SAP_AUTO == sap) {
-	for (sap = 0x10; link->services[sap] && (sap <= 0x1F); sap++) {
-	    break;
-	}
-	if (sap > MAX_LLC_LINK_SERVICE) {
+	for (sap = 0x10; link->services[sap] && (sap <= 0x1F); sap++);
+	if (sap > 0x1F) {
 	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "No space left for service");
 	    return -1;
 	}
