@@ -14,7 +14,8 @@ libnfc_llcp_la_SOURCES = \
 			 llcp.c \
 			 llcp_pdu.c \
 			 llcp_parameters.c \
-			 llc_service.c
+			 llc_service.c \
+			 llc_service_sdp.c 
 
 if HAS_LOG4C
 libnfc_llcp_la_SOURCES += llcp_log.c

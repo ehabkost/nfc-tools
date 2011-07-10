@@ -36,6 +36,8 @@
 #define PDU_I       0xC
 #define PDU_RR      0xD
 #define PDU_RNR     0xE
+/* LLCP 1.1 PDU */
+#define PDU_SNL     0x9
 
 struct pdu {
     uint8_t ptype;

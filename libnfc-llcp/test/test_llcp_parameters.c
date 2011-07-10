@@ -185,3 +185,57 @@ test_llcp_parameter_opt (void)
     cut_assert_equal_int (0, res, cut_message ("parameter_decode_opt() failed"));
     cut_assert_equal_int (0x01, opt, cut_message ("Wrong OPT"));
 }
+
+void
+test_llcp_parameter_sdreq (void)
+{
+    uint8_t tid = 42;
+    char *uri = "urn:nfc:sn:foo";
+
+    uint8_t buffer[BUFSIZ];
+    uint8_t buffer2[] = {
+	0x08,
+	15,
+	42,
+	'u', 'r', 'n', ':', 'n', 'f', 'c',
+	':', 's', 'n', ':', 'f', 'o', 'o'
+    };
+
+    int res = parameter_encode_sdreq (buffer, sizeof (buffer), tid, uri);
+    cut_assert_equal_int (17, res, cut_message ("Invalid packed length"));
+    cut_assert_equal_memory (buffer, res, buffer2, sizeof (buffer2), cut_message ("Wrong data"));
+
+    char *the_uri;
+    tid = 0;
+    res = parameter_decode_sdreq (buffer, 17, &tid, &the_uri);
+    cut_assert_equal_int (0, res, cut_message ("parameter_decode_sdreq() failed"));
+    cut_assert_equal_int (42, tid, cut_message ("Wrong TID"));
+    cut_assert_equal_string (uri, the_uri, cut_message ("Wrong URI"));
+
+    free (the_uri);
+
+}
+
+void
+test_llcp_parameter_sdres (void)
+{
+    uint8_t tid = 42;
+    uint8_t sap = 12;
+
+    uint8_t buffer[BUFSIZ];
+    uint8_t buffer2[] = {
+	0x09,
+	0x02,
+	42, 12
+    };
+
+    int res = parameter_encode_sdres (buffer, sizeof (buffer), tid, sap);
+    cut_assert_equal_int (4, res, cut_message ("Invalid packed length"));
+    cut_assert_equal_memory (buffer, res, buffer2, sizeof (buffer2), cut_message ("Wrong data"));
+
+    tid = sap = 0;
+    res = parameter_decode_sdres (buffer, 4, &tid, &sap);
+    cut_assert_equal_int (0, res, cut_message ("parameter_decode_sdres() failed"));
+    cut_assert_equal_int (42, tid, cut_message ("Wrong TID"));
+    cut_assert_equal_int (12, sap, cut_message ("Wrong SAP"));
+}

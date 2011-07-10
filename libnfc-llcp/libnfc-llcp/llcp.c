@@ -39,6 +39,7 @@
 #include "llcp_parameters.h"
 #include "llcp_pdu.h"
 #include "llc_service.h"
+#include "llc_service_sdp.h"
 
 #define LOG_LLC_LINK "libnfc-llcp.llc.link"
 #define LLC_LINK_MSG(priority, message) llcp_log_log (LOG_LLC_LINK, priority, "%s", message)
@@ -242,6 +243,15 @@ llc_link_new (void)
 
 	if (llc_link_service_bind (link, llcp_service, 0) < 0) {
 	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot bind LLC service 0");
+	    llc_link_free (link);
+	    return NULL;
+	}
+
+	struct llc_service *sdp_service = llc_service_new_with_uri (llc_service_sdp_thread, LLCP_SDP_URI);
+
+	llc_service_set_user_data (sdp_service, link);
+	if (llc_link_service_bind (link, sdp_service, LLCP_SDP_SAP) < 0) {
+	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot bind LLC service 1");
 	    llc_link_free (link);
 	    return NULL;
 	}

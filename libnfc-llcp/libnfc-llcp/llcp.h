@@ -102,4 +102,23 @@ struct llc_link {
 
 #define LLC_DEFAULT_MIU 128
 
+/*
+ * http://www.nfc-forum.org/specs/nfc_forum_assigned_numbers_register
+ */
+
+/*
+ * Well-known LLCP SAP Values
+ */
+
+#define LLCP_SDP_SAP  1
+#define LLCP_IP_SAP   2
+#define LLCP_OBEX_SAP 3
+#define LLCP_SNEP_SAP 4
+
+#define LLCP_SDP_URI  "urn:nfc:sn:sdp"
+#define LLCP_IP_URI   "urn:nfc:sn:ip"
+#define LLCP_OBEX_URI "urn:nfc:sn:obex"
+#define LLCP_SNEP_URI "urn:nfc:sn:snep"
+
+
 #endif /* !_LLCP_H */

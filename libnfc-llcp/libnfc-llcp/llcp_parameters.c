@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "llcp.h"
 #include "llcp_log.h"
@@ -336,3 +337,104 @@ parameter_decode_opt (const uint8_t buffer[], size_t buffer_len, uint8_t *opt)
     return 0;
 }
 
+int
+parameter_encode_sdreq (uint8_t buffer[], size_t buffer_len, uint8_t tid, const char *uri)
+{
+    if (!uri) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "NULL uri argument");
+	return -1;
+    }
+
+    size_t uri_len = strlen (uri);
+
+    if (buffer_len < 3 + uri_len) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "Insuficient buffer space");
+	return -1;
+    }
+    if (!uri) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "NULL uri argument");
+	return -1;
+    }
+
+    buffer[0] = LLCP_PARAMETER_SDREQ;
+    buffer[1] = 1 + uri_len;
+    buffer[2] = tid;
+    memcpy (buffer + 3, uri, uri_len);
+
+    return 3 + uri_len;
+}
+
+
+int
+parameter_decode_sdreq (const uint8_t buffer[], size_t buffer_len, uint8_t *tid, char **uri)
+{
+    if (buffer_len < 4) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "Invalid TLV field length");
+	return -1;
+    }
+    if (!tid) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "NULL tid argument");
+	return -1;
+    }
+    if (!uri) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "NULL uri argument");
+	return -1;
+    }
+    if ((buffer[0] != LLCP_PARAMETER_SDREQ) ||
+	(buffer_len != buffer[1] + 2u)) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "Invalid TLV header");
+	return -1;
+    }
+    *tid = buffer[2];
+    if ((*uri = malloc (buffer[1] - 1))) {
+	memcpy (*uri, buffer + 3, buffer[1] - 1);
+	*(*uri + buffer[1] - 1) = '\0';
+    } else {
+	return -1;
+    }
+
+    return 0;
+}
+
+int
+parameter_encode_sdres (uint8_t buffer[], size_t buffer_len, uint8_t tid, uint8_t sap)
+{
+    if (buffer_len < 4) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "Insuficient buffer space");
+	return -1;
+    }
+
+    buffer[0] = LLCP_PARAMETER_SDRES;
+    buffer[1] = 0x02;
+    buffer[2] = tid;
+    buffer[3] = sap;
+
+    return 4;
+}
+
+int
+parameter_decode_sdres (const uint8_t buffer[], size_t buffer_len, uint8_t *tid, uint8_t *sap)
+{
+    if (buffer_len != 4) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "Invalid TLV field length");
+	return -1;
+    }
+    if (!tid) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "NULL tid argument");
+	return -1;
+    }
+    if (!sap) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "NULL sap argument");
+	return -1;
+    }
+    if ((buffer[0] != LLCP_PARAMETER_SDRES) ||
+	(buffer[1] != 0x02)) {
+	LLC_TLV_MSG (LLC_PRIORITY_ERROR, "Invalid TLV header");
+	return -1;
+    }
+
+    *tid = buffer[2];
+    *sap = buffer[3];
+
+    return 0;
+}
