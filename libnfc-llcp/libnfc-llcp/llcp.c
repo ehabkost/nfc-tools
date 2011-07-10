@@ -448,7 +448,7 @@ llc_link_deactivate (struct llc_link *link)
 {
     assert (link);
 
-    for (int i = MAX_LLC_LINK_SERVICE; i >= 0; i--) {
+    for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
 	if (link->services[i]) {
 	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping service %d", i);
 	    llc_service_stop (link->services[i]);
