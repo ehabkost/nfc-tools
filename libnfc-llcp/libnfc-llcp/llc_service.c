@@ -149,8 +149,10 @@ llc_service_stop (struct llc_service *service)
 	service->thread = NULL;
 	mq_close (service->llc_up);
 	service->llc_up = (mqd_t) -1;
+	mq_unlink (service->mq_up_name);
 	mq_close (service->llc_down);
 	service->llc_down = (mqd_t) -1;
+	mq_unlink (service->mq_down_name);
     }
 }
 
@@ -161,6 +163,7 @@ llc_service_free (struct llc_service *service)
 
     free (service->uri);
 
+    /* FIXME: mqueue cleanup should have already be done in llc_service_stop */
     if (service->llc_up != (mqd_t)-1)
 	mq_close (service->llc_up);
     if (service->llc_down != (mqd_t)-1)
