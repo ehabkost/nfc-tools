@@ -61,7 +61,7 @@ llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)
 	return -1;
     }
 
-    link->services[service]->urn = NULL;
+    link->services[service]->uri = NULL;
 
     link->services[service]->thread_routine = thread_routine;
     link->services[service]->thread = NULL;
@@ -146,7 +146,7 @@ llc_service_free (struct llc_link *link, uint8_t service)
     assert (link);
     assert (service <= MAX_LLC_LINK_SERVICE);
 
-    free (link->services[service]->urn);
+    free (link->services[service]->uri);
 
     if (link->services[service]->llc_up != (mqd_t)-1)
 	mq_close (link->services[service]->llc_up);

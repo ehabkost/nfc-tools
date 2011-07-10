@@ -26,7 +26,7 @@
 #include <mqueue.h>
 
 struct llc_service {
-    char *urn;
+    char *uri;
 
     pthread_t thread;
     void *(*thread_routine)(void *);
