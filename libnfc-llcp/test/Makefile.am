@@ -12,6 +12,7 @@ cutter_unit_test_libs = \
 			test_llcp_link.la \
 			test_llcp_pdu.la \
 			test_llcp_parameters.la \
+			test_llc_service.la \
 			test_dummy_mac_link.la
 
 if WITH_DEBUG
@@ -30,6 +31,9 @@ test_llcp_pdu_la_LIBADD = $(top_builddir)/libnfc-llcp/libnfc-llcp.la
 
 test_llcp_parameters_la_SOURCES = test_llcp_parameters.c
 test_llcp_parameters_la_LIBADD = $(top_builddir)/libnfc-llcp/libnfc-llcp.la
+
+test_llc_service_la_SOURCES = test_llc_service.c
+test_llc_service_la_LIBADD = $(top_builddir)/libnfc-llcp/libnfc-llcp.la
 
 test_dummy_mac_link_la_SOURCES = test_dummy_mac_link.c
 test_dummy_mac_link_la_LIBADD = $(top_builddir)/libnfc-llcp/libnfc-llcp.la

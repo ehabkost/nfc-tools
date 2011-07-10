@@ -53,13 +53,19 @@ mq_name (char **name, const struct llc_service *service, const char *direction)
 struct llc_service *
 llc_service_new (void *(*thread_routine)(void *))
 {
+    return llc_service_new_with_uri (thread_routine, NULL);
+}
+
+struct llc_service *
+llc_service_new_with_uri (void *(*thread_routine)(void *), char *uri)
+{
     assert (thread_routine);
 
     struct llc_service *service;
 
     if ((service = malloc (sizeof (*service)))) {
 
-	service->uri = NULL;
+	service->uri = (uri) ? strdup (uri) : NULL;
 
 	service->thread_routine = thread_routine;
 	service->thread = NULL;
@@ -76,6 +82,20 @@ llc_service_new (void *(*thread_routine)(void *))
     }
 
     return service;
+}
+
+const char *
+llc_service_get_uri (const struct llc_service *service)
+{
+    return service->uri;
+}
+
+const char *
+llc_service_set_uri (struct llc_service *service, const char *uri)
+{
+    assert (service);
+    free (service->uri);
+    return service->uri = (uri) ? strdup (uri) : NULL;
 }
 
 void
