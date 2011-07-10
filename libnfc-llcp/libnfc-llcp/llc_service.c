@@ -143,7 +143,9 @@ llc_service_stop (struct llc_service *service)
 	    nanosleep (&delay, NULL);
 	}
 	sem_post (log_sem);
+	LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "(%p) JOIN", service->thread);
 	pthread_join (service->thread, NULL);
+	LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "(%p) JOINED", service->thread);
 	service->thread = NULL;
 	mq_close (service->llc_up);
 	service->llc_up = (mqd_t) -1;

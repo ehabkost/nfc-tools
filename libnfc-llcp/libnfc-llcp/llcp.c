@@ -124,13 +124,14 @@ llcp_thread (void *arg)
 	}
 
 	char buffer[1024];
-	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) mq_receive+", pthread_self ());
+	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) mq_receive+", pthread_self ());
 	pthread_testcancel ();
 	res = mq_receive (llc_up, buffer, sizeof (buffer), NULL);
 	pthread_testcancel ();
 	if (res < 0) {
 	    pthread_testcancel ();
 	}
+	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) received %d bytes", pthread_self (), res);
 
 	struct pdu *pdu;
 	struct pdu **pdus, **p;
@@ -140,15 +141,18 @@ llcp_thread (void *arg)
 	case PDU_SYMM:
 	    assert (!pdu->dsap);
 	    assert (!pdu->ssap);
+	    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) SYMM PDU", pthread_self ());
 	    break;
 	case PDU_PAX:
 	    assert (!pdu->dsap);
 	    assert (!pdu->ssap);
+	    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) PAX PDU", pthread_self ());
 	    assert (0 == llc_link_configure (link, pdu->information, pdu->information_size));
 	    break;
 	case PDU_AGF:
 	    assert (!pdu->dsap);
 	    assert (!pdu->ssap);
+	    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) AGF PDU", pthread_self ());
 	    p = pdus = pdu_dispatch (pdu);
 	    while (*p) {
 		mq_send (link->services[0]->llc_up, (char *) (*p)->information, (*p)->information_size, 1);
@@ -159,10 +163,12 @@ llcp_thread (void *arg)
 	    free (pdus);
 	    break;
 	case PDU_UI:
+	    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) UI PDU", pthread_self ());
 	    assert (link->services[pdu->dsap]);
 	    mq_send (link->services[pdu->dsap]->llc_up, (char *) pdu->information, pdu->information_size, 0);
 	    break;
-
+	default:
+	    LLC_LINK_LOG (LLC_PRIORITY_WARN, "(%p[0]) Unsupported LLC PDU: 0x%02x", pthread_self (), pdu->ptype);
 	}
 	pdu_free (pdu);
 	pthread_setcancelstate (old_cancelstate, NULL);
@@ -299,6 +305,8 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
     uint8_t lto;
     uint8_t opt;
 
+    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "llc_link_configure (%p, %p, %d)", (void *)link, (void *) parameters, length);
+
     size_t offset = 0;
     while (offset < length) {
 	if (offset > length - 2) {
@@ -306,7 +314,7 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 	    return -1;
 	}
 	if (offset + 2 + parameters[offset+1] > length) {
-	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Incomplete TLV value in parameters list");
+	    LLC_LINK_LOG (LLC_PRIORITY_ERROR, "Incomplete TLV value in parameters list (expected %d bytes but only %d left)", parameters[offset+1], length - (offset + 2));
 	    return -1;
 	}
 	switch (parameters[offset]) {
@@ -315,10 +323,12 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid Version TLV parameter");
 		return -1;
 	    }
+	    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "Version: %d.%d (remote)", version.major, version.minor);
 	    if (llcp_version_agreement (link, version) < 0) {
 		LLC_LINK_MSG (LLC_PRIORITY_WARN, "LLCP Version Agreement Procedure failed");
 		return -1;
 	    }
+	    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "Version: %d.%d (agreed)", version.major, version.minor);
 	    break;
 	case LLCP_PARAMETER_MIUX:
 	    if (parameter_decode_miux (parameters + offset, 2 + parameters[offset+1], &miux) < 0) {
@@ -326,12 +336,14 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 		return -1;
 	    }
 	    link->remote_miu = miux + 128;
+	    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "MIUX: %d (0x%02x)", miux + 128, miux);
 	    break;
 	case LLCP_PARAMETER_WKS:
 	    if (parameter_decode_wks (parameters + offset, 2 + parameters[offset+1], &link->remote_wks) < 0) {
 		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid WKS TLV parameter");
 		return -1;
 	    }
+	    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "WKS: 0x%04x", link->remote_wks);
 	    break;
 	case LLCP_PARAMETER_LTO:
 	    if (parameter_decode_lto (parameters + offset, 2 + parameters[offset+1], &lto) < 0) {
@@ -340,6 +352,7 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 	    }
 	    link->remote_lto.tv_sec = (lto * 10 * 1000000) / 1000000000;
 	    link->remote_lto.tv_nsec = (lto * 10 * 1000000) % 1000000000;
+	    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "LTO: %d ms (0x%02x)", 10 * lto, lto);
 	    break;
 	case LLCP_PARAMETER_OPT:
 	    if (parameter_decode_opt (parameters + offset, 2 + parameters[offset+1], &opt) < 0) {
@@ -347,7 +360,11 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 		return -1;
 	    }
 	    link->remote_lsc = opt & 0x03;
+	    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "OPT: 0x%02x", opt);
 	    break;
+	default:
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Unknown TLV Field 0x%02x (length: %d)",
+			  parameters[offset], parameters[offset+1]);
 	}
 	offset += 2 + parameters[offset+1];
     }
@@ -388,6 +405,7 @@ llc_link_deactivate (struct llc_link *link)
 	if (link->services[i]) {
 	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping service %d", i);
 	    llc_service_stop (link->services[i]);
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Service %d stopped", i);
 	}
     }
 }
