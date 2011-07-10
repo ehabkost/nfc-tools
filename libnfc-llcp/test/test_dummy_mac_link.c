@@ -85,6 +85,7 @@ echo_service (void *arg)
 	cut_assert_equal_int (5, res, cut_message ("Invalid message length"));
 	cut_assert_equal_memory (buffer, res, "Hello", 5, cut_message ("Invalid message data"));
 	sem_post (sem_cutter);
+	pthread_testcancel ();
     }
 }
 
