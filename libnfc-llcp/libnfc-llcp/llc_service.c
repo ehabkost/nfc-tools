@@ -59,18 +59,18 @@ llc_service_new (void *(*thread_routine)(void *))
 
     if ((service = malloc (sizeof (*service)))) {
 
-    service->uri = NULL;
+	service->uri = NULL;
 
-    service->thread_routine = thread_routine;
-    service->thread = NULL;
-    service->user_data = service;
+	service->thread_routine = thread_routine;
+	service->thread = NULL;
+	service->user_data = service;
 
-    service->llc_up = (mqd_t)-1;
-    service->llc_down = (mqd_t)-1;
-    service->mq_down_flags = O_NONBLOCK;
+	service->llc_up = (mqd_t)-1;
+	service->llc_down = (mqd_t)-1;
+	service->mq_down_flags = O_NONBLOCK;
 
-    mq_name (&service->mq_up_name, service, mq_dirction_up);
-    mq_name (&service->mq_down_name, service, mq_dirction_down);
+	mq_name (&service->mq_up_name, service, mq_dirction_up);
+	mq_name (&service->mq_down_name, service, mq_dirction_down);
     }
 
     return service;
