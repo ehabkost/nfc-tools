@@ -169,5 +169,8 @@ llc_service_free (struct llc_service *service)
     mq_unlink (service->mq_up_name);
     mq_unlink (service->mq_down_name);
 
+    free (service->mq_up_name);
+    free (service->mq_down_name);
+
     free (service);
 }
