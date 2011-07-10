@@ -25,6 +25,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <mqueue.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -106,23 +107,7 @@ llcp_thread (void *arg)
     pthread_setcancelstate (old_cancelstate, NULL);
     LLC_LINK_LOG (LLC_PRIORITY_INFO, "(%p) Link activated", (void *)pthread_self ());
     for (;;) {
-	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) sleep+", pthread_self ());
-	pthread_testcancel();
-	int res = sleep (1);
-	pthread_testcancel ();
-
-	if (res) {
-	    pthread_testcancel();
-	}
-	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p) mq_send+", pthread_self ());
-	pthread_testcancel();
-	res = mq_send (llc_down, "\x00\x00", 2, 0);
-	pthread_testcancel ();
-
-	if (res < 0) {
-	    pthread_testcancel ();
-	}
-
+	int res;
 	char buffer[1024];
 	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) mq_receive+", pthread_self ());
 	pthread_testcancel ();
@@ -155,23 +140,80 @@ llcp_thread (void *arg)
 	    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) AGF PDU", pthread_self ());
 	    p = pdus = pdu_dispatch (pdu);
 	    while (*p) {
-		mq_send (link->services[0]->llc_up, (char *) (*p)->information, (*p)->information_size, 1);
+		uint8_t buffer[BUFSIZ];
+		ssize_t length = pdu_pack (*p, buffer, sizeof (buffer));
+		mq_send (link->services[0]->llc_up, (char *) buffer, length, 1);
 		pdu_free (*p);
 		p++;
 	    }
 
 	    free (pdus);
 	    break;
+	case PDU_DISC:
+	    /* TODO Broadcast to services */
+	    LLC_LINK_MSG (LLC_PRIORITY_CRIT, "Disconnect PDU not implemented");
+//	    for (int i = 1; i <= MAX_LLC_LINK_SERVICE; i++)
+//		llc_service_stop (link, i);
+//	    pthread_exit (NULL);
+	    break;
 	case PDU_UI:
-	    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) UI PDU", pthread_self ());
 	    assert (link->services[pdu->dsap]);
-	    mq_send (link->services[pdu->dsap]->llc_up, (char *) pdu->information, pdu->information_size, 0);
+	    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) UI PDU", pthread_self ());
+#if 0
+	    /* XXX: Remove */
+	    struct mq_attr attr;
+	    mq_getattr (link->services[pdu->dsap]->llc_up, &attr);
+	    LLC_LINK_LOG (LLC_PRIORITY_CRIT, "(%p[0]) MQ: %d / %d x %d bytes", pthread_self (), attr.mq_curmsgs, attr.mq_maxmsg, attr.mq_msgsize);
+#endif
+	    if (mq_send (link->services[pdu->dsap]->llc_up, (char *) buffer, res, 0) < 0) {
+		LLC_LINK_LOG (LLC_PRIORITY_ERROR, "(%p[0]) Error sending %d bytes to service %d", pthread_self (), res, pdu->dsap);
+	    } else {
+		LLC_LINK_LOG (LLC_PRIORITY_INFO, "(%p[0]) Send %d bytes to service %d", pthread_self (), res, pdu->dsap);
+	    }
 	    break;
 	default:
 	    LLC_LINK_LOG (LLC_PRIORITY_WARN, "(%p[0]) Unsupported LLC PDU: 0x%02x", pthread_self (), pdu->ptype);
 	}
 	pdu_free (pdu);
 	pthread_setcancelstate (old_cancelstate, NULL);
+
+	/* ---------------- */
+
+	ssize_t length = 0;
+	for (int i = 1; i <= MAX_LLC_LINK_SERVICE; i++) {
+	    if (link->services[i]) {
+		length = mq_receive (link->services[i]->llc_down, buffer, sizeof (buffer), NULL);
+		LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) Read %d bytes from service %d", pthread_self (), length, i);
+		if (length > 0)
+		    break;
+		switch (errno) {
+		case EAGAIN:
+		case EINTR:
+		case ETIMEDOUT: /* XXX Should not happend */
+		    /* NOOP */
+		    break;
+		default:
+		    LLC_LINK_LOG (LLC_PRIORITY_ERROR, "(%p[0]) Can read from service %d message queue", pthread_self (), i);
+		    break;
+		}
+	    }
+	}
+
+	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) mq_send+", pthread_self ());
+	pthread_testcancel();
+
+	if (length <= 0) {
+	    buffer[0] = buffer[1] = '\x00';
+	    length = 2;
+	}
+
+	res = mq_send (llc_down, buffer, length, 0);
+	pthread_testcancel ();
+
+	if (res < 0) {
+	    pthread_testcancel ();
+	}
+	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) sent %d bytes", pthread_self (), length);
     }
     pthread_cleanup_pop (1);
     return NULL;
