@@ -20,6 +20,6 @@
     <layout name="basic" type="basic"/>
     <layout name="dated" type="dated"/>
 
-    <category name="libnfc-llcp.llc" priority="info" appender="stderr"/>
+    <category name="libnfc-llcp" priority="trace" appender="stderr"/>
 
 </log4c>

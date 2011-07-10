@@ -39,82 +39,90 @@
 #define LLC_SERVICE_MSG(priority, message) llcp_log_log (LOG_LLC_SERVICE, priority, "%s", message)
 #define LLC_SERVICE_LOG(priority, format, ...) llcp_log_log (LOG_LLC_SERVICE, priority, format, __VA_ARGS__)
 
-static char *mq_fmt = "/libnfc-llcp-%d-%x-service-%d-%s";
+static char *mq_fmt = "/libnfc-llcp-%d-%x-%s";
 
 static const char *mq_dirction_up = "up";
 static const char *mq_dirction_down = "down";
 
 static inline void
-mq_name (char **name, const struct llc_link *link, uint8_t service, const char *direction)
+mq_name (char **name, const struct llc_service *service, const char *direction)
 {
-    asprintf (name, mq_fmt, getpid(), link, service, direction);
+    asprintf (name, mq_fmt, getpid(), service, direction);
 }
 
-int
-llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)(void *))
+struct llc_service *
+llc_service_new (void *(*thread_routine)(void *))
 {
-    assert (link);
-    assert (service <= MAX_LLC_LINK_SERVICE);
     assert (thread_routine);
 
-    if (!(link->services[service] = malloc (sizeof (*link->services[service])))) {
-	return -1;
+    struct llc_service *service;
+
+    if ((service = malloc (sizeof (*service)))) {
+
+    service->uri = NULL;
+
+    service->thread_routine = thread_routine;
+    service->thread = NULL;
+    service->user_data = service;
+
+    service->llc_up = (mqd_t)-1;
+    service->llc_down = (mqd_t)-1;
+    service->mq_down_flags = O_NONBLOCK;
+
+    mq_name (&service->mq_up_name, service, mq_dirction_up);
+    mq_name (&service->mq_down_name, service, mq_dirction_down);
     }
 
-    link->services[service]->uri = NULL;
-
-    link->services[service]->thread_routine = thread_routine;
-    link->services[service]->thread = NULL;
-
-    link->services[service]->llc_up = (mqd_t)-1;
-    link->services[service]->llc_down = (mqd_t)-1;
-
-    mq_name (&link->services[service]->mq_up_name, link, service, mq_dirction_up);
-    mq_name (&link->services[service]->mq_down_name, link, service, mq_dirction_down);
-
-    LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->services[service]->mq_up_name);
-    link->services[service]->llc_up   = mq_open (link->services[service]->mq_up_name, O_CREAT | O_EXCL | O_WRONLY, 0666, NULL);
-    if (link->services[service]->llc_up == (mqd_t)-1) {
-	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[service]->mq_up_name);
-	return -1;
-    }
-
-    LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->services[service]->mq_down_name);
-    link->services[service]->llc_down = mq_open (link->services[service]->mq_down_name, O_CREAT | O_EXCL | O_RDONLY, 0666, NULL);
-    if (link->services[service]->llc_down == (mqd_t)-1) {
-	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[service]->mq_down_name);
-	return -1;
-    }
-
-    link->services[service]->cut_test_context = link->cut_test_context;
-
-    return 0;
-}
-
-int
-llc_service_start (struct llc_link *link, uint8_t service)
-{
-    assert (link);
-    assert (service <= MAX_LLC_LINK_SERVICE);
-    assert (link->services[service]);
-
-    if (!service)
-	return pthread_create (&link->services[service]->thread, NULL, link->services[service]->thread_routine, link);
-    else
-	return pthread_create (&link->services[service]->thread, NULL, link->services[service]->thread_routine, link->services[service]);
+    return service;
 }
 
 void
-llc_service_stop (struct llc_link *link, uint8_t service)
+llc_service_set_user_data (struct llc_service *service, void *user_data)
 {
-    assert (link);
-    assert (service <= MAX_LLC_LINK_SERVICE);
-    assert (link->services[service]);
+    assert (service);
 
-    if (link->services[service]->thread) {
+    service->user_data = user_data;
+}
+
+void
+llc_service_set_mq_down_non_blocking (struct llc_service *service)
+{
+    assert (service);
+
+    service->mq_down_flags = 0;
+}
+
+int
+llc_service_start (struct llc_service *service)
+{
+    assert (service);
+
+    LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", service->mq_up_name);
+    service->llc_up   = mq_open (service->mq_up_name, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0666, NULL);
+    if (service->llc_up == (mqd_t)-1) {
+	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", service->mq_up_name);
+	return -1;
+    }
+
+    LLC_SERVICE_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", service->mq_down_name);
+    service->llc_down = mq_open (service->mq_down_name, O_CREAT | O_EXCL | O_RDONLY | service->mq_down_flags, 0666, NULL);
+    if (service->llc_down == (mqd_t)-1) {
+	LLC_SERVICE_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", service->mq_down_name);
+	return -1;
+    }
+
+    return pthread_create (&service->thread, NULL, service->thread_routine, service->user_data);
+}
+
+void
+llc_service_stop (struct llc_service *service)
+{
+    assert (service);
+
+    if (service->thread) {
 	/* A thread SHALL not be canceled while logging */
 	sem_wait (log_sem);
-	pthread_cancel (link->services[service]->thread);
+	pthread_cancel (service->thread);
 
 	/*
 	 * Send a signal to the thread
@@ -131,33 +139,33 @@ llc_service_stop (struct llc_link *link, uint8_t service)
 	    .tv_sec  = 0,
 	    .tv_nsec = 10000000,
 	};
-	while (0 == pthread_kill (link->services[service]->thread, SIGUSR1)) {
+	while (0 == pthread_kill (service->thread, SIGUSR1)) {
 	    nanosleep (&delay, NULL);
 	}
 	sem_post (log_sem);
-	pthread_join (link->services[service]->thread, NULL);
-	link->services[service]->thread = NULL;
+	pthread_join (service->thread, NULL);
+	service->thread = NULL;
+	mq_close (service->llc_up);
+	service->llc_up = (mqd_t) -1;
+	mq_close (service->llc_down);
+	service->llc_down = (mqd_t) -1;
     }
 }
 
 void
-llc_service_free (struct llc_link *link, uint8_t service)
+llc_service_free (struct llc_service *service)
 {
-    assert (link);
-    assert (service <= MAX_LLC_LINK_SERVICE);
+    assert (service);
 
-    free (link->services[service]->uri);
+    free (service->uri);
 
-    if (link->services[service]->llc_up != (mqd_t)-1)
-	mq_close (link->services[service]->llc_up);
-    if (link->services[service]->llc_down != (mqd_t)-1)
-	mq_close (link->services[service]->llc_down);
+    if (service->llc_up != (mqd_t)-1)
+	mq_close (service->llc_up);
+    if (service->llc_down != (mqd_t)-1)
+	mq_close (service->llc_down);
 
-    mq_unlink (link->services[service]->mq_up_name);
-    mq_unlink (link->services[service]->mq_down_name);
+    mq_unlink (service->mq_up_name);
+    mq_unlink (service->mq_down_name);
 
-    free (link->services[service]->mq_up_name);
-    free (link->services[service]->mq_down_name);
-
-    free (link->services[service]);
+    free (service);
 }

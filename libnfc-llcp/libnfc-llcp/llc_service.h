@@ -30,18 +30,23 @@ struct llc_service {
 
     pthread_t thread;
     void *(*thread_routine)(void *);
+    void *user_data;
     mqd_t llc_up;
     mqd_t llc_down;
     char *mq_up_name;
     char *mq_down_name;
+    int mq_down_flags;
+    int8_t sap;
 
     /* Unit tests metadata */
     void *cut_test_context;
 };
 
-int		 llc_service_new (struct llc_link *link, uint8_t service, void *(*thread_routine)(void *));
-int		 llc_service_start(struct llc_link *link, uint8_t service);
-void		 llc_service_stop (struct llc_link *link, uint8_t service);
-void		 llc_service_free (struct llc_link *link, uint8_t service);
+struct llc_service *llc_service_new (void *(*thread_routine)(void *));
+void		 llc_service_set_user_data (struct llc_service *service, void *user_data);
+void	    	 llc_service_set_mq_down_non_blocking (struct llc_service *service);
+int		 llc_service_start(struct llc_service *service);
+void		 llc_service_stop (struct llc_service *service);
+void		 llc_service_free (struct llc_service *service);
 
 #endif /* !_LLC_SERVICE_H */

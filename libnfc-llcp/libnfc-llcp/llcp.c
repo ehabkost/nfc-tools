@@ -179,13 +179,66 @@ llc_link_new (void)
     if ((link = malloc (sizeof (*link)))) {
 	memset (link->services, '\0', sizeof (link->services));
 	link->cut_test_context = NULL;
-	if (llc_service_new (link, 0, llcp_thread) < 0) {
+
+	struct llc_service *llcp_service = llc_service_new (llcp_thread);
+	if (!llcp_service) {
+	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot create LLC service 0");
 	    llc_link_free (link);
-	    link = NULL;
+	    return NULL;
+	}
+
+	llc_service_set_user_data (llcp_service, link);
+	llc_service_set_mq_down_non_blocking (llcp_service);
+
+	if (llc_link_service_bind (link, llcp_service, 0) < 0) {
+	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot bind LLC service 0");
+	    llc_link_free (link);
+	    return NULL;
 	}
     }
 
     return link;
+}
+
+int
+llc_link_service_bind (struct llc_link *link, struct llc_service *service, int8_t sap)
+{
+    assert (link);
+    assert (service);
+    assert (sap <= MAX_LLC_LINK_SERVICE);
+
+    if (SAP_AUTO == sap) {
+	for (sap = 0x10; link->services[sap] && (sap <= 0x1F); sap++) {
+	    break;
+	}
+	if (sap > MAX_LLC_LINK_SERVICE) {
+	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "No space left for service");
+	    return -1;
+	}
+    }
+
+    if (link->services[sap]) {
+	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "SAP %d already bound", sap);
+	return -1;
+    }
+
+    service->cut_test_context = link->cut_test_context;
+    service->sap = sap;
+    link->services[sap] = service;
+
+    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "service %p bound to SAP %d", (void *) service, sap);
+
+    return sap;
+}
+
+void
+llc_link_service_unbind (struct llc_link *link, uint8_t sap)
+{
+    if (link->services[sap]) {
+	link->services[sap]->cut_test_context = NULL;
+	link->services[sap]->sap = -1;
+	link->services[sap] = NULL;
+    }
 }
 
 int
@@ -231,7 +284,7 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
 	if (link->services[i]) {
 	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Starting service %d", i);
-	    llc_service_start (link, i);
+	    llc_service_start (link->services[i]);
 	}
     }
 
@@ -334,7 +387,7 @@ llc_link_deactivate (struct llc_link *link)
     for (int i = MAX_LLC_LINK_SERVICE; i >= 0; i--) {
 	if (link->services[i]) {
 	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping service %d", i);
-	    llc_service_stop (link, i);
+	    llc_service_stop (link->services[i]);
 	}
     }
 }
@@ -347,7 +400,7 @@ llc_link_free (struct llc_link *link)
     for (int i = MAX_LLC_LINK_SERVICE; i >= 0; i--) {
 	if (link->services[i]) {
 	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Freeing service %d", i);
-	    llc_service_free (link, i);
+	    llc_service_free (link->services[i]);
 	}
     }
 

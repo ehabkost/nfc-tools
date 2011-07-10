@@ -37,6 +37,8 @@
 #define LLCP_VERSION_MAJOR 1
 #define LLCP_VERSION_MINOR 0
 
+struct llc_service;
+
 struct llcp_version {
     uint8_t major;
     uint8_t minor;
@@ -63,6 +65,8 @@ struct data_link_connection {
 int		 llcp_init (void);
 int		 llcp_fini (void);
 struct llc_link	*llc_link_new (void);
+int		 llc_link_service_bind (struct llc_link *link, struct llc_service *service, int8_t sap);
+void		 llc_link_service_unbind (struct llc_link *link, uint8_t sap);
 int		 llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *parameters, size_t length);
 int		 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length);
 void		 llc_link_deactivate (struct llc_link *link);
@@ -71,6 +75,7 @@ void		 llc_link_free (struct llc_link *link);
 int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version);
 
 #define MAX_LLC_LINK_SERVICE 0x3F
+#define SAP_AUTO -1
 
 struct llc_link {
     uint8_t role;

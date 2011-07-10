@@ -31,6 +31,8 @@
 #include "llcp.h"
 #include "llc_service.h"
 
+#define ECHO_SAP 16
+
 const char *sem_cutter_name = "/cutter";
 sem_t *sem_cutter;
 
@@ -119,6 +121,7 @@ test_dummy_mac_link (void)
 {
     int res;
     struct llc_link *initiator, *target;
+    struct llc_service *service;
 
     initiator = llc_link_new ();
     cut_assert_not_null (initiator, cut_message ("llc_link_new()"));
@@ -127,8 +130,11 @@ test_dummy_mac_link (void)
 
     initiator->cut_test_context = cut_get_current_test_context ();
 
-    res = llc_service_new (initiator, 1, echo_service);
-    cut_assert_equal_int (0, res, cut_message ("llc_service_new()"));
+    service = llc_service_new (echo_service);
+    cut_assert_not_null (service, cut_message ("llc_service_new()"));
+
+    res = llc_link_service_bind (initiator, service, ECHO_SAP);
+    cut_assert_equal_int (ECHO_SAP, res, cut_message ("llc_link_service_bind()"));
 
     res = llc_link_activate (initiator, LLC_INITIATOR | LLC_PAX_PDU_PROHIBITED, NULL, 0);
     cut_assert_equal_int (0, res, cut_message ("llc_link_activate()"));
@@ -144,7 +150,7 @@ test_dummy_mac_link (void)
     };
     pthread_create (&transport, NULL, dummy_mac_transport_thread, &eps);
 
-    buffer[0] = '\x04';
+    buffer[0] = ECHO_SAP << 2;
     buffer[1] = '\xC0';
     buffer[2] = 'H';
     buffer[3] = 'e';
