@@ -292,7 +292,10 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
 	if (link->services[i]) {
 	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Starting service %d", i);
-	    llc_service_start (link->services[i]);
+	    if (llc_service_start (link->services[i]) < 0) {
+		LLC_LINK_LOG (LLC_PRIORITY_ERROR, "Can't start service %d", i);
+		return -1;
+	    }
 	}
     }
 
