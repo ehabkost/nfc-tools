@@ -71,6 +71,8 @@ llc_service_new (void *(*thread_routine)(void *))
 
 	mq_name (&service->mq_up_name, service, mq_dirction_up);
 	mq_name (&service->mq_down_name, service, mq_dirction_down);
+
+	service->cut_test_context = NULL;
     }
 
     return service;
