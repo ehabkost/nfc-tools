@@ -47,9 +47,8 @@ struct pdu {
     uint8_t ssap;
 
     // Sequence field
-    uint8_t send_sequence_number;
-    uint8_t receive_sequence_number;
-    uint8_t n_s, n_r;
+    uint8_t nr;
+    uint8_t ns;
 
     // Information filed
     size_t information_size;

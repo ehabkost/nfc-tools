@@ -68,7 +68,7 @@ pdu_pack (const struct pdu *pdu, uint8_t *buffer, size_t len)
     buffer[n++] = (pdu->ptype << 6) | (pdu->ssap);
 
     if (pdu_has_sequence_field (pdu)) {
-	buffer[n++] = (pdu->n_s << 4) | pdu->n_r;
+	buffer[n++] = (pdu->ns << 4) | pdu->nr;
     }
 
     for (size_t i = 0; i < pdu->information_size; i++)
@@ -90,8 +90,8 @@ pdu_unpack (const uint8_t *buffer, size_t len)
 	int n = 2;
 
 	if (pdu_has_sequence_field (pdu)) {
-	    pdu->n_s = buffer[n] >> 4;
-	    pdu->n_r = buffer[n++] & 0x0F;
+	    pdu->ns = buffer[n] >> 4;
+	    pdu->nr = buffer[n++] & 0x0F;
 	}
 
 	pdu->information_size = len - n;
