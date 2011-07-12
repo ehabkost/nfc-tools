@@ -228,6 +228,7 @@ llc_link_new (void)
     if ((link = malloc (sizeof (*link)))) {
 	link->version.major = LLCP_VERSION_MAJOR;
 	link->version.minor = LLCP_VERSION_MINOR;
+	link->opt = LINK_SERVICE_CLASS_3;
 	memset (link->services, '\0', sizeof (link->services));
 	link->cut_test_context = NULL;
 
@@ -459,11 +460,9 @@ llc_link_encode_parameters (const struct llc_link *link, uint8_t *parameters, si
 	return -1;
     parameter += n; length -= n;
 
-#if 0
     if ((n = parameter_encode_opt (parameter, length, link->opt)) < 0)
 	return -1;
     parameter += n; length -= n;
-#endif
 
     return parameter - parameters;
 }

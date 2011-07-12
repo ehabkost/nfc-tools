@@ -78,6 +78,10 @@ int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version
 #define MAX_LLC_LINK_SERVICE 0x3F
 #define SAP_AUTO -1
 
+#define LINK_SERVICE_CLASS_1 1
+#define LINK_SERVICE_CLASS_2 2
+#define LINK_SERVICE_CLASS_3 (LINK_SERVICE_CLASS_1 | LINK_SERVICE_CLASS_2)
+
 struct llc_link {
     uint8_t role;
     struct llcp_version version;
@@ -88,6 +92,7 @@ struct llc_link {
     struct timespec remote_lto;
     uint8_t local_lsc;
     uint8_t remote_lsc;
+    uint8_t opt;
 
     struct llc_service *services[MAX_LLC_LINK_SERVICE + 1];
 
