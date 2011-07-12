@@ -44,7 +44,7 @@ uint8_t _pdu_ptype_sequence_field[] = {
     0, /* PDU_CC */
     0, /* PDU_DM */
     0, /* PDU_FRMR */
-    0, /* reserved */
+    0, /* PDU_SNL */
     0, /* reserved */
     0, /* reserved */
     1, /* PDU_I */
