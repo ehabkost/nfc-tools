@@ -119,6 +119,13 @@ llcp_thread (void *arg)
 	}
 	LLC_LINK_LOG (LLC_PRIORITY_TRACE, "(%p[0]) received %d bytes", pthread_self (), res);
 
+	if (res < 2) {
+	    /* FIXME: Maybe we'd rather quit */
+	    LLC_LINK_LOG (LLC_PRIORITY_FATAL, "(%p[0]) Too short for a PDU (expected 2 bytes, got %d)", pthread_self (), res);
+	    buffer[0] = buffer[1] = '\0';
+	    res = 2;
+	}
+
 	struct pdu *pdu;
 	struct pdu **pdus, **p;
 	pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancelstate);
