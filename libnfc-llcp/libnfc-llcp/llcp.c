@@ -21,6 +21,7 @@
 
 #include "config.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <assert.h>
@@ -40,8 +41,6 @@
 #define LOG_LLCP "libnfc-llcp"
 #define LLCP_MSG(priority, message) llcp_log_log (LOG_LLCP, priority, "%s", message)
 #define LLCP_LOG(priority, format, ...) llcp_log_log (LOG_LLCP, priority, format, __VA_ARGS__)
-
-#define MIN(a, b) ((a < b) ? a : b)
 
 void
 sigusr1_handler (int x)
