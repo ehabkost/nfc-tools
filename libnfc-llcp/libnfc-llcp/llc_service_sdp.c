@@ -29,6 +29,7 @@
 
 #include "llcp.h"
 #include "llcp_log.h"
+#include "llc_link.h"
 #include "llc_service.h"
 #include "llc_service_sdp.h"
 #include "llcp_parameters.h"

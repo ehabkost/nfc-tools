@@ -28,7 +28,7 @@
 #include <semaphore.h>
 #include <time.h>
 
-#include "llcp.h"
+#include "llc_link.h"
 #include "llc_service.h"
 
 #define ECHO_SAP 16

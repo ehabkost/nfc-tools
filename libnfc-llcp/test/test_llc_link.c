@@ -21,7 +21,7 @@
 
 #include <cutter.h>
 
-#include "llcp.h"
+#include "llc_link.h"
 
 void
 cut_setup (void)

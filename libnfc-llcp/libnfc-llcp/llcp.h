@@ -62,18 +62,14 @@ struct data_link_connection {
     struct data_link_connection_parameters parameters;
 };
 
+struct llc_link;
+
 int		 llcp_init (void);
 int		 llcp_fini (void);
-struct llc_link	*llc_link_new (void);
-int		 llc_link_service_bind (struct llc_link *link, struct llc_service *service, int8_t sap);
-void		 llc_link_service_unbind (struct llc_link *link, uint8_t sap);
-int		 llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *parameters, size_t length);
-int		 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length);
-int		 llc_link_encode_parameters (const struct llc_link *link, uint8_t *parameters, size_t length);
-void		 llc_link_deactivate (struct llc_link *link);
-void		 llc_link_free (struct llc_link *link);
 
+void		*llcp_thread (void *arg);
 int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version);
+
 
 #define MAX_LLC_LINK_SERVICE 0x3F
 #define SAP_AUTO -1
@@ -82,23 +78,6 @@ int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version
 #define LINK_SERVICE_CLASS_2 2
 #define LINK_SERVICE_CLASS_3 (LINK_SERVICE_CLASS_1 | LINK_SERVICE_CLASS_2)
 
-struct llc_link {
-    uint8_t role;
-    struct llcp_version version;
-    uint16_t local_miu;
-    uint16_t remote_miu;
-    uint16_t remote_wks;
-    struct timespec local_lto;
-    struct timespec remote_lto;
-    uint8_t local_lsc;
-    uint8_t remote_lsc;
-    uint8_t opt;
-
-    struct llc_service *services[MAX_LLC_LINK_SERVICE + 1];
-
-    /* Unit tests metadata */
-    void *cut_test_context;
-};
 /* LLC Operating modes */
 #define LLC_INITIATOR 0
 #define LLC_TARGET    1

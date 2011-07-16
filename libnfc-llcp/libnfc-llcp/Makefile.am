@@ -14,6 +14,7 @@ libnfc_llcp_la_SOURCES = \
 			 llcp.c \
 			 llcp_pdu.c \
 			 llcp_parameters.c \
+			 llc_link.c \
 			 llc_service.c \
 			 llc_service_sdp.c 
 
