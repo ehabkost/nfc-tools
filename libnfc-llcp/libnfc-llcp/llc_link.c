@@ -31,6 +31,7 @@
 #include "llcp_parameters.h"
 #include "llc_link.h"
 #include "llc_service.h"
+#include "llc_service_llc.h"
 #include "llc_service_sdp.h"
 
 #define LOG_LLC_LINK "libnfc-llcp.llc.link"
@@ -49,7 +50,7 @@ llc_link_new (void)
 	memset (link->services, '\0', sizeof (link->services));
 	link->cut_test_context = NULL;
 
-	struct llc_service *llcp_service = llc_service_new (llcp_thread);
+	struct llc_service *llcp_service = llc_service_new (llc_service_llc_thread);
 	if (!llcp_service) {
 	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot create LLC service 0");
 	    llc_link_free (link);

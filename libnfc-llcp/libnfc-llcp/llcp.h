@@ -37,8 +37,6 @@
 #define LLCP_VERSION_MAJOR 1
 #define LLCP_VERSION_MINOR 0
 
-struct llc_service;
-
 struct llcp_version {
     uint8_t major;
     uint8_t minor;
@@ -67,7 +65,6 @@ struct llc_link;
 int		 llcp_init (void);
 int		 llcp_fini (void);
 
-void		*llcp_thread (void *arg);
 int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version);
 
 
