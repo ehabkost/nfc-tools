@@ -48,21 +48,27 @@ char *pdu_names[] = {
 void
 explain_pdu (const char *s)
 {
-    unsigned bytes[2];
-    uint8_t raw_pdu[2];
-    if (2 == sscanf (s, "%02x %02x", &bytes[0], &bytes[1])) {
-	raw_pdu[0] = bytes[0];
-	raw_pdu[1] = bytes[1];
-	struct pdu *pdu;
-	pdu = pdu_unpack (raw_pdu, 2);
+    unsigned byte;
+    uint8_t raw_pdu[BUFSIZ];
 
-	printf ("  DSAP .... : 0x%02x (%d)\n"
-		"  PTYPE ... : 0x%02x (%s)\n"
-		"  SSAP .... : 0x%02x (%d)\n", pdu->dsap, pdu->dsap, pdu->ptype, pdu_names[pdu->ptype], pdu->ssap, pdu->ssap);
-
-    } else {
-	printf ("Malformed PDU (expected at least 2 hex bytes)\n");
+    off_t offset = 0;
+    int r, n = 0;
+    while (1 == sscanf (s + offset, "%02x%n", &byte, &r)) {
+	raw_pdu[n++] = byte;
+	offset += r;
     }
+
+    struct pdu *pdu;
+    pdu = pdu_unpack (raw_pdu, n);
+
+    if (!pdu) {
+	printf ("Invalid PDU header\n");
+	return;
+    }
+
+    printf ("  DSAP .... : 0x%02x (%d)\n"
+	    "  PTYPE ... : 0x%02x (%s)\n"
+	    "  SSAP .... : 0x%02x (%d)\n", pdu->dsap, pdu->dsap, pdu->ptype, pdu_names[pdu->ptype], pdu->ssap, pdu->ssap);
 }
 
 int
