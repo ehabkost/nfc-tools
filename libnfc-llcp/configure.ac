@@ -71,4 +71,6 @@ AC_OUTPUT([
 	   doc/Makefile
 	   libnfc-llcp/Makefile
 	   test/Makefile
+	   tools/Makefile
+	   tools/llcp-pdu-explain/Makefile
 	   ])
