@@ -4,7 +4,10 @@ AC_INIT([libnfc-llcp], [0.1.0])
 
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_PROG_CC
 AC_PROG_LIBTOOL
+
+AC_C_INLINE
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -20,11 +23,18 @@ if test x"$enable_debug" != x"yes"; then
 fi
 
 AC_FUNC_MALLOC
+AC_TYPE_INT8_T
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT8_T
+
+AC_CHECK_FUNCS([strcasecmp])
+AC_CHECK_FUNCS([strdup])
+
+AC_CHECK_HEADERS([fcntl.h])
+AC_CHECK_HEADERS([sys/param.h])
 
 CFLAGS="$CFLAGS -std=c99"
 
