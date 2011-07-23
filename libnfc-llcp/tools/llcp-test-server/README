@@ -1,0 +1,10 @@
+llcp-test-server
+================
+
+This is an attempt to port nfcpy's examples/llcp-test-server.py against the
+libnfc and linfc-llcp.
+
+The following tests are known to fail:
+  2, 8	- Require libnfc-llcp to be compiled in a special way to provide the
+          same limitation as nfcpy.
+  5, 6  - Tests are buggy.

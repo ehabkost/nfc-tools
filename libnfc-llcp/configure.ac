@@ -73,4 +73,5 @@ AC_OUTPUT([
 	   test/Makefile
 	   tools/Makefile
 	   tools/llcp-pdu-explain/Makefile
+	   tools/llcp-test-server/Makefile
 	   ])

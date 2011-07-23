@@ -1,3 +1,4 @@
 # $Id$
 
-SUBDIRS = llcp-pdu-explain
+SUBDIRS = llcp-test-server \
+	  llcp-pdu-explain
