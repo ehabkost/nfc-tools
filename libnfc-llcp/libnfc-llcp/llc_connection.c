@@ -47,6 +47,8 @@ struct llc_connection *llc_connection_new (struct llc_link *link, uint8_t ssap, 
 struct llc_connection *
 llc_connection_new (struct llc_link *link, uint8_t ssap, uint8_t dsap)
 {
+    assert (link);
+
     struct llc_connection *res;
 
     if ((res = malloc (sizeof *res))) {
@@ -101,6 +103,10 @@ llc_connection_new (struct llc_link *link, uint8_t ssap, uint8_t dsap)
 struct llc_connection *
 llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int *reason)
 {
+    assert (link);
+    assert (pdu);
+    assert (reason);
+
     struct llc_connection *res;
 
     char sn[BUFSIZ];
@@ -171,6 +177,9 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 struct llc_connection *
 llc_logical_data_link_new (struct llc_link *link, const struct pdu *pdu)
 {
+    assert (link);
+    assert (pdu);
+
     struct llc_connection *res;
     uint8_t sap = 0;
 
