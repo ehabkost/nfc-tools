@@ -69,6 +69,8 @@ explain_pdu (const char *s)
     printf ("  DSAP .... : 0x%02x (%d)\n"
 	    "  PTYPE ... : 0x%02x (%s)\n"
 	    "  SSAP .... : 0x%02x (%d)\n", pdu->dsap, pdu->dsap, pdu->ptype, pdu_names[pdu->ptype], pdu->ssap, pdu->ssap);
+
+    pdu_free (pdu);
 }
 
 int
