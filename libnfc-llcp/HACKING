@@ -18,6 +18,17 @@ you started:
      for a debugger, it can help to diagnose quickly what's going wrong.
      http://log4c.sourceforge.net/
 
+     The libnfc-llcp log4c loggers hierarchy is:
+
+     libnfc-llcp
+     |-> llc
+     | |-> link
+     | |-> pdu
+     | |-> services
+     | `-> tlv
+     `-> mac
+       `-> link
+
   3. Follow style conventions
      The source code of the library trend to follow some conventions so that it
      is consistent in style and thus easier to read.  Basically, it follows

@@ -88,3 +88,30 @@ llcp_version_agreement (struct llc_link *link, struct llcp_version version)
 
     return res;
 }
+
+void
+llcp_threadslayer (pthread_t thread)
+{
+    pthread_cancel (thread);
+
+    /*
+     * Send a signal to the thread
+     *
+     * Thread cancellation is not handled by message queue functions so the
+     * only way to unlock a thread blocked on message operations is by
+     * sending a signal to it so that it gets a chance to see the
+     * cancelation state.  However, if send too early in the thread's life,
+     * the signal may be missed.  So loop on pthread_kill() until it fails.
+     *
+     * XXX This is a dirty hack.
+     */
+    struct timespec delay = {
+	.tv_sec  = 0,
+	.tv_nsec = 10000000,
+    };
+    while (0 == pthread_kill (thread, SIGUSR1)) {
+	nanosleep (&delay, NULL);
+    }
+
+    pthread_join (thread, NULL);
+}

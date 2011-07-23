@@ -24,11 +24,17 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <fcntl.h>
+#include <pthread_np.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "llc_connection.h"
 #include "llcp_log.h"
 #include "llcp_parameters.h"
+#include "llcp_pdu.h"
 #include "llc_link.h"
 #include "llc_service.h"
 #include "llc_service_llc.h"
@@ -47,28 +53,22 @@ llc_link_new (void)
 	link->version.major = LLCP_VERSION_MAJOR;
 	link->version.minor = LLCP_VERSION_MINOR;
 	link->opt = LINK_SERVICE_CLASS_3;
-	memset (link->services, '\0', sizeof (link->services));
+	for (size_t i = 0; i < sizeof (link->available_services) / sizeof (*link->available_services); i++) {
+	    link->available_services[i] = NULL;
+	    link->datagram_handlers[i] = NULL;
+	    link->transmission_handlers[i] = NULL;
+	}
 	link->cut_test_context = NULL;
+	link->mac_link = NULL;
+	link->local_miu = 128;
 
-	struct llc_service *llcp_service = llc_service_new (llc_service_llc_thread);
-	if (!llcp_service) {
-	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot create LLC service 0");
-	    llc_link_free (link);
-	    return NULL;
-	}
+	asprintf (&link->mq_up_name, "/libnfc-llcp-%d-%p-up", getpid (), (void *) link);
+	asprintf (&link->mq_down_name, "/libnfc-llcp-%d-%p-down", getpid (), (void *) link);
+	link->llc_up   = (mqd_t) -1;
+	link->llc_down = (mqd_t) -1;
 
-	llc_service_set_user_data (llcp_service, link);
-	llc_service_set_mq_down_non_blocking (llcp_service);
+	struct llc_service *sdp_service = llc_service_new_with_uri (NULL, llc_service_sdp_thread, LLCP_SDP_URI);
 
-	if (llc_link_service_bind (link, llcp_service, 0) < 0) {
-	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot bind LLC service 0");
-	    llc_link_free (link);
-	    return NULL;
-	}
-
-	struct llc_service *sdp_service = llc_service_new_with_uri (llc_service_sdp_thread, LLCP_SDP_URI);
-
-	llc_service_set_user_data (sdp_service, link);
 	if (llc_link_service_bind (link, sdp_service, LLCP_SDP_SAP) < 0) {
 	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot bind LLC service 1");
 	    llc_link_free (link);
@@ -87,21 +87,20 @@ llc_link_service_bind (struct llc_link *link, struct llc_service *service, int8_
     assert (sap <= MAX_LLC_LINK_SERVICE);
 
     if (SAP_AUTO == sap) {
-	for (sap = 0x10; link->services[sap] && (sap <= 0x1F); sap++);
+	for (sap = 0x10; link->available_services[sap] && (sap <= 0x1F); sap++);
 	if (sap > 0x1F) {
 	    LLC_LINK_MSG (LLC_PRIORITY_ERROR, "No space left for service");
 	    return -1;
 	}
     }
 
-    if (link->services[sap]) {
+    if (link->available_services[sap]) {
 	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "SAP %d already bound", sap);
 	return -1;
     }
 
-    service->cut_test_context = link->cut_test_context;
     service->sap = sap;
-    link->services[sap] = service;
+    link->available_services[sap] = service;
 
     LLC_LINK_LOG (LLC_PRIORITY_TRACE, "service %p bound to SAP %d", (void *) service, sap);
 
@@ -111,10 +110,9 @@ llc_link_service_bind (struct llc_link *link, struct llc_service *service, int8_
 void
 llc_link_service_unbind (struct llc_link *link, uint8_t sap)
 {
-    if (link->services[sap]) {
-	link->services[sap]->cut_test_context = NULL;
-	link->services[sap]->sap = -1;
-	link->services[sap] = NULL;
+    if (link->available_services[sap]) {
+	link->available_services[sap]->sap = -1;
+	link->available_services[sap] = NULL;
     }
 }
 
@@ -123,7 +121,7 @@ llc_link_get_wks (const struct llc_link *link)
 {
     uint16_t wks = 0x0000;
     for (int i = 0; i < 16; i++) {
-	wks |= (link->services[i] ? 1 : 0) << i;
+	wks |= (link->available_services[i] ? 1 : 0) << i;
     }
 
     return wks;
@@ -138,8 +136,8 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     link->role = flags & 0x01;
     link->version.major = LLCP_VERSION_MAJOR;
     link->version.minor = LLCP_VERSION_MINOR;
-    link->local_miu  = LLC_DEFAULT_MIU;
-    link->remote_miu = LLC_DEFAULT_MIU;
+    link->local_miu  = LLCP_DEFAULT_MIU;
+    link->remote_miu = LLCP_DEFAULT_MIU;
     link->remote_wks = 0x0001;
     link->local_lto.tv_sec  = 0;
     link->local_lto.tv_nsec = 100000000;
@@ -164,14 +162,29 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
 	/* FIXME: Exchange PAX PDU */
     }
 
-    for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
-	if (link->services[i]) {
-	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Starting service %d", i);
-	    if (llc_service_start (link->services[i]) < 0) {
-		LLC_LINK_LOG (LLC_PRIORITY_ERROR, "Can't start service %d", i);
-		return -1;
-	    }
-	}
+    /*
+     * Start link
+     */
+
+    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->mq_up_name);
+    link->llc_up   = mq_open (link->mq_up_name, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0666, NULL);
+    if (link->llc_up == (mqd_t)-1) {
+	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->mq_up_name);
+	return -1;
+    }
+
+    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->mq_down_name);
+    link->llc_down = mq_open (link->mq_down_name, O_CREAT | O_EXCL | O_RDONLY, 0666, NULL);
+    if (link->llc_down == (mqd_t)-1) {
+	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->mq_down_name);
+	return -1;
+    }
+
+    if ((pthread_create (&link->thread, NULL, llc_service_llc_thread, link)) == 0) {
+	pthread_set_name_np (link->thread, "LLC Link");
+	LLC_LINK_MSG (LLC_PRIORITY_INFO, "LLC Link started successfully");
+    } else {
+	return -1;
     }
 
     return 0;
@@ -285,18 +298,79 @@ llc_link_encode_parameters (const struct llc_link *link, uint8_t *parameters, si
     return parameter - parameters;
 }
 
+int8_t
+llc_link_find_sap_by_uri (const struct llc_link *link, const char *uri)
+{
+    LLC_LINK_LOG (LLC_PRIORITY_TRACE, "Searching SAP for service '%s'", uri);
+    int8_t res = -1;
+    for (int i = 1; i <= 0x1F; i++) {
+	if (link->available_services[i]) {
+	    if (link->available_services[i]->uri &&
+		(0 == strcmp (link->available_services[i]->uri, uri))) {
+		LLC_LINK_LOG (LLC_PRIORITY_INFO, "Service '%s' is bound to SAP '%d'", uri, i);
+		res = i;
+		break;
+	    }
+	}
+    }
+
+    return res;
+}
+
 void
 llc_link_deactivate (struct llc_link *link)
 {
     assert (link);
 
-    for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
-	if (link->services[i]) {
-	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping service %d", i);
-	    llc_service_stop (link->services[i]);
-	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Service %d stopped", i);
+    uint8_t ssap;
+    uint8_t dsap;
+
+    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Deactivating LLC Link");
+
+    for (int i = 0; i <= MAX_LOGICAL_DATA_LINK; i++) {
+	if (link->datagram_handlers[i]) {
+	    dsap = link->datagram_handlers[i]->dsap;
+	    ssap = link->datagram_handlers[i]->ssap;
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping Logical Data Link [%d -> %d]", ssap, dsap);
+	    llc_connection_stop (link->datagram_handlers[i]);
+	    llc_connection_free (link->datagram_handlers[i]);
+	    link->datagram_handlers[i] = NULL;
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Logical Data Link [%d -> %d] stopped", ssap, dsap);
 	}
     }
+    for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
+	if (link->transmission_handlers[i]) {
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping Data Link Connection [%d -> %d]", ssap, dsap);
+	    llc_connection_stop (link->transmission_handlers[i]);
+	    llc_connection_free (link->transmission_handlers[i]);
+	    link->transmission_handlers[i] = NULL;
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Data Link Connection [%d -> %d] stopped", ssap, dsap);
+	}
+    }
+
+    if (link->llc_up != (mqd_t) -1)
+	mq_close (link->llc_up);
+    if (link->llc_down != (mqd_t) -1)
+	mq_close (link->llc_down);
+
+    if (link->mq_up_name)
+	mq_unlink (link->mq_up_name);
+    if (link->mq_down_name)
+	mq_unlink (link->mq_down_name);
+
+    link->llc_up   = (mqd_t) -1;
+    link->llc_down = (mqd_t) -1;
+
+    /*
+     * If the LLC link is being deactivated by itself, let the control return
+     * and the thread terminate..
+     */
+    if (link->thread == pthread_self ()) {
+	// NOOP
+    } else {
+	llcp_threadslayer (link->thread);
+    }
+
 }
 
 void
@@ -305,11 +379,15 @@ llc_link_free (struct llc_link *link)
     assert (link);
 
     for (int i = MAX_LLC_LINK_SERVICE; i >= 0; i--) {
-	if (link->services[i]) {
+	if (link->available_services[i]) {
 	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Freeing service %d", i);
-	    llc_service_free (link->services[i]);
+	    llc_service_free (link->available_services[i]);
+	    link->available_services[i] = NULL;
 	}
     }
+
+    free (link->mq_up_name);
+    free (link->mq_down_name);
 
     free (link);
 }

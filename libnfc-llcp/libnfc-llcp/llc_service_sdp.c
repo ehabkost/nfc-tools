@@ -29,57 +29,59 @@
 
 #include "llcp.h"
 #include "llcp_log.h"
+#include "llc_connection.h"
 #include "llc_link.h"
 #include "llc_service.h"
 #include "llc_service_sdp.h"
 #include "llcp_parameters.h"
 
 #define LOG_LLC_SDP "libnfc-llcp.llc.sdp"
-#define LLC_SDP_MSG(priority, message) llcp_log_log (LOG_LLC_SDP, priority, "%s", message)
-#define LLC_SDP_LOG(priority, format, ...) llcp_log_log (LOG_LLC_SDP, priority, format, __VA_ARGS__)
+#define LLC_SDP_MSG(priority, message) llcp_log_log (LOG_LLC_SDP, priority, "(%p) %s", pthread_self (), message)
+#define LLC_SDP_LOG(priority, format, ...) llcp_log_log (LOG_LLC_SDP, priority, "(%p) " format, pthread_self (), __VA_ARGS__)
 
 /* Service Discovery Protocol */
 
 void
 llc_service_sdp_thread_cleanup (void *arg)
 {
-    (void) arg;
+    struct llc_connection *connection = (struct llc_connection *) arg;
+
+    (void) connection;
 }
 
 void *
 llc_service_sdp_thread (void *arg)
 {
-    struct llc_link *link = (struct llc_link *) arg;
+    struct llc_connection *connection = (struct llc_connection *) arg;
     mqd_t llc_up, llc_down;
 
     int old_cancelstate;
 
     pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancelstate);
 
-    llc_up   = mq_open (link->services[1]->mq_up_name, O_RDONLY);
-    llc_down = mq_open (link->services[1]->mq_down_name, O_WRONLY);
+    llc_up   = mq_open (connection->mq_up_name, O_RDONLY);
+    llc_down = mq_open (connection->mq_down_name, O_WRONLY);
 
     if (llc_up == (mqd_t)-1)
-	LLC_SDP_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[1]->mq_up_name);
+	LLC_SDP_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", connection->mq_up_name);
     if (llc_down == (mqd_t)-1)
-	LLC_SDP_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->services[1]->mq_down_name);
+	LLC_SDP_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", connection->mq_down_name);
 
     pthread_cleanup_push (llc_service_sdp_thread_cleanup, arg);
     pthread_setcancelstate (old_cancelstate, NULL);
-    LLC_SDP_LOG (LLC_PRIORITY_INFO, "(%p) Service Discovery Protocol started", (void *)pthread_self ());
+    LLC_SDP_MSG (LLC_PRIORITY_INFO, "Service Discovery Protocol started");
 
-    for (;;) {
 	int res;
 
 	uint8_t buffer[1024];
-	LLC_SDP_LOG (LLC_PRIORITY_TRACE, "(%p[1]) mq_receive+", pthread_self ());
+	LLC_SDP_MSG (LLC_PRIORITY_TRACE, "mq_receive+");
 	pthread_testcancel ();
 	res = mq_receive (llc_up, (char *) buffer, sizeof (buffer), NULL);
 	pthread_testcancel ();
 	if (res < 0) {
 	    pthread_testcancel ();
 	}
-	LLC_SDP_LOG (LLC_PRIORITY_TRACE, "(%p[1]) received %d bytes", pthread_self (), res);
+	LLC_SDP_LOG (LLC_PRIORITY_TRACE, "Received %d bytes", res);
 
 	uint8_t tid;
 	char *uri;
@@ -87,16 +89,16 @@ llc_service_sdp_thread (void *arg)
 	switch (buffer[2]) {
 	case LLCP_PARAMETER_SDREQ:
 	    if (parameter_decode_sdreq (buffer + 2, res - 2, &tid, &uri) < 0) {
-		LLC_SDP_LOG (LLC_PRIORITY_ERROR, "(%p[1]) Ignoring PDU", pthread_self ());
+		LLC_SDP_MSG (LLC_PRIORITY_ERROR, "Ignoring PDU");
 	    } else {
-		LLC_SDP_LOG (LLC_PRIORITY_TRACE, "(%p[1]) Service Discovery Request #0x%02x for '%s'", pthread_self (), tid, uri);
+		LLC_SDP_LOG (LLC_PRIORITY_TRACE, "Service Discovery Request #0x%02x for '%s'", tid, uri);
 
 		int sap = 0;
 		for (int i = 1; i <= 0x1F; i++) {
-		    if (link->services[i]) {
-			if (link->services[i]->uri &&
-			    (0 == strcmp (link->services[i]->uri, uri))) {
-			    LLC_SDP_LOG (LLC_PRIORITY_INFO, "(%p[1]) Service '%s' is bound to SAP '%d'", pthread_self (), uri, i);
+		    if (connection->link->available_services[i]) {
+			if (connection->link->available_services[i]->uri &&
+			    (0 == strcmp (connection->link->available_services[i]->uri, uri))) {
+			    LLC_SDP_LOG (LLC_PRIORITY_INFO, "Service '%s' is bound to SAP '%d'", uri, i);
 			    sap = i;
 			    break;
 			}
@@ -104,22 +106,22 @@ llc_service_sdp_thread (void *arg)
 		}
 
 		if (!sap) {
-		    LLC_SDP_LOG (LLC_PRIORITY_ERROR, "(%p[1]) No registered service provide '%s'", pthread_self (), uri);
+		    LLC_SDP_LOG (LLC_PRIORITY_ERROR, "No registered service provide '%s'", uri);
 		}
 		buffer[0] = 0x06;
 		buffer[1] = 0x41;
 		int n = parameter_encode_sdres (buffer + 2, sizeof (buffer) -2, tid, sap);
 
 		mq_send (llc_down, (char *) buffer, n + 2, 0);
-		LLC_SDP_LOG (LLC_PRIORITY_TRACE, "(%p[1]) sent %d bytes", pthread_self (), n+2);
+		LLC_SDP_LOG (LLC_PRIORITY_TRACE, "Sent %d bytes", n+2);
 
 	    }
 	    break;
 	default:
-	    LLC_SDP_LOG (LLC_PRIORITY_ERROR, "(%p[1]) invalid parameter type", pthread_self ());
+	    LLC_SDP_MSG (LLC_PRIORITY_ERROR, "Invalid parameter type");
 	}
-    }
 
     pthread_cleanup_pop (1);
+    llc_connection_stop (connection);
     return NULL;
 }

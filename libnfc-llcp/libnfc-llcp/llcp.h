@@ -42,24 +42,6 @@ struct llcp_version {
     uint8_t minor;
 };
 
-struct data_link_connection_state {
-    uint8_t s;	    /* Send State Variable */
-    uint8_t sa;	    /* Send Acknowledgement State Variable */
-    uint8_t r;	    /* Receive State Variable */
-    uint8_t ra;	    /* Receive Acknowledgement State Variable */
-};
-
-struct data_link_connection_parameters {
-    uint8_t miu;    /* Maximum Information Unit Size for I PDUs */
-    uint8_t rwl;    /* Local Receive Window Size */
-    uint8_t rwr;    /* Remote Receive Window Size */
-};
-
-struct data_link_connection {
-    struct data_link_connection_state state;
-    struct data_link_connection_parameters parameters;
-};
-
 struct llc_link;
 
 int		 llcp_init (void);
@@ -67,7 +49,10 @@ int		 llcp_fini (void);
 
 int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version);
 
+void		 llcp_threadslayer (pthread_t thread);
 
+#define MAX_LOGICAL_DATA_LINK 8
+//          DATA_LINK_CONNECTION
 #define MAX_LLC_LINK_SERVICE 0x3F
 #define SAP_AUTO -1
 
@@ -81,7 +66,8 @@ int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version
 
 #define LLC_PAX_PDU_PROHIBITED 0x02
 
-#define LLC_DEFAULT_MIU 128
+#define LLCP_DEFAULT_RW 1
+#define LLCP_DEFAULT_MIU 128
 
 /*
  * http://www.nfc-forum.org/specs/nfc_forum_assigned_numbers_register

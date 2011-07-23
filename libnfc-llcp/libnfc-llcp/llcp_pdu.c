@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "llc_connection.h"
 #include "llcp_log.h"
 #include "llcp_pdu.h"
 
@@ -54,6 +55,45 @@ uint8_t _pdu_ptype_sequence_field[] = {
 };
 
 #define pdu_has_sequence_field(pdu) (_pdu_ptype_sequence_field[(pdu)->ptype])
+
+static inline uint8_t *
+memdup (const uint8_t *mem, size_t len)
+{
+    uint8_t *res = NULL;
+
+    if (mem && (res = malloc (len))) {
+	memcpy (res, mem, len);
+    }
+
+    return res;
+}
+
+struct pdu *
+pdu_new (uint8_t dsap, uint8_t ptype, uint8_t ssap, uint8_t nr, uint8_t ns, const uint8_t *information, size_t information_size)
+{
+    struct pdu *pdu;
+
+    if ((pdu = malloc (sizeof (*pdu)))) {
+	pdu->dsap  = dsap;
+	pdu->ptype = ptype;
+	pdu->ssap  = ssap;
+
+	pdu->nr = nr;
+	pdu->ns = ns;
+
+	pdu->information_size = information_size;
+	pdu->information = memdup (information, information_size);
+    }
+
+    return pdu;
+}
+
+struct pdu *
+pdu_new_frmr (uint8_t dsap, uint8_t ssap, struct pdu *pdu, struct llc_connection *connection, int reason)
+{
+    uint8_t info[] = { reason | pdu->ptype, pdu_has_sequence_field(pdu) ? (pdu->nr << 4 | pdu->ns) : 0, connection->state.s << 4 | connection->state.r, connection->state.sa << 4 | connection->state.ra };
+    return pdu_new (dsap, PDU_FRMR, ssap, 0, 0, info, sizeof (info));
+}
 
 int
 pdu_pack (const struct pdu *pdu, uint8_t *buffer, size_t len)

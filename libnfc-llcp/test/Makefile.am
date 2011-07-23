@@ -37,6 +37,7 @@ test_llc_service_la_LIBADD = $(top_builddir)/libnfc-llcp/libnfc-llcp.la
 
 test_dummy_mac_link_la_SOURCES = test_dummy_mac_link.c
 test_dummy_mac_link_la_LIBADD = $(top_builddir)/libnfc-llcp/libnfc-llcp.la
+test_dummy_mac_link_la_CFLAGS = $(LIBNFC_CFLAGS)
 
 echo-cutter:
 	@echo $(CUTTER)

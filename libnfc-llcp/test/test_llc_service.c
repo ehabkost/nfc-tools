@@ -35,7 +35,7 @@ test_llc_service_uri (void)
 {
     struct llc_service *service;
 
-    service = llc_service_new (void_thread);
+    service = llc_service_new (NULL, void_thread);
     cut_assert_not_null (service, cut_message ("llc_service_new()"));
 
     const char *s;
@@ -47,7 +47,7 @@ test_llc_service_uri (void)
 
     llc_service_free (service);
 
-    service = llc_service_new_with_uri (void_thread, "urn:nfc:xsn:foo");
+    service = llc_service_new_with_uri (NULL, void_thread, "urn:nfc:xsn:foo");
     cut_assert_not_null (service, cut_message ("llc_service_new_with_uri()"));
 
     s = llc_service_get_uri (service);

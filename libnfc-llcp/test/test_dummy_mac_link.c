@@ -29,7 +29,8 @@
 #include <time.h>
 
 #include "llc_link.h"
-#include "llc_service.h"
+#include "llc_connection.h"
+#include "mac.h"
 
 #define ECHO_SAP 16
 
@@ -63,17 +64,17 @@ cut_teardown (void)
 void *
 echo_service (void *arg)
 {
-    struct llc_service *service = (struct llc_service *)arg;
+    struct llc_connection *connection = (struct llc_connection *)arg;
 
     int old_cancelstate;
     pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancelstate);
 
-    cut_set_current_test_context (service->cut_test_context);
+    cut_set_current_test_context (connection->link->cut_test_context);
 
-    mqd_t llc_up = mq_open (service->mq_up_name, O_RDONLY);
+    mqd_t llc_up = mq_open (connection->mq_up_name, O_RDONLY);
     cut_assert_false (llc_up == (mqd_t)-1, cut_message ("Can't open llc_up mqueue for reading"));
 
-    mqd_t llc_down = mq_open (service->mq_down_name, O_WRONLY);
+    mqd_t llc_down = mq_open (connection->mq_down_name, O_WRONLY);
     cut_assert_false (llc_down == (mqd_t)-1, cut_message ("Can't open llc_down mqueue for writing"));
 
     pthread_setcancelstate (PTHREAD_CANCEL_ENABLE, NULL);
@@ -96,14 +97,18 @@ dummy_mac_transport (struct llc_link *initiator, struct llc_link *target)
     char buffer[1024];
 
     for (;;) {
-	n = mq_receive (initiator->services[0]->llc_down, buffer, sizeof (buffer), NULL);
+	n = mq_receive (initiator->llc_down, buffer, sizeof (buffer), NULL);
 	if (n < 0) break;
-	n = mq_send (target->services[0]->llc_up, buffer, n, 0);
+	pthread_testcancel ();
+	n = mq_send (target->llc_up, buffer, n, 0);
 	if (n < 0) break;
-	n = mq_receive (target->services[0]->llc_down, buffer, sizeof (buffer), NULL);
+	pthread_testcancel ();
+	n = mq_receive (target->llc_down, buffer, sizeof (buffer), NULL);
 	if (n < 0) break;
-	n = mq_send (initiator->services[0]->llc_up, buffer, n, 0);
+	pthread_testcancel ();
+	n = mq_send (initiator->llc_up, buffer, n, 0);
 	if (n < 0) break;
+	pthread_testcancel ();
     }
 }
 
@@ -123,6 +128,7 @@ test_dummy_mac_link (void)
     int res;
     struct llc_link *initiator, *target;
     struct llc_service *service;
+    struct mac_link mac_initiator, mac_target;
 
     initiator = llc_link_new ();
     cut_assert_not_null (initiator, cut_message ("llc_link_new()"));
@@ -131,7 +137,7 @@ test_dummy_mac_link (void)
 
     initiator->cut_test_context = cut_get_current_test_context ();
 
-    service = llc_service_new (echo_service);
+    service = llc_service_new (NULL, echo_service);
     cut_assert_not_null (service, cut_message ("llc_service_new()"));
 
     res = llc_link_service_bind (initiator, service, ECHO_SAP);
@@ -151,6 +157,12 @@ test_dummy_mac_link (void)
     };
     pthread_create (&transport, NULL, dummy_mac_transport_thread, &eps);
 
+    mac_initiator.exchange_pdus_thread = transport;
+    mac_target.exchange_pdus_thread = transport;
+
+    //initiator->mac_link = &mac_initiator;
+    //target->mac_link = &mac_target;
+
     buffer[0] = ECHO_SAP << 2;
     buffer[1] = '\xC0';
     buffer[2] = 'H';
@@ -159,7 +171,7 @@ test_dummy_mac_link (void)
     buffer[5] = 'l';
     buffer[6] = 'o';
 
-    res = mq_send (initiator->services[0]->llc_up, buffer, 7, 0);
+    res = mq_send (initiator->llc_up, buffer, 7, 0);
     cut_assert_equal_int (0, res, cut_message ("mq_send"));
 
     struct timespec ts = {
@@ -173,6 +185,9 @@ test_dummy_mac_link (void)
     cut_assert_equal_int (0, res, cut_message ("Message not received"));
     pthread_setcancelstate (old_cancelstate, NULL);
 
+    pthread_cancel (transport);
+    //pthread_kill (transport, SIGUSR1);
+    pthread_join (transport, NULL);
 
     llc_link_deactivate (initiator);
     llc_link_deactivate (target);
