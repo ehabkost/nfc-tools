@@ -25,5 +25,14 @@ if HAS_LOG4C
 libnfc_llcp_la_SOURCES += llcp_log.c
 endif
 
-EXTRA_DIST = llcp.h llcp_log.h llcp_pdu.h llcp_parameters.h llc_service.h
+EXTRA_DIST = llcp.h \
+	     llcp_log.h \
+	     llcp_pdu.h \
+	     llcp_parameters.h \
+	     llc_connection.h \
+	     llc_link.h \
+	     llc_service.h \
+	     llc_service_llc.h \
+	     llc_service_sdp.h \
+	     mac.h
 CLEANFILES = *.gcno
