@@ -9,7 +9,7 @@ message_sequence_charts = \
 all-am: $(message_sequence_charts)
 
 .msc.png:
-	$(MSCGEN) -Tpng -o $@ -i $<
+	$(AM_V_GEN)$(MSCGEN) -Tpng -o $@ -i $<
 
 CLEANFILES = $(message_sequence_charts)
 endif
