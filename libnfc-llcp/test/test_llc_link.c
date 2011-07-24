@@ -22,12 +22,22 @@
 #include <cutter.h>
 
 #include "llc_link.h"
+#include "llc_service.h"
+
+void *
+void_service (void *arg)
+{
+    return arg;
+}
 
 void
 cut_setup (void)
 {
     if (llcp_init ())
 	cut_fail ("llcp_init() failed");
+
+    /* Void service is never called */
+    void_service (NULL);
 }
 
 void
@@ -37,7 +47,7 @@ cut_teardown (void)
 }
 
 void
-test_llcp_link_activate_as_initiator (void)
+test_llc_link_activate_as_initiator (void)
 {
     struct llc_link *link;
 
@@ -110,7 +120,7 @@ test_llcp_link_activate_as_initiator (void)
 }
 
 void
-test_llcp_link_activate_as_target (void)
+test_llc_link_activate_as_target (void)
 {
     struct llc_link *link;
 
@@ -132,7 +142,7 @@ test_llcp_link_activate_as_target (void)
 }
 
 void
-test_llcp_link_encode_parameters (void)
+test_llc_link_encode_parameters (void)
 {
     struct llc_link *link;
 
@@ -145,4 +155,29 @@ test_llcp_link_encode_parameters (void)
 
     res = llc_link_configure (link, buffer, res);
     cut_assert_equal_int (0, res, cut_message ("llc_link_configure()"));
+}
+
+void
+test_llc_link_find_sap_by_uri (void)
+{
+    struct llc_link *link;
+    int res;
+
+    link = llc_link_new ();
+    cut_assert_not_null (link, cut_message ("llc_link_new()"));
+
+    struct llc_service *service = llc_service_new_with_uri (NULL, void_service, "urn:nfc:xsn:foo");
+    res = llc_link_service_bind (link, service, -1);
+    cut_assert_not_equal_int (-1, res, cut_message ("llc_link_service_bind()"));
+
+    int sap = llc_link_find_sap_by_uri (link, "urn:nfc:xsn:foo");
+    cut_assert_not_equal_int (-1, sap, cut_message ("llc_link_find_sap_by_uri()"));
+    cut_assert_equal_int (res, sap, cut_message ("Wrong SAP"));
+
+    llc_link_service_unbind (link, service->sap);
+    sap = llc_link_find_sap_by_uri (link, "urn:nfc:xsn:foo");
+    cut_assert_equal_int (-1, sap, cut_message ("llc_link_find_sap_by_uri()"));
+
+    llc_service_free (service);
+    llc_link_free (link);
 }
