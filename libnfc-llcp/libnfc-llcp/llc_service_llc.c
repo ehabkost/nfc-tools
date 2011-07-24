@@ -450,7 +450,7 @@ spawn_logical_data_link:
 			     * The service is not running anymore and it's down
 			     * queue is empty.  It can be garbage collected.
 			     */
-			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Garbage-collecting Data Link Connection [%d -> %d]", link->datagram_handlers[i]->ssap, link->datagram_handlers[i]->dsap);
+			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Garbage-collecting Data Link Connection [%d -> %d]", link->transmission_handlers[i]->ssap, link->transmission_handlers[i]->dsap);
 			    llc_connection_free (link->transmission_handlers[i]);
 			    link->transmission_handlers[i] = NULL;
 			    break;

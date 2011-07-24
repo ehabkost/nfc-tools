@@ -28,6 +28,12 @@
 
 struct llc_link *llc_link;
 
+void *
+void_thread (void *arg)
+{
+    return arg;
+}
+
 void
 cut_setup (void)
 {
@@ -35,6 +41,8 @@ cut_setup (void)
 
     llc_link = llc_link_new ();
     cut_assert_not_null (llc_link, cut_message ("llc_link()"));
+
+    void_thread (NULL);
 }
 
 void
@@ -110,4 +118,103 @@ test_llc_logical_data_link_new (void)
     llc_connection_free (connection2);
 
     pdu_free (pdu);
+}
+
+void *
+accept_thread (void *arg)
+{
+    struct llc_connection *connection = (struct llc_connection *) arg;
+
+    llc_connection_accept (connection);
+    return (NULL);
+}
+
+void *
+reject_thread (void *arg)
+{
+    struct llc_connection *connection = (struct llc_connection *) arg;
+
+    llc_connection_reject (connection);
+    return (NULL);
+}
+
+void
+test_llc_connection_accept (void)
+{
+    struct llc_service *service;
+    service = llc_service_new (accept_thread, void_thread);
+    cut_assert_not_null (service, cut_message ("llc_service_new()"));
+
+    int sap;
+    sap = llc_link_service_bind (llc_link, service, 17);
+    cut_assert_not_equal_int (-1, sap, cut_message ("llc_link_service_bind"));
+    cut_assert_equal_int (17, sap, cut_message ("Wrong SAP"));
+
+    int res = llc_link_activate (llc_link, 0, NULL, 0);
+    cut_assert_equal_int (0, res, cut_message ("llc_link_activate()"));
+
+    char buffer[1024] = { 0x45, 0x20 };
+    res = mq_send (llc_link->llc_up, buffer, 2, 0);
+    cut_assert_not_equal_int (-1, res, cut_message ("mq_send()"));
+
+    for (;;) {
+	res = mq_receive (llc_link->llc_down, buffer, sizeof (buffer), NULL);
+	cut_assert_not_equal_int (-1, res, cut_message ("mq_receive()"));
+	cut_assert_equal_int (2, res, cut_message ("Unexpected message length"));
+
+	if (buffer[0] || buffer[1])
+	    break;
+
+	res = mq_send (llc_link->llc_up, buffer, res, 0);
+	cut_assert_not_equal_int (-1, res, cut_message ("mq_send()"));
+    }
+
+    uint8_t expected_response[] = { 0x81, 0x91 };
+    cut_assert_equal_memory (buffer, res, expected_response, sizeof (expected_response), cut_message ("Invalid response"));
+
+    llc_link_deactivate (llc_link);
+    llc_link_service_unbind (llc_link, sap);
+
+    llc_service_free (service);
+}
+
+void
+test_llc_connection_reject (void)
+{
+    struct llc_service *service;
+    service = llc_service_new (reject_thread, void_thread);
+    cut_assert_not_null (service, cut_message ("llc_service_new()"));
+
+    int sap;
+    sap = llc_link_service_bind (llc_link, service, 17);
+    cut_assert_not_equal_int (-1, sap, cut_message ("llc_link_service_bind"));
+    cut_assert_equal_int (17, sap, cut_message ("Wrong SAP"));
+
+    int res = llc_link_activate (llc_link, 0, NULL, 0);
+    cut_assert_equal_int (0, res, cut_message ("llc_link_activate()"));
+
+    char buffer[1024] = { 0x45, 0x20 };
+    res = mq_send (llc_link->llc_up, buffer, 2, 0);
+    cut_assert_not_equal_int (-1, res, cut_message ("mq_send()"));
+
+    for (;;) {
+	res = mq_receive (llc_link->llc_down, buffer, sizeof (buffer), NULL);
+	cut_assert_not_equal_int (-1, res, cut_message ("mq_receive()"));
+	if (res == 3)
+	    break;
+
+	uint8_t symm_pdu[] = { 0x00, 0x00 };
+	cut_assert_equal_memory (buffer, res, symm_pdu, sizeof (symm_pdu), cut_message ("Unexpected message"));
+
+	res = mq_send (llc_link->llc_up, buffer, res, 0);
+	cut_assert_not_equal_int (-1, res, cut_message ("mq_send()"));
+    }
+
+    uint8_t expected_response[] = { 0x81, 0xd1, 0x03 };
+    cut_assert_equal_memory (buffer, res, expected_response, sizeof (expected_response), cut_message ("Invalid response"));
+
+    llc_link_deactivate (llc_link);
+    llc_link_service_unbind (llc_link, sap);
+
+    llc_service_free (service);
 }
