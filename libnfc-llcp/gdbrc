@@ -1,0 +1,5 @@
+# vim:set syntax=gdb:
+# 
+# To ease-up debugging, pass this file as the --command argument of gdb, e.g.:
+# ./libtool --mode=execute gdb --command=gdbrc --args ./program
+handle SIGUSR1 pass nostop
