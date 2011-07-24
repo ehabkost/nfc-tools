@@ -170,13 +170,13 @@ test_llc_link_find_sap_by_uri (void)
     res = llc_link_service_bind (link, service, -1);
     cut_assert_not_equal_int (-1, res, cut_message ("llc_link_service_bind()"));
 
-    int sap = llc_link_find_sap_by_uri (link, "urn:nfc:xsn:foo");
-    cut_assert_not_equal_int (-1, sap, cut_message ("llc_link_find_sap_by_uri()"));
+    uint8_t sap = llc_link_find_sap_by_uri (link, "urn:nfc:xsn:foo");
+    cut_assert_not_equal_int (0, sap, cut_message ("llc_link_find_sap_by_uri()"));
     cut_assert_equal_int (res, sap, cut_message ("Wrong SAP"));
 
     llc_link_service_unbind (link, service->sap);
     sap = llc_link_find_sap_by_uri (link, "urn:nfc:xsn:foo");
-    cut_assert_equal_int (-1, sap, cut_message ("llc_link_find_sap_by_uri()"));
+    cut_assert_equal_int (0, sap, cut_message ("llc_link_find_sap_by_uri()"));
 
     llc_service_free (service);
     llc_link_free (link);

@@ -93,17 +93,7 @@ llc_service_sdp_thread (void *arg)
 	    } else {
 		LLC_SDP_LOG (LLC_PRIORITY_TRACE, "Service Discovery Request #0x%02x for '%s'", tid, uri);
 
-		int sap = 0;
-		for (int i = 1; i <= 0x1F; i++) {
-		    if (connection->link->available_services[i]) {
-			if (connection->link->available_services[i]->uri &&
-			    (0 == strcmp (connection->link->available_services[i]->uri, uri))) {
-			    LLC_SDP_LOG (LLC_PRIORITY_INFO, "Service '%s' is bound to SAP '%d'", uri, i);
-			    sap = i;
-			    break;
-			}
-		    }
-		}
+		uint8_t sap = llc_link_find_sap_by_uri (connection->link, uri);
 
 		if (!sap) {
 		    LLC_SDP_LOG (LLC_PRIORITY_ERROR, "No registered service provide '%s'", uri);

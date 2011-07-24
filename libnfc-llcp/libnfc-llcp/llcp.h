@@ -53,6 +53,7 @@ void		 llcp_threadslayer (pthread_t thread);
 
 #define MAX_LOGICAL_DATA_LINK 8
 //          DATA_LINK_CONNECTION
+#define MAX_LLC_LINK_ADVERTISED_SERVICE 0x1F
 #define MAX_LLC_LINK_SERVICE 0x3F
 #define SAP_AUTO -1
 

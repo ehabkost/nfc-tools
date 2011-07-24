@@ -58,7 +58,7 @@ void		 llc_link_service_unbind (struct llc_link *link, uint8_t sap);
 int		 llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *parameters, size_t length);
 int		 llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t length);
 int		 llc_link_encode_parameters (const struct llc_link *link, uint8_t *parameters, size_t length);
-int8_t		 llc_link_find_sap_by_uri (const struct llc_link *link, const char *uri);
+uint8_t		 llc_link_find_sap_by_uri (const struct llc_link *link, const char *uri);
 void		 llc_link_deactivate (struct llc_link *link);
 void		 llc_link_free (struct llc_link *link);
 

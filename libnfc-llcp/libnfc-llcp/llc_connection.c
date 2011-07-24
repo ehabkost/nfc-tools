@@ -139,7 +139,7 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 	    }
 	    if (pdu->dsap == 0x01) {
 		service_sap = llc_link_find_sap_by_uri (link, sn);
-		if (service_sap < 0) {
+		if (!service_sap) {
 		    *reason = 0x02;
 		    return NULL;
 		}

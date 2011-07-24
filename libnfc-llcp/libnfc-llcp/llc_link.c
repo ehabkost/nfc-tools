@@ -298,12 +298,12 @@ llc_link_encode_parameters (const struct llc_link *link, uint8_t *parameters, si
     return parameter - parameters;
 }
 
-int8_t
+uint8_t
 llc_link_find_sap_by_uri (const struct llc_link *link, const char *uri)
 {
     LLC_LINK_LOG (LLC_PRIORITY_TRACE, "Searching SAP for service '%s'", uri);
-    int8_t res = -1;
-    for (int i = 1; i <= 0x1F; i++) {
+    int8_t res = 0;
+    for (int i = 1; i <= MAX_LLC_LINK_ADVERTISED_SERVICE; i++) {
 	if (link->available_services[i]) {
 	    if (link->available_services[i]->uri &&
 		(0 == strcmp (link->available_services[i]->uri, uri))) {
@@ -313,6 +313,9 @@ llc_link_find_sap_by_uri (const struct llc_link *link, const char *uri)
 	    }
 	}
     }
+
+    if (!res)
+	LLC_LINK_LOG (LLC_PRIORITY_INFO, "Service '%s' not available", uri);
 
     return res;
 }
