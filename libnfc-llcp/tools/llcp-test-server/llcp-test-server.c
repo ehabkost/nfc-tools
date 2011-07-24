@@ -142,10 +142,10 @@ main (int argc, char *argv[])
 	errx (EXIT_FAILURE, "Cannot allocate LLC link data structures");
     }
 
-    if (!llc_link_service_bind (llc_link, cl_echo_service, -1)) {
+    if (llc_link_service_bind (llc_link, cl_echo_service, -1) < 0) {
 	errx (EXIT_FAILURE, "llc_service_new_with_uri()");
     }
-    if (!llc_link_service_bind (llc_link, co_echo_service, -1)) {
+    if (llc_link_service_bind (llc_link, co_echo_service, -1) < 0) {
 	errx (EXIT_FAILURE, "llc_service_new_with_uri()");
     }
 
