@@ -9,6 +9,7 @@ TESTS = run-test.sh
 TESTS_ENVIRONMENT = NO_MAKE=yes CUTTER="$(CUTTER)"
 
 cutter_unit_test_libs = \
+			test_llc_connection.la \
 			test_llc_link.la \
 			test_llcp_pdu.la \
 			test_llcp_parameters.la \
@@ -22,6 +23,9 @@ check_LTLIBRARIES = $(cutter_unit_test_libs)
 endif
 
 AM_LDFLAGS = -module -rpath $(libdir) -avoid-version -no-undefined
+
+test_llc_connection_la_SOURCES = test_llc_connection.c
+test_llc_connection_la_LIBADD = $(top_builddir)/libnfc-llcp/libnfc-llcp.la
 
 test_llc_link_la_SOURCES = test_llc_link.c
 test_llc_link_la_LIBADD = $(top_builddir)/libnfc-llcp/libnfc-llcp.la
