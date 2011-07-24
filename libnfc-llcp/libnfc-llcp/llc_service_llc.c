@@ -412,20 +412,40 @@ spawn_logical_data_link:
 			    break;
 			}
 		    } else {
+			struct pdu *reply;
+			uint8_t reason[] = { 0x00 };
 			switch (link->transmission_handlers[i]->status) {
+			case DLC_NEW:
 			case DLC_CONNECTED:
+			    /*
+			     * The llc_connection thread is running.
+			     * Do nothing.
+			     */
+			    break;
+			case DLC_ACCEPTED:
 			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accepted (service %d).  Sending CC", connection->ssap, connection->dsap, connection->sap);
-			    struct pdu *reply = pdu_new_cc (connection->ssap, connection->dsap);
+			    reply = pdu_new_cc (connection->ssap, connection->dsap);
 			    length = pdu_pack (reply, buffer, sizeof (buffer));
 			    pdu_free (reply);
 
 			    if (pthread_create (&connection->thread, NULL, connection->link->available_services[connection->sap]->thread_routine, connection) < 0) {
 				LLC_SERVICE_LLC_MSG (LLC_PRIORITY_FATAL, "Cannot start Data Link Connection thread");
+				link->transmission_handlers[i]->status = DLC_DISCONNECTED;
+				break;
 			    }
+			    link->transmission_handlers[i]->status = DLC_CONNECTED;
 			    break;
-			case DLC_CONNECTION_REQUESTED:
-			    break;
+			case DLC_REJECTED:
+			    reason[0] = 0x03;
+			    link->transmission_handlers[i]->status = DLC_DISCONNECTED;
+			    /* FALLTHROUGH */
 			case DLC_DISCONNECTED:
+			    reply = pdu_new_dm (connection->ssap, connection->dsap, reason);
+			    length = pdu_pack (reply, buffer, sizeof (buffer));
+			    pdu_free (reply);
+			    link->transmission_handlers[i]->status = DLC_TERMINATED;
+			    /* FALLTHROUGH */
+			case DLC_TERMINATED:
 			    /*
 			     * The service is not running anymore and it's down
 			     * queue is empty.  It can be garbage collected.

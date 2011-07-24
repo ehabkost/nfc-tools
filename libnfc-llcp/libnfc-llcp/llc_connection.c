@@ -167,7 +167,7 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 	assert (!link->transmission_handlers[connection_dsap]);
 	link->transmission_handlers[connection_dsap] = res;
 	res->sap = service_sap;
-	res->status = DLC_CONNECTION_REQUESTED;
+	res->status = DLC_NEW;
 	res->rwr = rw;
     }
 
@@ -202,7 +202,7 @@ void
 llc_connection_accept (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
-    connection->status = DLC_CONNECTED;
+    connection->status = DLC_ACCEPTED;
     connection->thread = NULL;
     pthread_exit (NULL);
 }
@@ -211,7 +211,7 @@ void
 llc_connection_reject (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
-    connection->status = DLC_DISCONNECTED;
+    connection->status = DLC_REJECTED;
     connection->thread = NULL;
     pthread_exit (NULL);
 }

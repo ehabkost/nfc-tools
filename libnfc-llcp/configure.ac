@@ -49,6 +49,10 @@ if test x"$LOG4C_CONFIG" != x""; then
 fi
 AM_CONDITIONAL(HAS_LOG4C, [test x"$LOG4C_CONFIG" != x""])
 
+# Checks for graphviz
+AC_PATH_PROG([DOT], [dot])
+AC_SUBST(DOT)
+AM_CONDITIONAL(HAS_GRAPHVIZ, [test x"$DOT" != x""])
 
 # Checks for mscgen
 AC_PATH_PROG([MSCGEN], [mscgen])

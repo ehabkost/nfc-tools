@@ -30,9 +30,12 @@ struct llc_connection {
     uint8_t dsap;
     uint8_t ssap;
     enum {
-	DLC_CONNECTION_REQUESTED,
+	DLC_NEW,
+	DLC_ACCEPTED,
+	DLC_REJECTED,
 	DLC_CONNECTED,
-	DLC_DISCONNECTED
+	DLC_DISCONNECTED,
+	DLC_TERMINATED
     } status;
     pthread_t thread;
     char *mq_up_name;

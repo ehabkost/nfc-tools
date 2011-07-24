@@ -1,0 +1,19 @@
+digraph data_link_connection {
+    label="Data Link Connection Status status state-machine\n$Id$";
+
+    s [shape=point];
+    n [label="NEW"];
+    a [label="ACCEPTED", style=filled];
+    r [label="REJECTED", style=filled];
+    c [label="CONNECTED"];
+    d [label="DISCONNECTED", style=filled];
+    t [label="TERMINATED", style=filled]
+
+    s -> n [label="thread(accept_routine)"];
+    n -> a [label="llc_connection_accept()"];
+    n -> r [label="llc_connection_reject()"];
+    a -> c [label="llc_send(CC)\nthread(run_routine)"];
+    c -> d [constraint=false];
+    r -> d;
+    d -> t [label="llc_send(DM)"];
+};
