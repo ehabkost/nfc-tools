@@ -31,6 +31,12 @@ void_thread (void *arg)
 }
 
 void
+cut_setup (void)
+{
+    void_thread (NULL);
+}
+
+void
 test_llc_service_uri (void)
 {
     struct llc_service *service;
