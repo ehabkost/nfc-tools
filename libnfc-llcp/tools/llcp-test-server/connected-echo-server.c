@@ -79,26 +79,6 @@ connected_echo_server_thread (void *arg)
 	int res = mq_receive (llc_up, (char *) buffer, sizeof (buffer), &prio);
 	pthread_testcancel ();
 
-#if 0
-	mq_send (llc_up, (char *) buffer, res, prio + 1);
-	pthread_testcancel ();
-
-	struct timespec ts;
-	ts.tv_sec = 2;
-	ts.tv_nsec = 0;
-
-	struct timespec ts2 = ts;
-	do {
-	    ts2 = ts;
-	} while (0 != nanosleep (&ts2, &ts));
-
-	/*
-	 * Read message (for real this time
-	 */
-	res = mq_receive (llc_up, (char *) buffer, sizeof (buffer), NULL);
-	pthread_testcancel ();
-#endif
-
 	struct pdu *pdu = pdu_unpack (buffer, res);
 	struct pdu *reply;
 
@@ -116,7 +96,6 @@ connected_echo_server_thread (void *arg)
 		do {
 		    ts2 = ts;
 		} while (0 != nanosleep (&ts2, &ts));
-
 
 		/* send data */
 		reply = pdu_new_i (pdu->ssap, pdu->dsap, connection, pdu->information, pdu->information_size);
