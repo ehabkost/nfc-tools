@@ -62,6 +62,7 @@ struct pdu {
 
 struct llc_connection;
 
+int		 pdu_has_sequence_field(const struct pdu *pdu);
 struct pdu	*pdu_new (uint8_t dsap, uint8_t ptype, uint8_t ssap, uint8_t nr, uint8_t ns, const uint8_t *information, size_t information_size);
 struct pdu	*pdu_new_frmr (uint8_t dsap, uint8_t ssap, struct pdu *pdu, struct llc_connection *connection, int reason);
 int		 pdu_pack (const struct pdu *pdu, uint8_t *buffer, size_t len);

@@ -54,7 +54,11 @@ uint8_t _pdu_ptype_sequence_field[] = {
     0  /* reserved */
 };
 
-#define pdu_has_sequence_field(pdu) (_pdu_ptype_sequence_field[(pdu)->ptype])
+int
+pdu_has_sequence_field(const struct pdu *pdu)
+{
+    return _pdu_ptype_sequence_field[pdu->ptype];
+}
 
 static inline uint8_t *
 memdup (const uint8_t *mem, size_t len)

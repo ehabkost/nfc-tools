@@ -66,9 +66,16 @@ explain_pdu (const char *s)
 	return;
     }
 
-    printf ("  DSAP .... : 0x%02x (%d)\n"
-	    "  PTYPE ... : 0x%02x (%s)\n"
-	    "  SSAP .... : 0x%02x (%d)\n", pdu->dsap, pdu->dsap, pdu->ptype, pdu_names[pdu->ptype], pdu->ssap, pdu->ssap);
+    printf ("  DSAP ......... : 0x%02x (%d)\n"
+	    "  PTYPE ........ : 0x%02x (%s)\n"
+	    "  SSAP ......... : 0x%02x (%d)\n", pdu->dsap, pdu->dsap, pdu->ptype, pdu_names[pdu->ptype], pdu->ssap, pdu->ssap);
+    if (pdu_has_sequence_field (pdu)) {
+	printf ("  N(R) ......... : 0x%02x (%d)\n"
+		"  N(S) ......... : 0x%02x (%d)\n", pdu->nr, pdu->nr, pdu->ns, pdu->ns);
+    }
+    if (pdu->information_size) {
+	printf ("  Information .. : %d bytes\n", (int) pdu->information_size);
+    }
 
     pdu_free (pdu);
 }
