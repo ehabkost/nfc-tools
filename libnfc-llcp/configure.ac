@@ -24,6 +24,7 @@ fi
 
 AC_DEFINE([_XOPEN_SOURCE], [600], [Define to 500 if Single Unix conformance is wanted, 600 for sixth revision.])
 AC_DEFINE([_BSD_SOURCE], [1], [Define on BSD to activate all library features])
+AC_DEFINE([__BSD_VISIBLE], [1], [Define on BSD to activate all library features])
 AC_DEFINE([_GNU_SOURCE], [1], [Define on GNU/Linux to activate all library features])
 
 AC_FUNC_MALLOC
