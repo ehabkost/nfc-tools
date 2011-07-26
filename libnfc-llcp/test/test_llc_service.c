@@ -69,3 +69,20 @@ test_llc_service_uri (void)
 
     llc_service_free (service);
 }
+
+void
+test_llc_service_miu (void)
+{
+    struct llc_service *service;
+
+    service = llc_service_new (NULL, void_thread);
+    cut_assert_not_null (service, cut_message ("llc_service_new()"));
+
+    int miu = llc_service_get_miu (service);
+    cut_assert_equal_int (128, miu, cut_message ("Wrong default MIU"));
+
+    llc_service_set_miu (service, 1024);
+
+    miu = llc_service_get_miu (service);
+    cut_assert_equal_int (1024, miu, cut_message ("MIU not changed"));
+}
