@@ -24,6 +24,7 @@
 #include <err.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -37,6 +38,7 @@
 #include "connectionless-echo-server.h"
 
 int link_miu = 128;
+struct mac_link *mac_link;
 
 static struct option longopts[] = {
     { "help",     no_argument,       NULL, 'h' },
@@ -74,6 +76,15 @@ usage (const char *progname)
 	    );
 }
 
+void
+stop_mac_link (int sig)
+{
+    (void) sig;
+
+    if (mac_link && mac_link->device)
+	nfc_abort_command (mac_link->device);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -82,6 +93,8 @@ main (int argc, char *argv[])
 
     if (llcp_init () < 0)
 	errx (EXIT_FAILURE, "llcp_init()");
+
+    signal (SIGINT, stop_mac_link);
 
     while ((ch = getopt_long(argc, argv, "qd:f:l:D:m:Q:h", longopts, NULL)) != -1) {
 	switch (ch) {
@@ -151,7 +164,7 @@ main (int argc, char *argv[])
 	errx (EXIT_FAILURE, "llc_service_new_with_uri()");
     }
 
-    struct mac_link *mac_link = mac_link_new (device, llc_link);
+    mac_link= mac_link_new (device, llc_link);
     if (!mac_link)
 	errx (EXIT_FAILURE, "Cannot establish MAC link");
 
