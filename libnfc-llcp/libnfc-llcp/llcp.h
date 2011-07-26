@@ -22,7 +22,8 @@
 #ifndef _LLCP_H
 #define _LLCP_H
 
-#include <mqueue.h>
+#include <pthread.h>
+#include <stdint.h>
 
 /*
  * Logical Link Control Protocol
@@ -33,16 +34,14 @@
  * 2009-12-11
  */
 
+struct llc_link;
 
 #define LLCP_VERSION_MAJOR 1
 #define LLCP_VERSION_MINOR 0
-
 struct llcp_version {
     uint8_t major;
     uint8_t minor;
 };
-
-struct llc_link;
 
 int		 llcp_init (void);
 int		 llcp_fini (void);

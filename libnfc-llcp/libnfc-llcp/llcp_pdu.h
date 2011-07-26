@@ -24,6 +24,10 @@
 
 #include <sys/types.h>
 
+#include <stdint.h>
+
+struct llc_connection;
+
 #define PDU_SYMM    0x0
 #define PDU_PAX	    0x1
 #define PDU_AGF     0x2
@@ -59,8 +63,6 @@ struct pdu {
     size_t information_size;
     uint8_t *information;
 };
-
-struct llc_connection;
 
 int		 pdu_has_sequence_field(const struct pdu *pdu);
 struct pdu	*pdu_new (uint8_t dsap, uint8_t ptype, uint8_t ssap, uint8_t nr, uint8_t ns, const uint8_t *information, size_t information_size);

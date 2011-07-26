@@ -22,8 +22,13 @@
 #ifndef _LLC_CONNECTION_H
 #define _LLC_CONNECTION_H
 
-#include "llcp_pdu.h"
-#include "llc_service.h"
+#include <sys/types.h>
+
+#include <mqueue.h>
+#include <stdint.h>
+
+struct pdu;
+struct llc_link;
 
 struct llc_connection {
     uint8_t sap;

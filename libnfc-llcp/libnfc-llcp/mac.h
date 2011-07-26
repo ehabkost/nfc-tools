@@ -21,7 +21,9 @@
 
 #ifndef _MAC_H
 #define _MAC_H
+
 #include <sys/types.h>
+
 #include <nfc/nfc.h>
 
 struct mac_link {

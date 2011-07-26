@@ -22,8 +22,10 @@
 #ifndef _LLC_LINK_H
 #define _LLC_LINK_H
 
+#include <mqueue.h>
+#include <stdint.h>
+
 #include "llcp.h"
-#include "llcp_pdu.h"
 
 struct llc_link {
     uint8_t role;

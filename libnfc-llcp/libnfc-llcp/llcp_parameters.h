@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 
+#include <stdint.h>
 #include "llcp.h"
 
 #define LLCP_PARAMETER_VERSION 0x01

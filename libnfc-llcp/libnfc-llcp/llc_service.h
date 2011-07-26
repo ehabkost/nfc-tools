@@ -23,9 +23,7 @@
 #define _LLC_SERVICE_H
 
 #include <pthread.h>
-#include <mqueue.h>
-
-#include "llcp.h"
+#include <stdint.h>
 
 struct llc_service {
     char *uri;
