@@ -21,7 +21,6 @@
 
 #include "config.h"
 
-#include <sys/endian.h>
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -186,8 +185,9 @@ pdu_aggregate (struct pdu **pdus)
 	off_t offset = 0;
 	pdu = pdus;
 	while (*pdu) {
-	    *(uint16_t *)(res->information + offset) = htobe16 (pdu_size (*pdu));
-	    offset += 2;
+	    uint16_t size = pdu_size (*pdu);
+	    res->information[offset++] = size >> 8;
+	    res->information[offset++] = size;
 	    offset += pdu_pack (*pdu, res->information + offset, len - offset);
 	    pdu++;
 	}
@@ -208,6 +208,7 @@ pdu_dispatch (struct pdu *pdu)
 
     size_t pdu_count = 0;
     size_t offset = 0;
+    uint16_t pdu_length;
 
     while (offset < pdu->information_size) {
 	if (offset + 2 > pdu->information_size) {
@@ -215,8 +216,8 @@ pdu_dispatch (struct pdu *pdu)
 	    return NULL;
 	}
 
-	uint16_t pdu_length = be16toh (*(uint16_t *)(pdu->information + offset));
-	offset += 2;
+	pdu_length = pdu->information[offset++] << 8;
+	pdu_length += pdu->information[offset++];
 	offset += pdu_length;
 	pdu_count++;
     }
@@ -231,8 +232,8 @@ pdu_dispatch (struct pdu *pdu)
     pdu_count = 0;
 
     while (offset < pdu->information_size) {
-	uint16_t pdu_length = be16toh (*(uint16_t *)(pdu->information + offset));
-	offset += 2;
+	pdu_length = pdu->information[offset++] << 8;
+	pdu_length += pdu->information[offset++];
 	pdus[pdu_count++] = pdu_unpack (pdu->information + offset, pdu_length);
 	offset += pdu_length;
     }
