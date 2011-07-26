@@ -37,7 +37,7 @@
 struct llc_link;
 
 #define LLCP_VERSION_MAJOR 1
-#define LLCP_VERSION_MINOR 0
+#define LLCP_VERSION_MINOR 1
 struct llcp_version {
     uint8_t major;
     uint8_t minor;

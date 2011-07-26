@@ -146,6 +146,14 @@ llc_service_llc_thread (void *arg)
 	    break;
 	case PDU_SNL:
 	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_TRACE, "Service Name Lookup PDU");
+	    if (!((link->version.major == 1) && (link->version.minor >= 1))) {
+		/*
+		 * Even if we negociate LLCP 1.0, some LLCP implementation will
+		 * use LLCP 1.1 SNL to discover available services so warn
+		 * about this problem but perform th operation anyway.
+		 */
+		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ALERT, "SNL PDU (LLCP 1.1) received on LLCP %d.%d link", link->version.major, link->version.minor);
+	    }
 	    goto spawn_logical_data_link;
 
 	case PDU_UI:
