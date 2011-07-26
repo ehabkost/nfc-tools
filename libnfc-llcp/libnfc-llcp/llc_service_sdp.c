@@ -21,9 +21,8 @@
 
 #include "config.h"
 
-#include <sys/mqueue.h>
-
 #include <fcntl.h>
+#include <mqueue.h>
 #include <pthread.h>
 #include <string.h>
 
