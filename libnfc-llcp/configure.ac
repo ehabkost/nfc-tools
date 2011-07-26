@@ -37,6 +37,8 @@ AC_CHECK_HEADERS([fcntl.h])
 AC_CHECK_HEADERS([sys/param.h])
 AC_CHECK_HEADERS([pthread_np.h])
 
+AC_CHECK_DECLS([pthread_set_name_np(pthread_t, const char *)], [], [], [[#include <pthread_np.h>]])
+
 CFLAGS="$CFLAGS -std=c99"
 
 # Checks for log4c

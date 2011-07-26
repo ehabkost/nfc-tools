@@ -25,6 +25,10 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <pthread.h>
+#if defined(HAVE_PTHREAD_NP_H)
+#  include <pthread_np.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -215,6 +219,9 @@ mac_link_wait (struct mac_link *link, void **value_ptr)
 	MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot create PDU exchanging thread");
 	return -1;
     }
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+    pthread_set_name_np (link->exchange_pdus_thread, "MAC Link");
+#endif
 
     MAC_LINK_MSG (LLC_PRIORITY_TRACE, "Waiting for MAC Link deactivation");
     int res = pthread_join (link->exchange_pdus_thread, value_ptr);

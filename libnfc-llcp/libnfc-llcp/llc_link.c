@@ -25,7 +25,9 @@
 
 #include <assert.h>
 #include <fcntl.h>
-#include <pthread_np.h>
+#if defined(HAVE_PTHREAD_NP_H)
+#  include <pthread_np.h>
+#endif
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -181,7 +183,9 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     }
 
     if ((pthread_create (&link->thread, NULL, llc_service_llc_thread, link)) == 0) {
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
 	pthread_set_name_np (link->thread, "LLC Link");
+#endif
 	LLC_LINK_MSG (LLC_PRIORITY_INFO, "LLC Link started successfully");
     } else {
 	return -1;

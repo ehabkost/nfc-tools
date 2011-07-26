@@ -24,9 +24,6 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <mqueue.h>
-#if defined(HAVE_PTHREAD_NP_H)
-#  include <pthread_np.h>
-#endif
 #include <semaphore.h>
 #include <signal.h>
 #include <stdio.h>

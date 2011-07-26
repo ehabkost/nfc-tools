@@ -29,6 +29,9 @@
 #include <errno.h>
 #include <mqueue.h>
 #include <pthread.h>
+#if defined(HAVE_PTHREAD_NP_H)
+#  include <pthread_np.h>
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,6 +76,9 @@ llc_service_llc_thread (void *arg)
     mqd_t llc_up, llc_down;
 
     int old_cancelstate;
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+    char *thread_name;
+#endif
 
     pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &old_cancelstate);
 
@@ -160,6 +166,11 @@ spawn_logical_data_link:
 		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Logical Data Link [%d -> %d] thread", connection->ssap, connection->dsap);
 		break;
 	    }
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+	    asprintf (&thread_name, "LDL on SAP %d", connection->sap);
+	    pthread_set_name_np (connection->thread, thread_name);
+	    free (thread_name);
+#endif
 
 	    if (mq_send (connection->llc_up, (char *) buffer, res, 0) < 0) {
 		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot send data to Logical Data Link [%d -> %d]", connection->ssap, connection->dsap);
@@ -208,6 +219,11 @@ spawn_logical_data_link:
 		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Data Link Connection [%d -> %d] accept routine", connection->ssap, connection->dsap);
 		break;
 	    }
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+	    asprintf (&thread_name, "DLC Accept on SAP %d", connection->sap);
+	    pthread_set_name_np (connection->thread, thread_name);
+	    free (thread_name);
+#endif
 
 	    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accept routine launched (service %d)", connection->ssap, connection->dsap, connection->sap);
 	    break;
@@ -433,6 +449,11 @@ spawn_logical_data_link:
 				link->transmission_handlers[i]->status = DLC_DISCONNECTED;
 				break;
 			    }
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+			    asprintf (&thread_name, "DLC on SAP %d", connection->sap);
+			    pthread_set_name_np (connection->thread, thread_name);
+			    free (thread_name);
+#endif
 			    link->transmission_handlers[i]->status = DLC_CONNECTED;
 			    break;
 			case DLC_REJECTED:
