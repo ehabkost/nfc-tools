@@ -46,7 +46,6 @@ void
 sigusr1_handler (int x)
 {
     (void) x;
-    printf ("(%p) SIGUSR1\n", (void *)pthread_self ());
 }
 
 int

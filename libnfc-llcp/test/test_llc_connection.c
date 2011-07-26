@@ -35,7 +35,9 @@ struct llc_link *llc_link;
 void *
 void_thread (void *arg)
 {
-    return arg;
+    struct llc_connection *connection = (struct llc_connection *) arg;
+    llc_connection_stop (connection);
+    return NULL;
 }
 
 void
@@ -45,8 +47,6 @@ cut_setup (void)
 
     llc_link = llc_link_new ();
     cut_assert_not_null (llc_link, cut_message ("llc_link()"));
-
-    void_thread (NULL);
 }
 
 void

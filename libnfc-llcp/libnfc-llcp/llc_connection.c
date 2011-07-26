@@ -245,6 +245,9 @@ void
 llc_connection_accept (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
+
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accpeted", connection->ssap, connection->dsap);
+
     connection->status = DLC_ACCEPTED;
     connection->thread = 0;
     pthread_exit (NULL);
@@ -254,6 +257,9 @@ void
 llc_connection_reject (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
+
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] rejected", connection->ssap, connection->dsap);
+
     connection->status = DLC_REJECTED;
     connection->thread = 0;
     pthread_exit (NULL);
@@ -264,15 +270,14 @@ llc_connection_stop (struct llc_connection *connection)
 {
     assert (connection);
 
-    pthread_t thread = connection->thread;
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Stopping Data Link Connection [%d -> %d]", connection->ssap, connection->dsap);
 
-    connection->thread = 0;
-    connection->status = DLC_DISCONNECTED;
-
-    if (thread == pthread_self ()) {
+    if (connection->thread == pthread_self ()) {
+	connection->status = DLC_DISCONNECTED;
 	pthread_exit (NULL);
     } else {
-	llcp_threadslayer (thread);
+	llcp_threadslayer (connection->thread);
+	connection->thread = 0;
     }
     return 0;
 }
@@ -281,7 +286,8 @@ void
 llc_connection_free (struct llc_connection *connection)
 {
     assert (connection);
-    assert (!connection->thread);
+
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Freeing Data Link Connection [%d -> %d]", connection->ssap, connection->dsap);
 
     if (connection->llc_up != (mqd_t) -1)
 	mq_close (connection->llc_up);
