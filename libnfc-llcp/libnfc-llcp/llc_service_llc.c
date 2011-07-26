@@ -76,7 +76,7 @@ llc_service_llc_thread (void *arg)
     mqd_t llc_up, llc_down;
 
     int old_cancelstate;
-#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
     char *thread_name;
 #endif
 
@@ -166,7 +166,7 @@ spawn_logical_data_link:
 		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Logical Data Link [%d -> %d] thread", connection->ssap, connection->dsap);
 		break;
 	    }
-#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
 	    asprintf (&thread_name, "LDL on SAP %d", connection->sap);
 	    pthread_set_name_np (connection->thread, thread_name);
 	    free (thread_name);
@@ -219,7 +219,7 @@ spawn_logical_data_link:
 		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Data Link Connection [%d -> %d] accept routine", connection->ssap, connection->dsap);
 		break;
 	    }
-#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
 	    asprintf (&thread_name, "DLC Accept on SAP %d", connection->sap);
 	    pthread_set_name_np (connection->thread, thread_name);
 	    free (thread_name);
@@ -449,7 +449,7 @@ spawn_logical_data_link:
 				link->transmission_handlers[i]->status = DLC_DISCONNECTED;
 				break;
 			    }
-#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
 			    asprintf (&thread_name, "DLC on SAP %d", connection->sap);
 			    pthread_set_name_np (connection->thread, thread_name);
 			    free (thread_name);

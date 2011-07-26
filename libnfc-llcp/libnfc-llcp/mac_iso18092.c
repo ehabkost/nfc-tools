@@ -219,7 +219,7 @@ mac_link_wait (struct mac_link *link, void **value_ptr)
 	MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot create PDU exchanging thread");
 	return -1;
     }
-#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP)
+#if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
     pthread_set_name_np (link->exchange_pdus_thread, "MAC Link");
 #endif
 
