@@ -86,7 +86,7 @@ llc_connection_start (struct llc_connection *connection)
     assert (connection);
 
     struct mq_attr attr_up = {
-	.mq_msgsize = connection->local_miu,
+	.mq_msgsize = 3 + connection->local_miu,
 	.mq_maxmsg  = 2,
     };
 
@@ -99,7 +99,7 @@ llc_connection_start (struct llc_connection *connection)
     }
 
     struct mq_attr attr_down = {
-	.mq_msgsize = connection->remote_miu,
+	.mq_msgsize = 3 + connection->remote_miu,
 	.mq_maxmsg  = 2,
     };
 

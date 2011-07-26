@@ -62,7 +62,7 @@ llc_link_new (void)
 	}
 	link->cut_test_context = NULL;
 	link->mac_link = NULL;
-	link->local_miu = 128;
+	link->local_miu = LLCP_DEFAULT_MIU;
 
 	asprintf (&link->mq_up_name, "/libnfc-llcp-%d-%p-up", getpid (), (void *) link);
 	asprintf (&link->mq_down_name, "/libnfc-llcp-%d-%p-down", getpid (), (void *) link);
@@ -168,7 +168,7 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
      * Start link
      */
     struct mq_attr attr_up = {
-	.mq_msgsize = link->local_miu,
+	.mq_msgsize = 3 + link->local_miu,
 	.mq_maxmsg  = 2,
     };
     LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->mq_up_name);
@@ -179,7 +179,7 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     }
 
     struct mq_attr attr_down = {
-	.mq_msgsize = link->remote_miu,
+	.mq_msgsize = 3 + link->remote_miu,
 	.mq_maxmsg  = 2,
     };
     LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->mq_down_name);
