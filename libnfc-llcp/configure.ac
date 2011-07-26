@@ -22,6 +22,10 @@ if test x"$enable_debug" != x"yes"; then
     CFLAGS="$CFLAGS -DNDEBUG"
 fi
 
+AC_DEFINE([_XOPEN_SOURCE], [600], [Define to 500 if Single Unix conformance is wanted, 600 for sixth revision.])
+AC_DEFINE([_BSD_SOURCE], [1], [Define on BSD to activate all library features])
+AC_DEFINE([_GNU_SOURCE], [1], [Define on GNU/Linux to activate all library features])
+
 AC_FUNC_MALLOC
 AC_TYPE_INT8_T
 AC_TYPE_OFF_T
