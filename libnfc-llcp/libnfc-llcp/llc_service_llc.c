@@ -413,7 +413,7 @@ spawn_logical_data_link:
 			    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_WARN, "Send acknoledgment for received data");
 			    struct pdu *reply;
 			    struct mq_attr attr;
-			    mq_getattr (link->transmission_handlers[pdu->dsap]->llc_up, &attr);
+			    mq_getattr (link->transmission_handlers[i]->llc_up, &attr);
 			    if (attr.mq_curmsgs == attr.mq_maxmsg) {
 				LLC_SERVICE_LLC_MSG (LLC_PRIORITY_INFO, "Message queue is full");
 				reply = pdu_new_rnr (link->transmission_handlers[i]);
