@@ -25,6 +25,7 @@
 #include <sys/types.h>
 
 #include <mqueue.h>
+#include <pthread.h>
 #include <stdint.h>
 
 struct pdu;
