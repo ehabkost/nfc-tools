@@ -25,6 +25,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
 #if defined(HAVE_PTHREAD_NP_H)
 #  include <pthread_np.h>
@@ -187,7 +188,10 @@ mac_link_exchange_pdus (void *arg)
 	}
 	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d bytes", (int) len);
 
-	mq_send (link->llc_link->llc_up, (char *) buffer, len, 0);
+	if (mq_send (link->llc_link->llc_up, (char *) buffer, len, 0) < 0) {
+	    MAC_LINK_LOG (LLC_PRIORITY_FATAL, "Can't send data to LLC Link: %s", strerror (errno));
+	    break;
+	}
 
 	struct timespec ts;
 	ts.tv_sec = 0;
@@ -196,6 +200,10 @@ mac_link_exchange_pdus (void *arg)
 	nanosleep (&ts, NULL); // TODO Adjust me
 
 	len = mq_receive (link->llc_link->llc_down, (char *) buffer, sizeof (buffer), NULL);
+	if (len < 0) {
+	    MAC_LINK_LOG (LLC_PRIORITY_FATAL, "Can't receive data from LLC Link: %s", strerror (errno));
+	    break;
+	}
 
 	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Sending %d bytes", len);
 	if ((len = pdu_send (link, buffer, len)) < 0) {
