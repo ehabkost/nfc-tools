@@ -19,6 +19,8 @@
  * $Id$
  */
 
+#include "config.h"
+
 #include <cutter.h>
 #include <stdio.h>
 

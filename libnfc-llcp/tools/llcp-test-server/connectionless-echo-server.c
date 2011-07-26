@@ -19,6 +19,8 @@
  * $Id$
  */
 
+#include "config.h"
+
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
