@@ -277,8 +277,8 @@ spawn_logical_data_link:
 		break;
 	    }
 
-	    if (pdu->information_size > link->transmission_handlers[pdu->dsap]->miu) {
-		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_FATAL, "Information PDU too long: %d (MIU: %d)", pdu->information_size, link->transmission_handlers[pdu->dsap]->miu);
+	    if (pdu->information_size > link->transmission_handlers[pdu->dsap]->local_miu) {
+		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_FATAL, "Information PDU too long: %d (MIU: %d)", pdu->information_size, link->transmission_handlers[pdu->dsap]->local_miu);
 		struct pdu *reply = pdu_new_frmr (pdu->ssap, pdu->dsap, pdu, link->transmission_handlers[pdu->dsap], FRMR_I);
 		int len = pdu_pack (reply, buffer, sizeof (buffer));
 		pdu_free (reply);

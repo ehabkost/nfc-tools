@@ -54,7 +54,8 @@ struct llc_connection {
 	uint8_t r;	    /* Receive State Variable */
 	uint8_t ra;	    /* Receive Acknowledgement State Variable */
     } state;
-    uint8_t miu;    /* Maximum Information Unit Size for I PDUs */
+    uint16_t local_miu;     /* Maximum Information Unit Size for I PDUs */
+    uint16_t remote_miu;    /* Maximum Information Unit Size for I PDUs */
     uint8_t rwl;    /* Local Receive Window Size */
     uint8_t rwr;    /* Remote Receive Window Size */
     struct llc_link *link;

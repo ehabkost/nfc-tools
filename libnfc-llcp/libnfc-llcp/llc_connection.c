@@ -34,6 +34,7 @@
 #include "llcp.h"
 #include "llc_connection.h"
 #include "llc_link.h"
+#include "llc_service.h"
 #include "llcp_log.h"
 #include "llcp_pdu.h"
 #include "llcp_parameters.h"
@@ -63,7 +64,8 @@ llc_connection_new (struct llc_link *link, uint8_t ssap, uint8_t dsap)
 	res->state.sa = 0;
 	res->state.r  = 0;
 	res->state.ra = 0;
-	res->miu = LLCP_DEFAULT_MIU;
+	res->local_miu  = LLCP_DEFAULT_MIU;
+	res->remote_miu = LLCP_DEFAULT_MIU;
 	res->rwr = LLCP_DEFAULT_RW;
 	res->rwl = LLCP_DEFAULT_RW;
 
@@ -71,33 +73,45 @@ llc_connection_new (struct llc_link *link, uint8_t ssap, uint8_t dsap)
 	res->mq_down_name = NULL;
 	res->llc_up   = (mqd_t) -1;
 	res->llc_down = (mqd_t) -1;
-
-
-	struct mq_attr attr = {
-	    .mq_maxmsg  = 2,
-	    .mq_msgsize = 1024,
-	};
-
-	asprintf (&res->mq_up_name, "/libnfc-llcp-%d-%p-%s", getpid(), (void *) res, "up");
-	res->llc_up = mq_open (res->mq_up_name, O_WRONLY | O_CREAT | O_NONBLOCK, 0666, &attr);
-	if (res->llc_up == (mqd_t) -1) {
-	    LLC_CONNECTION_LOG (LLC_PRIORITY_FATAL, "Cannot open message queue '%s'", res->mq_up_name);
-	    llc_connection_free (res);
-	    return NULL;
-	}
-
-	asprintf (&res->mq_down_name, "/libnfc-llcp-%d-%p-%s", getpid(), (void *) res, "down");
-	res->llc_down = mq_open (res->mq_down_name, O_RDONLY | O_CREAT | O_NONBLOCK, 0666, &attr);
-	if (res->llc_down == (mqd_t) -1) {
-	    LLC_CONNECTION_LOG (LLC_PRIORITY_FATAL, "Cannot open message queue '%s'", res->mq_down_name);
-	    llc_connection_free (res);
-	    return NULL;
-	}
     } else {
 	LLC_CONNECTION_MSG (LLC_PRIORITY_FATAL, "Cannot allocate memory");
     }
 
     return res;
+}
+
+int
+llc_connection_start (struct llc_connection *connection)
+{
+    assert (connection);
+
+    struct mq_attr attr_up = {
+	.mq_msgsize = connection->local_miu,
+	.mq_maxmsg  = 2,
+    };
+
+    asprintf (&connection->mq_up_name, "/libnfc-llcp-%d-%p-%s", getpid(), (void *) connection, "up");
+    connection->llc_up = mq_open (connection->mq_up_name, O_WRONLY | O_CREAT | O_NONBLOCK, 0666, &attr_up);
+    if (connection->llc_up == (mqd_t) -1) {
+	LLC_CONNECTION_LOG (LLC_PRIORITY_FATAL, "Cannot open message queue '%s'", connection->mq_up_name);
+	llc_connection_free (connection);
+	return -1;
+    }
+
+    struct mq_attr attr_down = {
+	.mq_msgsize = connection->remote_miu,
+	.mq_maxmsg  = 2,
+    };
+
+    asprintf (&connection->mq_down_name, "/libnfc-llcp-%d-%p-%s", getpid(), (void *) connection, "down");
+    connection->llc_down = mq_open (connection->mq_down_name, O_RDONLY | O_CREAT | O_NONBLOCK, 0666, &attr_down);
+    if (connection->llc_down == (mqd_t) -1) {
+	LLC_CONNECTION_LOG (LLC_PRIORITY_FATAL, "Cannot open message queue '%s'", connection->mq_down_name);
+	llc_connection_free (connection);
+	return -1;
+    }
+
+    return 0;
 }
 
 struct llc_connection *
@@ -111,6 +125,7 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 
     char sn[BUFSIZ];
     int8_t service_sap = pdu->dsap;
+    uint16_t miux, miu = LLCP_DEFAULT_MIU;
     uint8_t rw = 2;
 
     *reason = -1;
@@ -126,6 +141,13 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 	    return NULL;
 	}
 	switch (pdu->information[offset]) {
+	case LLCP_PARAMETER_MIUX:
+	    if (parameter_decode_miux (pdu->information + offset, 2 + pdu->information[offset+1], &miux) < 0) {
+		LLC_CONNECTION_MSG (LLC_PRIORITY_ERROR, "Invalid MIUX parameter");
+		return NULL;
+	    }
+	    miu = 128 + miux;
+	    break;
 	case LLCP_PARAMETER_RW:
 	    if (parameter_decode_rw (pdu->information + offset, 2 + pdu->information[offset+1], &rw) < 0) {
 		LLC_CONNECTION_MSG (LLC_PRIORITY_ERROR, "Invalid RW parameter");
@@ -154,6 +176,11 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 	offset += 2 + pdu->information[offset+1];
     }
 
+    if (!link->available_services[service_sap]) {
+	*reason = 0x02;
+	return NULL;
+    }
+
     int8_t connection_dsap = service_sap;
 
     while (link->transmission_handlers[connection_dsap] && (connection_dsap <= MAX_LLC_LINK_SERVICE))
@@ -169,6 +196,13 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 	res->sap = service_sap;
 	res->status = DLC_NEW;
 	res->rwr = rw;
+	res->remote_miu = miu;
+	res->local_miu  = link->available_services[service_sap]->miu;
+
+	if (llc_connection_start (res) < 0) {
+	    llc_connection_free (res);
+	    return NULL;
+	}
     }
 
     return res;
@@ -183,6 +217,10 @@ llc_logical_data_link_new (struct llc_link *link, const struct pdu *pdu)
     struct llc_connection *res;
     uint8_t sap = 0;
 
+    if (!link->available_services[pdu->dsap]) {
+	return NULL;
+    }
+
     while (link->datagram_handlers[sap] && (sap <= MAX_LOGICAL_DATA_LINK))
 	sap++;
 
@@ -193,6 +231,11 @@ llc_logical_data_link_new (struct llc_link *link, const struct pdu *pdu)
 
     if ((res = llc_connection_new (link, pdu->ssap, pdu->dsap))) {
 	link->datagram_handlers[sap] = res;
+
+	if (llc_connection_start (res) < 0) {
+	    llc_connection_free (res);
+	    return NULL;
+	}
     }
 
     return res;

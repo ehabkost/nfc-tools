@@ -167,16 +167,23 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     /*
      * Start link
      */
-
+    struct mq_attr attr_up = {
+	.mq_msgsize = link->local_miu,
+	.mq_maxmsg  = 2,
+    };
     LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->mq_up_name);
-    link->llc_up   = mq_open (link->mq_up_name, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0666, NULL);
+    link->llc_up   = mq_open (link->mq_up_name, O_CREAT | O_EXCL | O_WRONLY | O_NONBLOCK, 0666, &attr_up);
     if (link->llc_up == (mqd_t)-1) {
 	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->mq_up_name);
 	return -1;
     }
 
+    struct mq_attr attr_down = {
+	.mq_msgsize = link->remote_miu,
+	.mq_maxmsg  = 2,
+    };
     LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->mq_down_name);
-    link->llc_down = mq_open (link->mq_down_name, O_CREAT | O_EXCL | O_RDONLY, 0666, NULL);
+    link->llc_down = mq_open (link->mq_down_name, O_CREAT | O_EXCL | O_RDONLY, 0666, &attr_down);
     if (link->llc_down == (mqd_t)-1) {
 	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->mq_down_name);
 	return -1;

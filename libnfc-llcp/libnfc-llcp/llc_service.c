@@ -60,9 +60,24 @@ llc_service_new_with_uri (void *(*accept_routine)(void *), void *(*thread_routin
 
 	service->accept_routine = accept_routine;
 	service->thread_routine = thread_routine;
+	service->miu = LLCP_DEFAULT_MIU;
     }
 
     return service;
+}
+
+uint16_t
+llc_service_get_miu (const struct llc_service *service)
+{
+    assert (service);
+    return service->miu;
+}
+
+void
+llc_service_set_miu (struct llc_service *service, uint16_t miu)
+{
+    assert (service);
+    service->miu = miu;
 }
 
 const char *

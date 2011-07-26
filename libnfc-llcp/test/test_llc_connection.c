@@ -60,19 +60,32 @@ cut_teardown (void)
 void
 test_llc_data_link_connection_new (void)
 {
+    struct llc_connection *connection0;
     struct llc_connection *connection1;
     struct llc_connection *connection2;
     int reason;
     struct pdu *pdu;
+    struct llc_service *service;
 
     uint8_t connect_pdu[] = { 0x45, 0x20 };
 
     pdu = pdu_unpack (connect_pdu, sizeof (connect_pdu));
     cut_assert_not_null (pdu, cut_message ("pdu_unpack"));
 
+    connection0 = llc_data_link_connection_new (llc_link, pdu, &reason);
+    cut_assert_null (connection0, cut_message ("llc_data_link_connection_new"));
+    cut_assert_equal_int (2, reason, cut_message ("Wrong reason"));
+
+    service = llc_service_new (NULL, void_thread);
+    cut_assert_not_null (service, cut_message ("llc_service_new()"));
+
+    int sap;
+    sap = llc_link_service_bind (llc_link, service, 17);
+    cut_assert_not_equal_int (-1, sap, cut_message ("llc_link_service_bind"));
+    cut_assert_equal_int (17, sap, cut_message ("Wrong SAP"));
+
     connection1 = llc_data_link_connection_new (llc_link, pdu, &reason);
     cut_assert_not_null (connection1, cut_message ("llc_data_link_connection_new"));
-
     cut_assert_equal_int (17, connection1->sap, cut_message ("Wrong SAP"));
     cut_assert_equal_int (17, connection1->dsap, cut_message ("Wrong DSAP"));
     cut_assert_equal_int (32, connection1->ssap, cut_message ("Wrong SSAP"));
@@ -86,6 +99,10 @@ test_llc_data_link_connection_new (void)
     cut_assert_equal_int (18, connection2->dsap, cut_message ("Wrong DSAP"));
     cut_assert_equal_int (32, connection2->ssap, cut_message ("Wrong SSAP"));
 
+    llc_link_service_unbind (llc_link, 17);
+
+    llc_service_free (service);
+
     llc_connection_free (connection1);
     llc_connection_free (connection2);
 
@@ -95,14 +112,27 @@ test_llc_data_link_connection_new (void)
 void
 test_llc_logical_data_link_new (void)
 {
+    struct llc_connection *connection0;
     struct llc_connection *connection1;
     struct llc_connection *connection2;
     struct pdu *pdu;
+    struct llc_service *service;
 
     uint8_t ui_pdu[] = { 0x80, 0xd8 };
 
     pdu = pdu_unpack (ui_pdu, sizeof (ui_pdu));
     cut_assert_not_null (pdu, cut_message ("pdu_unpack"));
+
+    connection0 = llc_logical_data_link_new (llc_link, pdu);
+    cut_assert_null (connection0, cut_message ("llc_logical_data_link_new"));
+
+    service = llc_service_new (NULL, void_thread);
+    cut_assert_not_null (service, cut_message ("llc_service_new()"));
+
+    int sap;
+    sap = llc_link_service_bind (llc_link, service, 32);
+    cut_assert_not_equal_int (-1, sap, cut_message ("llc_link_service_bind"));
+    cut_assert_equal_int (32, sap, cut_message ("Wrong SAP"));
 
     connection1 = llc_logical_data_link_new (llc_link, pdu);
     cut_assert_not_null (connection1, cut_message ("llc_logical_data_link_new"));
@@ -117,6 +147,10 @@ test_llc_logical_data_link_new (void)
     cut_assert_equal_int (0, connection2->sap, cut_message ("Wrong SAP"));
     cut_assert_equal_int (32, connection2->dsap, cut_message ("Wrong DSAP"));
     cut_assert_equal_int (24, connection2->ssap, cut_message ("Wrong SSAP"));
+
+    llc_link_service_unbind (llc_link, 32);
+
+    llc_service_free (service);
 
     llc_connection_free (connection1);
     llc_connection_free (connection2);
