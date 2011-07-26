@@ -53,7 +53,7 @@ llc_connection_new (struct llc_link *link, uint8_t ssap, uint8_t dsap)
 
     if ((res = malloc (sizeof *res))) {
 	res->link = link;
-	res->thread = NULL;
+	res->thread = 0;
 	res->sap = 0;
 	res->dsap = dsap;
 	res->ssap = ssap;
@@ -203,7 +203,7 @@ llc_connection_accept (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
     connection->status = DLC_ACCEPTED;
-    connection->thread = NULL;
+    connection->thread = 0;
     pthread_exit (NULL);
 }
 
@@ -212,7 +212,7 @@ llc_connection_reject (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
     connection->status = DLC_REJECTED;
-    connection->thread = NULL;
+    connection->thread = 0;
     pthread_exit (NULL);
 }
 
@@ -223,7 +223,7 @@ llc_connection_stop (struct llc_connection *connection)
 
     pthread_t thread = connection->thread;
 
-    connection->thread = NULL;
+    connection->thread = 0;
     connection->status = DLC_DISCONNECTED;
 
     if (thread == pthread_self ()) {
