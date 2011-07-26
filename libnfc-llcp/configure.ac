@@ -35,6 +35,7 @@ AC_CHECK_FUNCS([strdup])
 
 AC_CHECK_HEADERS([fcntl.h])
 AC_CHECK_HEADERS([sys/param.h])
+AC_CHECK_HEADERS([pthread_np.h])
 
 CFLAGS="$CFLAGS -std=c99"
 
