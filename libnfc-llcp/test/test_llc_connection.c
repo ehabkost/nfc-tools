@@ -25,6 +25,8 @@
 
 #include "llc_connection.h"
 #include "llc_link.h"
+#include "llc_service.h"
+#include "llcp_pdu.h"
 
 struct llc_link *llc_link;
 

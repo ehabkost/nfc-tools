@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <time.h>
+#include <pthread.h>
 #include <unistd.h>
 
 #include "llc_connection.h"

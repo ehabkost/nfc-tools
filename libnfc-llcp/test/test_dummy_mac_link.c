@@ -30,6 +30,7 @@
 
 #include "llc_link.h"
 #include "llc_connection.h"
+#include "llc_service.h"
 #include "mac.h"
 
 #define ECHO_SAP 16
