@@ -50,6 +50,8 @@ static uint8_t llcp_magic_number[] = { 0x46, 0x66, 0x6D };
 
 static uint8_t defaultid[10] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09 };
 
+int		 mac_link_run (struct mac_link *link);
+
 struct mac_link *
 mac_link_new (nfc_device_t *device, struct llc_link *llc_link)
 {
@@ -114,10 +116,11 @@ mac_link_activate_as_initiator (struct mac_link *mac_link)
 		MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) LLCP Link activated (initiator)", mac_link->device->acName);
 
 		mac_link->mode = MAC_LINK_INITIATOR;
-		res = 1;
 		if (llc_link_activate (mac_link->llc_link, LLC_INITIATOR | LLC_PAX_PDU_PROHIBITED, NULL, 0) < 0) {
 		    MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Error activating LLC Link");
 		    res = -1;
+		} else {
+		    res = mac_link_run (mac_link);
 		}
 	    }
 	} else {
@@ -167,7 +170,6 @@ mac_link_activate_as_target (struct mac_link *mac_link)
     if (nfc_target_init (mac_link->device, &nt, data, &n)) {
 	MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) LLCP Link activated (target)", mac_link->device->acName);
 	mac_link->mode = MAC_LINK_TARGET;
-	res = 1;
 	if (n < 20) {
 	    MAC_LINK_MSG (LLC_PRIORITY_ERROR, "Frame too short");
 	    res = -1;
@@ -177,6 +179,8 @@ mac_link_activate_as_target (struct mac_link *mac_link)
 	} else if (llc_link_activate (mac_link->llc_link, LLC_TARGET | LLC_PAX_PDU_PROHIBITED, data + 20, n - 20) < 0) {
 	    MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Error activating LLC Link");
 	    res = -1;
+	} else {
+	    res = mac_link_run (mac_link);
 	}
     } else {
 	MAC_LINK_MSG (LLC_PRIORITY_ERROR, "Cannot establish LLCP Link");
@@ -190,6 +194,13 @@ void *
 mac_link_exchange_pdus (void *arg)
 {
     struct mac_link *link = (struct mac_link *)arg;
+
+    if (link->mode == MAC_LINK_INITIATOR) {
+	/* Bootstrap the LLC communication sending a SYMM PDU */
+	uint8_t symm[2] = { 0x00, 0x00 };
+	if (pdu_send (link, symm, sizeof (symm)) < 0)
+	    return NULL;
+    }
 
     uint8_t buffer[BUFSIZ];
     for (;;) {
@@ -230,10 +241,9 @@ mac_link_exchange_pdus (void *arg)
 }
 
 int
-mac_link_wait (struct mac_link *link, void **value_ptr)
+mac_link_run (struct mac_link *link)
 {
     assert (link);
-    assert (value_ptr);
 
     if (pthread_create (&link->exchange_pdus_thread, NULL, mac_link_exchange_pdus, (void *) link) < 0) {
 	MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot create PDU exchanging thread");
@@ -242,6 +252,15 @@ mac_link_wait (struct mac_link *link, void **value_ptr)
 #if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
     pthread_set_name_np (link->exchange_pdus_thread, "MAC Link");
 #endif
+
+    return 1;
+}
+
+int
+mac_link_wait (struct mac_link *link, void **value_ptr)
+{
+    assert (link);
+    assert (value_ptr);
 
     MAC_LINK_MSG (LLC_PRIORITY_TRACE, "Waiting for MAC Link deactivation");
     int res = pthread_join (link->exchange_pdus_thread, value_ptr);
