@@ -101,7 +101,13 @@ mac_link_activate_as_initiator (struct mac_link *mac_link)
     MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) Attempting to activate LLCP Link as initiator", mac_link->device->acName);
     if (nfc_initiator_init (mac_link->device)) {
 	MAC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%s) nfc_initiator_init() succeeded", mac_link->device->acName);
-	if (nfc_initiator_select_dep_target (mac_link->device, NDM_PASSIVE, NBR_424, NULL, &nt)) {
+
+	nfc_dep_info_t info;
+	memcpy (info.abtNFCID3, mac_link->nfcid, sizeof (mac_link->nfcid));
+	memcpy (info.abtGB, llcp_magic_number, sizeof (llcp_magic_number));
+	info.szGB = sizeof (llcp_magic_number);
+
+	if (nfc_initiator_select_dep_target (mac_link->device, NDM_PASSIVE, NBR_424, &info, &nt)) {
 	    MAC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%s) nfc_initiator_select_dep_target() succeeded", mac_link->device->acName);
 	    if ((nt.nti.ndi.szGB >= sizeof (llcp_magic_number)) &&
 		(0 == memcmp (nt.nti.ndi.abtGB, llcp_magic_number, sizeof (llcp_magic_number)))) {
