@@ -168,7 +168,13 @@ mac_link_activate_as_target (struct mac_link *mac_link)
 	MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) LLCP Link activated (target)", mac_link->device->acName);
 	mac_link->mode = MAC_LINK_TARGET;
 	res = 1;
-	if (llc_link_activate (mac_link->llc_link, LLC_TARGET | LLC_PAX_PDU_PROHIBITED, data + 20, n - 20) < 0) {
+	if (n < 20) {
+	    MAC_LINK_MSG (LLC_PRIORITY_ERROR, "Frame too short");
+	    res = -1;
+	} else if (memcmp (data + 17, llcp_magic_number, sizeof (llcp_magic_number))) {
+	    MAC_LINK_MSG (LLC_PRIORITY_ERROR, "LLCP Magic Number not found");
+	    res = -1;
+	} else if (llc_link_activate (mac_link->llc_link, LLC_TARGET | LLC_PAX_PDU_PROHIBITED, data + 20, n - 20) < 0) {
 	    MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Error activating LLC Link");
 	    res = -1;
 	}
