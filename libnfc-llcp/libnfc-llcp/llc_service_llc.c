@@ -206,7 +206,7 @@ spawn_logical_data_link:
 		int len;
 		uint8_t reason[] = { error };
 
-		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot establish Data Link Connection [%d -> %d] (reason = %02x)", pdu->ssap, pdu->dsap, reason);
+		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot establish Data Link Connection [%d -> %d] (reason = %02x)", pdu->ssap, pdu->dsap, error);
 		reply = pdu_new_dm (pdu->ssap, pdu->dsap, reason);
 		len = pdu_pack (reply, buffer, sizeof (buffer));
 		pdu_free (reply);
