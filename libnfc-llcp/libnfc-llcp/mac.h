@@ -45,7 +45,9 @@ int		 mac_link_activate_as_target (struct mac_link *mac_link);
 ssize_t		 pdu_send (struct mac_link *link, const void *buf, size_t nbytes);
 ssize_t		 pdu_receive (struct mac_link *link, void *buf, size_t nbytes);
 int		 mac_link_wait (struct mac_link *link, void **value_ptr);
-int		 mac_link_deactivate (struct mac_link *link);
+#define MAC_DEACTIVATE_ON_REQUEST 0x00
+#define MAC_DEACTIVATE_ON_FAILURE 0x01
+int		 mac_link_deactivate (struct mac_link *link, intptr_t reason);
 
 void		 mac_link_free (struct mac_link *mac_link);
 

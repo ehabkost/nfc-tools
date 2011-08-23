@@ -235,7 +235,42 @@ mac_link_exchange_pdus (void *arg)
 	}
     }
 
-    //llc_link_deactivate (link->llc_link);
+    link->exchange_pdus_thread = NULL;
+
+    MAC_LINK_LOG (LLC_PRIORITY_ERROR, "NFC error: %s", nfc_strerror (link->device));
+    switch (link->device->iLastError ) {
+    case ETGREL:
+	/* The initiator has left the target's field */
+	return (void *) MAC_DEACTIVATE_ON_FAILURE;
+	break;
+    default:
+	return (void *) MAC_DEACTIVATE_ON_REQUEST;
+	break;
+    }
+}
+
+void *
+mac_link_drain (void *arg)
+{
+    struct mac_link *link = (struct mac_link *)arg;
+
+    uint8_t buffer[BUFSIZ];
+    uint8_t sym_pdu[] = { 0x00, 0x00 };
+
+    for (;;) {
+	ssize_t len = pdu_receive (link, buffer, sizeof (buffer));
+	if (len < 0) {
+	    MAC_LINK_LOG (LLC_PRIORITY_WARN, "pdu_receive returned %d (drain)", len);
+	    break;
+	}
+	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d bytes (drain)", (int) len);
+
+	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Sending %d bytes (drain)", sizeof (sym_pdu));
+	if ((len = pdu_send (link, sym_pdu, sizeof (sym_pdu))) < 0) {
+	    MAC_LINK_LOG (LLC_PRIORITY_WARN, "pdu_send returned %d (drain)", len);
+	    break;
+	}
+    }
 
     return NULL;
 }
@@ -262,31 +297,64 @@ mac_link_wait (struct mac_link *link, void **value_ptr)
     assert (link);
     assert (value_ptr);
 
-    MAC_LINK_MSG (LLC_PRIORITY_TRACE, "Waiting for MAC Link deactivation");
-    int res = pthread_join (link->exchange_pdus_thread, value_ptr);
-    MAC_LINK_MSG (LLC_PRIORITY_TRACE, "MAC Link deactivated");
+    *value_ptr = NULL;
 
-    llc_link_deactivate (link->llc_link);
+    MAC_LINK_MSG (LLC_PRIORITY_TRACE, "Waiting for MAC Link PDU exchange thread to exit");
+    int res = pthread_join (link->exchange_pdus_thread, value_ptr);
+    MAC_LINK_LOG (LLC_PRIORITY_TRACE, "MAC Link exchange PDU exchange thread terminated (returned %x)", *value_ptr);
 
     return res;
 }
 
 int
-mac_link_deactivate (struct mac_link *link)
+mac_link_deactivate (struct mac_link *link, intptr_t reason)
 {
-    uint8_t dsl_req[] = { 0xD4, 0x08 };
-    uint8_t dsl_res[] = { 0xD5, 0x09 };
+    assert (link);
+    assert (link->exchange_pdus_thread != pthread_self ());
 
-    uint8_t res[3];
-    size_t res_len = sizeof (res);
+    MAC_LINK_LOG (LLC_PRIORITY_INFO, "MAC Link deactivation requested (reason: %d)", reason);
 
-    MAC_LINK_MSG (LLC_PRIORITY_INFO, "MAC Link deactivation requested");
+    if (!link->exchange_pdus_thread) {
+	MAC_LINK_MSG (LLC_PRIORITY_WARN, "MAC Link already stopped");
+	return 0;
+    }
+
+    llcp_threadslayer (link->exchange_pdus_thread);
+    link->exchange_pdus_thread = NULL;
+
 
     bool st;
     if (link->mode == MAC_LINK_INITIATOR) {
-	st = nfc_initiator_transceive_bytes (link->device, dsl_req, sizeof (dsl_req), res, &res_len);
+	switch (reason) {
+	case MAC_DEACTIVATE_ON_REQUEST:
+	    st = nfc_initiator_deselect_target (link->device);
+	    break;
+	case MAC_DEACTIVATE_ON_FAILURE:
+	    /*
+	     * If a failure already occured, the DEP connection is alreday
+	     * broken so sending a deselect request would fail.
+	     */
+	    st = true;
+	    break;
+	default:
+	    abort ();
+	    break;
+	}
     } else {
-	st = nfc_target_send_bytes (link->device, dsl_res, sizeof (dsl_res));
+	switch (reason) {
+	case MAC_DEACTIVATE_ON_REQUEST:
+	    MAC_LINK_MSG (LLC_PRIORITY_INFO, "Drain mode");
+	    st = 0 == pthread_create (&link->exchange_pdus_thread, NULL, mac_link_drain, link);
+	    pthread_join (link->exchange_pdus_thread, NULL);
+	    link->exchange_pdus_thread = NULL;
+	    break;
+	case MAC_DEACTIVATE_ON_FAILURE:
+	    st = true;
+	    break;
+	default:
+	    abort ();
+	    break;
+	}
     }
 
     if (st) {
@@ -301,17 +369,25 @@ mac_link_deactivate (struct mac_link *link)
 ssize_t
 pdu_send (struct mac_link *link, const void *buf, size_t nbytes)
 {
+    ssize_t res = -1;
+    int oldstate;
+    pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &oldstate);
+
     MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Sending %d bytes", nbytes);
     if (link->mode == MAC_LINK_INITIATOR) {
 	link->buffer_size = sizeof (link->buffer);
 	if (nfc_initiator_transceive_bytes (link->device, buf, nbytes, link->buffer, &link->buffer_size))
-	    return nbytes;
+	    res = nbytes;
     } else {
 	if (nfc_target_send_bytes (link->device, buf, nbytes))
-	    return nbytes;
+	    res = nbytes;
     }
-    MAC_LINK_LOG (LLC_PRIORITY_FATAL, "Could not send %d bytes", nbytes);
-    return -1;
+
+    if (res < 0)
+	MAC_LINK_LOG (LLC_PRIORITY_FATAL, "Could not send %d bytes", nbytes);
+    pthread_setcancelstate (oldstate, NULL);
+
+    return res;
 }
 
 ssize_t

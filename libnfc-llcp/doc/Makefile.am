@@ -5,7 +5,9 @@ CLEANFILES =
 if HAS_MSCGEN
 message_sequence_charts = \
 			  link-activation-as-initiator.png \
-			  link-activation-as-target.png
+			  link-activation-as-target.png \
+			  link-deactivation-as-initiator.png \
+			  link-deactivation-as-target.png
 
 all-am: $(message_sequence_charts)
 
@@ -29,4 +31,6 @@ endif
 
 EXTRA_DIST = data-link-connection-status.dot \
 	     link-activation-as-initiator.msc \
-	     link-activation-as-target.msc
+	     link-activation-as-target.msc \
+	     link-deactivation-as-initiator.msc \
+	     link-deactivation-as-target.msc

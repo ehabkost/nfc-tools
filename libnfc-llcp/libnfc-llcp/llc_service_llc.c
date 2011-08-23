@@ -230,14 +230,7 @@ spawn_logical_data_link:
 	case PDU_DISC:
 	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_TRACE, "Disconnect PDU");
 	    if (!pdu->dsap && !pdu->ssap) {
-		/*
-		 * Deactivate the MAC layer (if any): there can be a race condition when
-		 * service 0 is stopped but the MAC tries to access it's message queue.
-		 */
-		if (link->mac_link && link->mac_link->exchange_pdus_thread) {
-		    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_INFO, "Stopping MAC link");
-		    pthread_cancel (link->mac_link->exchange_pdus_thread);
-		}
+		mac_link_deactivate (link->mac_link, MAC_DEACTIVATE_ON_REQUEST);
 		pthread_exit ((void *) 2);
 		break;
 	    } else {

@@ -41,6 +41,7 @@
 #include "llc_service.h"
 #include "llc_service_llc.h"
 #include "llc_service_sdp.h"
+#include "mac.h"
 
 #define LOG_LLC_LINK "libnfc-llcp.llc.link"
 #define LLC_LINK_MSG(priority, message) llcp_log_log (LOG_LLC_LINK, priority, "%s", message)
@@ -336,10 +337,16 @@ llc_link_deactivate (struct llc_link *link)
 {
     assert (link);
 
+    LLC_LINK_MSG (LLC_PRIORITY_INFO, "Deactivating LLC Link");
+
+    if (link->mac_link) {
+	LLC_LINK_MSG (LLC_PRIORITY_DEBUG, "The LLC Link has an active MAC link");
+	mac_link_deactivate (link->mac_link, MAC_DEACTIVATE_ON_REQUEST);
+	LLC_LINK_MSG (LLC_PRIORITY_DEBUG, "Back to LLC Link deactivation");
+    }
+
     uint8_t ssap;
     uint8_t dsap;
-
-    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Deactivating LLC Link");
 
     for (int i = 0; i <= MAX_LOGICAL_DATA_LINK; i++) {
 	if (link->datagram_handlers[i]) {
@@ -382,7 +389,10 @@ llc_link_deactivate (struct llc_link *link)
     if (link->thread == pthread_self ()) {
 	// NOOP
     } else {
-	llcp_threadslayer (link->thread);
+	if (link->thread) {
+	    llcp_threadslayer (link->thread);
+	    link->thread = NULL;
+	}
     }
 
 }

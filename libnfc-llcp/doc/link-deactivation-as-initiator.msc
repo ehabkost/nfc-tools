@@ -1,0 +1,14 @@
+msc {
+    hscale = "1.5";
+
+    ll [label="Local LLC"], lm [label="Local MAC"], rm [label="Remote MAC"], rl [label="Remote LLC"];
+    
+    --- [label="Dactivation requested by local LLC"];
+    ll => lm [label="Deactivate"];
+    lm => rm [label="DSL_REQ"];
+    lm >> ll [label="Indicate link deactivation"];
+
+    --- [label="On error"];
+    lm => rm [label="DSL_REQ"];
+    lm >> ll [label="Indicate link deactivation"];
+}
