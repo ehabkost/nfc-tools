@@ -56,9 +56,32 @@ llcp_log_log (char *category, int priority, char *format, ...)
 
     const log4c_category_t *cat = log4c_category_get (category);
     if (log4c_category_is_priority_enabled (cat, priority)) {
+	/*
+	 * FIXME: Output colorisation should be done by custom log4c logger
+	 */
+	switch (priority) {
+	case LLC_PRIORITY_FATAL:
+	    printf ("\033[37;41;1m");
+	    break;
+	case LLC_PRIORITY_ALERT:
+	case LLC_PRIORITY_CRIT:
+	case LLC_PRIORITY_ERROR:
+	    printf ("\033[31;1m");
+	    break;
+	case LLC_PRIORITY_WARN:
+	    printf ("\033[33;1m");
+	    break;
+	case LLC_PRIORITY_NOTICE:
+	    printf ("\033[34;1m");
+	    break;
+	default:
+	    printf ("\033[32m");
+	}
 	va_list va;
 	va_start (va, format);
 	log4c_category_vlog (cat, priority, format, va);
+	printf("[0m");
+	fflush (stdout);
     }
 
     sem_post (log_sem);
