@@ -1,4 +1,5 @@
 # $Id$
 
-SUBDIRS = llcp-test-server \
-	  llcp-pdu-explain
+SUBDIRS = llcp-pdu-explain \
+	  llcp-test-client \
+	  llcp-test-server
