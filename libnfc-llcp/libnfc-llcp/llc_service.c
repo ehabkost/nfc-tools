@@ -77,6 +77,7 @@ void
 llc_service_set_miu (struct llc_service *service, uint16_t miu)
 {
     assert (service);
+    assert (((miu - 128) & 0xfc00) == 0x0000);
     service->miu = miu;
 }
 
