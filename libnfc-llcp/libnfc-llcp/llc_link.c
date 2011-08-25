@@ -185,7 +185,7 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
 	.mq_maxmsg  = 2,
     };
     LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "mq_open (%s)", link->mq_down_name);
-    link->llc_down = mq_open (link->mq_down_name, O_CREAT | O_EXCL | O_RDONLY, 0666, &attr_down);
+    link->llc_down = mq_open (link->mq_down_name, O_CREAT | O_EXCL | O_RDWR, 0666, &attr_down);
     if (link->llc_down == (mqd_t)-1) {
 	LLC_LINK_LOG (LLC_PRIORITY_ERROR, "mq_open(%s)", link->mq_down_name);
 	return -1;

@@ -126,9 +126,7 @@ llcp_disconnect (struct llc_link *link)
     int len = pdu_pack (pdu, buffer, sizeof (buffer));
     pdu_free (pdu);
 
-    mqd_t llc_down = mq_open (link->mq_down_name, O_WRONLY);
-    int res = mq_send (llc_down, (char *) buffer, len, 0);
-    mq_close (llc_down);
+    int res = mq_send (link->llc_down, (char *) buffer, len, 0);
 
     llc_link_deactivate (link);
 
