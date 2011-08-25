@@ -248,6 +248,10 @@ test_01 (struct llc_link *link)
     printf ("===> Sleeping for a while\n");
     sleep (3);
 
+    printf ("===> Disconnecting\n");
+    if (llcp_disconnect (link) < 0)
+	return 1;
+
     printf ("===> Deactivating link\n");
     llc_link_deactivate (link);
     return 0;

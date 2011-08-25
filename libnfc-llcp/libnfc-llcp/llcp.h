@@ -50,6 +50,8 @@ int		 llcp_version_agreement (struct llc_link *link, struct llcp_version version
 
 void		 llcp_threadslayer (pthread_t thread);
 
+int		 llcp_disconnect (struct llc_link *link);
+
 #define MAX_LOGICAL_DATA_LINK 8
 //          DATA_LINK_CONNECTION
 #define MAX_LLC_LINK_ADVERTISED_SERVICE 0x1F

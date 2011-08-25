@@ -53,6 +53,7 @@ llc_link_new (void)
     struct llc_link *link;
 
     if ((link = malloc (sizeof (*link)))) {
+	link->status = LL_DEACTIVATED;
 	link->version.major = LLCP_VERSION_MAJOR;
 	link->version.minor = LLCP_VERSION_MINOR;
 	link->opt = LINK_SERVICE_CLASS_3;
@@ -199,6 +200,8 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
 	return -1;
     }
 
+    link->status = LL_ACTIVATED;
+
     return 0;
 }
 
@@ -339,10 +342,24 @@ llc_link_deactivate (struct llc_link *link)
 
     LLC_LINK_MSG (LLC_PRIORITY_INFO, "Deactivating LLC Link");
 
+    link->status = LL_DEACTIVATED;
+
     if (link->mac_link) {
 	LLC_LINK_MSG (LLC_PRIORITY_DEBUG, "The LLC Link has an active MAC link");
 	mac_link_deactivate (link->mac_link, MAC_DEACTIVATE_ON_REQUEST);
+	link->mac_link = NULL;
 	LLC_LINK_MSG (LLC_PRIORITY_DEBUG, "Back to LLC Link deactivation");
+    }
+
+    if (link->thread == pthread_self ()) {
+	/*
+	 * The thread is supposed to terminate once the function has returned.
+	 */
+    } else {
+	if (link->thread) {
+	    llcp_threadslayer (link->thread);
+	    link->thread = NULL;
+	}
     }
 
     uint8_t ssap;
@@ -381,20 +398,7 @@ llc_link_deactivate (struct llc_link *link)
 
     link->llc_up   = (mqd_t) -1;
     link->llc_down = (mqd_t) -1;
-
-    /*
-     * If the LLC link is being deactivated by itself, let the control return
-     * and the thread terminate..
-     */
-    if (link->thread == pthread_self ()) {
-	// NOOP
-    } else {
-	if (link->thread) {
-	    llcp_threadslayer (link->thread);
-	    link->thread = NULL;
-	}
-    }
-
+    LLC_LINK_MSG (LLC_PRIORITY_INFO, "LLC Link deactivated");
 }
 
 void

@@ -114,3 +114,23 @@ llcp_threadslayer (pthread_t thread)
 
     pthread_join (thread, NULL);
 }
+
+int
+llcp_disconnect (struct llc_link *link)
+{
+    assert (link);
+    struct pdu *pdu;
+    if (!(pdu = pdu_new (0, PDU_DISC, 0, 0, 0, NULL, 0)))
+	return -1;
+    uint8_t buffer[BUFSIZ];
+    int len = pdu_pack (pdu, buffer, sizeof (buffer));
+    pdu_free (pdu);
+
+    mqd_t llc_down = mq_open (link->mq_down_name, O_WRONLY);
+    int res = mq_send (llc_down, (char *) buffer, len, 0);
+    mq_close (llc_down);
+
+    llc_link_deactivate (link);
+
+    return res;
+}

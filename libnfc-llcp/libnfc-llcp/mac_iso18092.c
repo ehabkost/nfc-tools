@@ -108,6 +108,14 @@ mac_link_activate_as_initiator (struct mac_link *mac_link)
 	memcpy (info.abtNFCID3, mac_link->nfcid, sizeof (mac_link->nfcid));
 	memcpy (info.abtGB, llcp_magic_number, sizeof (llcp_magic_number));
 	info.szGB = sizeof (llcp_magic_number);
+#if 0
+	info.btDID = 0x00;
+	info.btBS = 0x0f;
+	info.btBR = 0x0f;
+	info.btTO = 0;
+	info.btPP = 0x32;
+	info.ndm = NDM_PASSIVE;
+#endif
 
 	if (nfc_initiator_select_dep_target (mac_link->device, NDM_PASSIVE, NBR_424, &info, &nt)) {
 	    MAC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%s) nfc_initiator_select_dep_target() succeeded", mac_link->device->acName);
@@ -211,9 +219,11 @@ mac_link_exchange_pdus (void *arg)
 	}
 	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d bytes", (int) len);
 
+	if (LL_ACTIVATED == link->llc_link->status) {
 	if (mq_send (link->llc_link->llc_up, (char *) buffer, len, 0) < 0) {
 	    MAC_LINK_LOG (LLC_PRIORITY_FATAL, "Can't send data to LLC Link: %s", strerror (errno));
 	    break;
+	}
 	}
 
 	struct timespec ts;

@@ -29,6 +29,10 @@
 
 struct llc_link {
     uint8_t role;
+    enum {
+	LL_ACTIVATED,
+	LL_DEACTIVATED,
+    } status;
     struct llcp_version version;
     uint16_t local_miu;
     uint16_t remote_miu;

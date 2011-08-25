@@ -230,7 +230,7 @@ spawn_logical_data_link:
 	case PDU_DISC:
 	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_TRACE, "Disconnect PDU");
 	    if (!pdu->dsap && !pdu->ssap) {
-		mac_link_deactivate (link->mac_link, MAC_DEACTIVATE_ON_REQUEST);
+		link->status = LL_DEACTIVATED;
 		pthread_exit ((void *) 2);
 		break;
 	    } else {
