@@ -199,7 +199,7 @@ spawn_logical_data_link:
 		break;
 	    }
 
-	    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Spawning Data Link Connection [%d -> %d]", pdu->ssap, pdu->dsap);
+	    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Spawning Data Link Connection [%d -> %d] accept routine", pdu->ssap, pdu->dsap);
 	    int error;
 	    if (!(connection = llc_data_link_connection_new (link, pdu, &error))) {
 		struct pdu *reply;
@@ -492,8 +492,8 @@ spawn_logical_data_link:
 	pthread_testcancel();
 
 	if (length <= 0) {
-	    buffer[0] = buffer[1] = '\x00';
-	    length = 2;
+	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_TRACE, "Nothing to send");
+	    continue;
 	}
 
 	res = mq_send (llc_down, (char *) buffer, length, 0);

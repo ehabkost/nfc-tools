@@ -228,11 +228,19 @@ mac_link_exchange_pdus (void *arg)
 
 	struct timespec ts;
 	ts.tv_sec = 0;
-	ts.tv_nsec = 500000000;
-	ts.tv_nsec = 10000000;
-	nanosleep (&ts, NULL); // TODO Adjust me
+	ts.tv_nsec = 10000000; // TODO Adjust me
 
-	len = mq_receive (link->llc_link->llc_down, (char *) buffer, sizeof (buffer), NULL);
+	len = mq_timedreceive (link->llc_link->llc_down, (char *) buffer, sizeof (buffer), NULL, &ts);
+	if (len < 0) {
+	    switch (errno) {
+	    case ETIMEDOUT:
+		buffer[0] = buffer[1] = 0x00;
+		len = 2;
+		break;
+	    default:
+		break;
+	    }
+	}
 	if (len < 0) {
 	    MAC_LINK_LOG (LLC_PRIORITY_FATAL, "Can't receive data from LLC Link: %s", strerror (errno));
 	    break;

@@ -21,6 +21,7 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <cutter.h>
 #include <fcntl.h>
 #include <mqueue.h>
@@ -100,14 +101,28 @@ dummy_mac_transport (struct llc_link *initiator, struct llc_link *target)
     char buffer[1024];
 
     for (;;) {
-	n = mq_receive (initiator->llc_down, buffer, sizeof (buffer), NULL);
-	if (n < 0) break;
+	struct timespec ts = {
+	    .tv_sec = 0,
+	    .tv_nsec = 10000,
+	};
+	n = mq_timedreceive (initiator->llc_down, buffer, sizeof (buffer), NULL, &ts);
+	if (n < 0) {
+	    if (errno == ETIMEDOUT) {
+		n = 2;
+		buffer[0] = buffer[1] = 0x00;
+	    } else break;
+	}
 	pthread_testcancel ();
 	n = mq_send (target->llc_up, buffer, n, 0);
 	if (n < 0) break;
 	pthread_testcancel ();
-	n = mq_receive (target->llc_down, buffer, sizeof (buffer), NULL);
-	if (n < 0) break;
+	n = mq_timedreceive (target->llc_down, buffer, sizeof (buffer), NULL, &ts);
+	if (n < 0) {
+	    if (errno == ETIMEDOUT) {
+		n = 2;
+		buffer[0] = buffer[1] = 0x00;
+	    } else break;
+	}
 	pthread_testcancel ();
 	n = mq_send (initiator->llc_up, buffer, n, 0);
 	if (n < 0) break;

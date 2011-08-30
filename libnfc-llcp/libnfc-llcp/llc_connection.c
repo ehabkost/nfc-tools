@@ -246,7 +246,7 @@ llc_connection_accept (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
 
-    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accpeted", connection->ssap, connection->dsap);
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accepted", connection->ssap, connection->dsap);
 
     connection->status = DLC_ACCEPTED;
     connection->thread = 0;
