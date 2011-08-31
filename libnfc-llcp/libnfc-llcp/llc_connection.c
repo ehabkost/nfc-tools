@@ -21,9 +21,11 @@
 
 #include "config.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <mqueue.h>
 #include <stdio.h>
@@ -91,7 +93,7 @@ llc_connection_start (struct llc_connection *connection)
     };
 
     asprintf (&connection->mq_up_name, "/libnfc-llcp-%d-%p-%s", getpid(), (void *) connection, "up");
-    connection->llc_up = mq_open (connection->mq_up_name, O_WRONLY | O_CREAT | O_NONBLOCK, 0666, &attr_up);
+    connection->llc_up = mq_open (connection->mq_up_name, O_RDWR | O_CREAT, 0666, &attr_up);
     if (connection->llc_up == (mqd_t) -1) {
 	LLC_CONNECTION_LOG (LLC_PRIORITY_FATAL, "Cannot open message queue '%s'", connection->mq_up_name);
 	llc_connection_free (connection);
@@ -263,6 +265,29 @@ llc_connection_reject (struct llc_connection *connection)
     connection->status = DLC_REJECTED;
     connection->thread = 0;
     pthread_exit (NULL);
+}
+
+int
+llc_connection_recv (struct llc_connection *connection, uint8_t *data, size_t len, uint8_t *ssap)
+{
+    int res;
+
+    uint8_t buffer[BUFSIZ];
+    res = mq_receive (connection->llc_up, (char *) buffer, sizeof (buffer), 0);
+    if (res < 0) {
+	LLC_CONNECTION_LOG (LLC_PRIORITY_ERROR, "mq_receive: %s", strerror (errno));
+	return -1;
+    }
+
+    struct pdu *pdu = pdu_unpack (buffer, res);
+    pdu_free (pdu);
+    len = MIN (pdu->information_size, len);
+    memcpy (data, pdu->information, len);
+
+    if (ssap)
+	*ssap = pdu->ssap;
+
+    return len;
 }
 
 int

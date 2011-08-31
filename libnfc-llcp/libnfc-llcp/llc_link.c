@@ -335,6 +335,25 @@ llc_link_find_sap_by_uri (const struct llc_link *link, const char *uri)
     return res;
 }
 
+int
+llc_link_send_data (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap, const uint8_t *data, size_t len)
+{
+    assert (link);
+    assert (link->status == LL_ACTIVATED);
+
+    struct pdu *pdu;
+    if (!(pdu = pdu_new (remote_sap, PDU_UI, local_sap, 0, 0, data, len)))
+	return -1;
+    uint8_t buffer[BUFSIZ];
+    len = pdu_pack (pdu, buffer, sizeof (buffer));
+    pdu_free (pdu);
+
+    if (mq_send (link->llc_down, (char *) buffer, len, 0) < 0)
+	return -1;
+
+    return 0;
+}
+
 void
 llc_link_deactivate (struct llc_link *link)
 {
