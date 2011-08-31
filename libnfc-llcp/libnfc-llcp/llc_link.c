@@ -362,6 +362,21 @@ llc_link_send_data (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap
     return 0;
 }
 
+
+int
+llc_link_connect (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap)
+{
+    struct pdu *pdu = pdu_new (remote_sap, PDU_CONNECT, local_sap, 0, 0, NULL, 0);
+    uint8_t buffer[BUFSIZ];
+    int len = pdu_pack (pdu, buffer, sizeof (buffer));
+    pdu_free (pdu);
+
+    int res = mq_send (link->llc_down, (char *) buffer, len, 0);
+    link->transmission_handlers[local_sap]->status = DLC_NEW;
+
+    return res;
+}
+
 void
 llc_link_deactivate (struct llc_link *link)
 {

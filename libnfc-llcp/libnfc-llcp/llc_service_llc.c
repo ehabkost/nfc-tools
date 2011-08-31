@@ -249,6 +249,17 @@ spawn_logical_data_link:
 		}
 	    }
 	    break;
+	case PDU_CC:
+	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_FATAL, "Connection Complete PDU");
+	    connection = link->transmission_handlers[pdu->dsap];
+	    connection->dsap = pdu->ssap;
+	    connection->status = DLC_RECEIVED_CC;
+	    break;
+	case PDU_DM:
+	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_FATAL, "Disconnected Mode PDU");
+	    llc_connection_stop (link->transmission_handlers[pdu->dsap]);
+	    link->transmission_handlers[pdu->dsap]->status = DLC_REJECTED;
+	    break;
 	case PDU_I:
 	    assert (link->transmission_handlers[pdu->dsap]);
 	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_TRACE, "Information PDU");
@@ -442,7 +453,8 @@ spawn_logical_data_link:
 			    reply = pdu_new_cc (connection->ssap, connection->dsap);
 			    length = pdu_pack (reply, buffer, sizeof (buffer));
 			    pdu_free (reply);
-
+			    /* FALLTHROUGH */
+			case DLC_RECEIVED_CC:
 			    if (pthread_create (&connection->thread, NULL, connection->link->available_services[connection->sap]->thread_routine, connection) < 0) {
 				LLC_SERVICE_LLC_MSG (LLC_PRIORITY_FATAL, "Cannot start Data Link Connection thread");
 				link->transmission_handlers[i]->status = DLC_DISCONNECTED;

@@ -106,7 +106,7 @@ llc_connection_start (struct llc_connection *connection)
     };
 
     asprintf (&connection->mq_down_name, "/libnfc-llcp-%d-%p-%s", getpid(), (void *) connection, "down");
-    connection->llc_down = mq_open (connection->mq_down_name, O_RDONLY | O_CREAT | O_NONBLOCK, 0666, &attr_down);
+    connection->llc_down = mq_open (connection->mq_down_name, O_RDWR | O_CREAT | O_NONBLOCK, 0666, &attr_down);
     if (connection->llc_down == (mqd_t) -1) {
 	LLC_CONNECTION_LOG (LLC_PRIORITY_FATAL, "Cannot open message queue '%s'", connection->mq_down_name);
 	llc_connection_free (connection);
@@ -211,6 +211,28 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 }
 
 struct llc_connection *
+llc_outgoing_data_link_connection_new (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap)
+{
+    struct llc_connection *res;
+
+    if ((res = llc_connection_new (link, local_sap, remote_sap))) {
+	link->transmission_handlers[local_sap] = res;
+	res->sap = local_sap;
+	res->status = DLC_NEW;
+	//res->rwr = rw;
+	//res->remote_miu = miu;
+	res->local_miu  = link->available_services[local_sap]->miu;
+
+	if (llc_connection_start (res) < 0) {
+	    llc_connection_free (res);
+	    return NULL;
+	}
+    }
+
+    return res;
+}
+
+struct llc_connection *
 llc_logical_data_link_new (struct llc_link *link, const struct pdu *pdu)
 {
     assert (link);
@@ -243,6 +265,27 @@ llc_logical_data_link_new (struct llc_link *link, const struct pdu *pdu)
     return res;
 }
 
+int
+llc_connection_connect (struct llc_connection *connection)
+{
+    assert (connection);
+    assert (connection->link);
+    assert (!connection->link->transmission_handlers[connection->ssap]);
+
+    struct pdu *pdu = pdu_new (connection->dsap, PDU_CONNECT, connection->ssap, 0, 0, NULL, 0);
+    uint8_t buffer[BUFSIZ];
+    int len = pdu_pack (pdu, buffer, sizeof (buffer));
+    pdu_free (pdu);
+
+    int res = mq_send (connection->link->llc_down, (char *) buffer, len, 0);
+
+    connection->link->transmission_handlers[connection->ssap] = connection;
+
+    llc_connection_start (connection);
+
+    return res;
+}
+
 void
 llc_connection_accept (struct llc_connection *connection)
 {
@@ -265,6 +308,21 @@ llc_connection_reject (struct llc_connection *connection)
     connection->status = DLC_REJECTED;
     connection->thread = 0;
     pthread_exit (NULL);
+}
+
+int
+llc_connection_send (struct llc_connection *connection, const uint8_t *data, size_t len)
+{
+    int res;
+
+    struct pdu *pdu = pdu_new_i (connection->dsap, connection->ssap, connection, data, len);
+    uint8_t buffer[BUFSIZ];
+    len = pdu_pack (pdu, buffer, sizeof (buffer));
+    pdu_free (pdu);
+
+    res = mq_send (connection->llc_down, (char *) buffer, len, 0);
+
+    return res;
 }
 
 int

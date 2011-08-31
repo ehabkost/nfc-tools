@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <err.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <libgen.h>
 #include <signal.h>
@@ -65,6 +66,7 @@ struct {
 
 int	test_01 (struct llc_link *link);
 int	test_02 (struct llc_link *link);
+int	test_03 (struct llc_link *link);
 
 struct {
     int enabled;
@@ -73,6 +75,7 @@ struct {
 } tests[] = {
     { 0, "Link activation, symmetry and desactivation", test_01 },
     { 0, "Connectionless information transfer", test_02 },
+    { 0, "Connected information transfer", test_03 },
 };
 
 void
@@ -292,6 +295,54 @@ test_02 (struct llc_link *link)
 	return 1;
 
     sleep (1);
+
+    printf ("===> Disconnecting\n");
+    if (llcp_disconnect (link) < 0)
+	return 1;
+
+    printf ("===> Deactivating link\n");
+    llc_link_deactivate (link);
+    return 0;
+}
+
+void *
+test_03_service (void *arg)
+{
+    struct llc_connection *connection = (struct llc_connection *) arg;
+
+    uint8_t buffer1[] = "Hello World";
+    llc_connection_send (connection, buffer1, sizeof (buffer1));
+
+    uint8_t buffer2[BUFSIZ];
+    int len = llc_connection_recv (connection, buffer2, sizeof (buffer2), NULL);
+
+    printf ("Received %d bytes: %s\n", len, buffer2);
+
+    // Let the service receive the acknoledgement.
+    sleep (1);
+
+    return 0;
+}
+
+int
+test_03 (struct llc_link *link)
+{
+    if (activate_link (link) < 0) {
+	fprintf (stderr, "Cannot activate link\n");
+	return 1;
+    }
+
+    struct llc_service *service;
+
+    service = llc_service_new (NULL, test_03_service);
+    int sap = llc_link_service_bind (link, service, 19);
+    if (!(llc_outgoing_data_link_connection_new (link, sap, 17)))
+	return 1;
+
+    if (llc_link_connect (link, sap, 17) < 0)
+	return 1;
+
+    sleep (5);
 
     printf ("===> Disconnecting\n");
     if (llcp_disconnect (link) < 0)
