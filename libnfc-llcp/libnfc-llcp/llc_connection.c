@@ -57,7 +57,7 @@ llc_connection_new (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap
     if ((res = malloc (sizeof *res))) {
 	res->link = link;
 	res->thread = 0;
-	res->service_sap = 0;
+	res->service_sap = local_sap;
 	res->local_sap = local_sap;
 	res->remote_sap = remote_sap;
 	res->status = DLC_DISCONNECTED;
