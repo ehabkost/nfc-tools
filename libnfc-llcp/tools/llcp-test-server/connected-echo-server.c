@@ -48,69 +48,18 @@ connected_echo_server_thread (void *arg)
 {
     struct llc_connection *connection = (struct llc_connection *)arg;
 
-    /*
-     * Beware kids!  Don't do this at home!
-     *
-     * If you are looking for an example for using the library, you are at the
-     * WRONG place!  This tool has been designed to be a drop-in replacement of
-     * nfcpy's llcp-test-server.py and as both libraries are not implemented
-     * the same way, some hackish adaptation was required.
-     */
-    mqd_t llc_up = mq_open (connection->mq_up_name, O_RDWR);
-    if (llc_up == (mqd_t)-1)
-	return NULL;
-
-    mqd_t llc_down = mq_open (connection->mq_down_name, O_WRONLY);
-    if (llc_down == (mqd_t)-1)
-	return NULL;
-
     for (;;) {
 
 	uint8_t buffer[1024];
-	unsigned int prio;
-	/*
-	 * AWFULY HACKISH
-	 *
-	 * The nfcpy implementation blocks for data to be available, then sleep
-	 * 2 seconds, then read the data.
-	 *
-	 * Such a behavior is not possible with mqueues.  When data arrive,
-	 * prompty put it back in the up queue after increasing it's priority
-	 * so that it will be the next message to be read.  Then sleep 2
-	 * seconds, and read it again.
-	 */
-	int res = mq_receive (llc_up, (char *) buffer, sizeof (buffer), &prio);
-	pthread_testcancel ();
 
-	struct pdu *pdu = pdu_unpack (buffer, res);
-	struct pdu *reply;
-
-	switch (pdu->ptype) {
-	case PDU_I:
-	    {
-
-		/* Sleep a bit */
-
-		struct timespec ts;
-		ts.tv_sec = 2;
-		ts.tv_nsec = 0;
-
-		struct timespec ts2 = ts;
-		do {
-		    ts2 = ts;
-		} while (0 != nanosleep (&ts2, &ts));
-
-		/* send data */
-		reply = pdu_new_i (pdu->ssap, pdu->dsap, connection, pdu->information, pdu->information_size);
-
-		res = pdu_pack (reply, buffer, sizeof (buffer));
-		mq_send (llc_down, (char *) buffer, res, 0);
-		pthread_testcancel ();
-		pdu_free (reply);
-	    }
+	int len;
+	if ((len = llc_connection_recv (connection, buffer, sizeof (buffer), NULL)) < 0)
 	    break;
-	}
 
+	sleep (1);
+
+	if (llc_connection_send (connection, buffer, len) < 0)
+	    break;
     }
 
     llc_connection_stop (connection);

@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include "llc_connection.h"
+#include "llc_link.h"
 
 #include "connectionless-echo-server.h"
 
@@ -35,75 +36,13 @@ connectionless_echo_server_thread (void *arg)
 {
     struct llc_connection *connection = (struct llc_connection *)arg;
 
-    /*
-     * Beware kids!  Don't do this at home!
-     *
-     * If you are looking for an example for using the library, you are at the
-     * WRONG place!  This tool has been designed to be a drop-in replacement of
-     * nfcpy's llcp-test-server.py and as both libraries are not implemented
-     * the same way, some hackish adaptation was required.
-     */
-    mqd_t llc_up = mq_open (connection->mq_up_name, O_RDWR);
-    if (llc_up == (mqd_t)-1)
-	return NULL;
 
-    mqd_t llc_down = mq_open (connection->mq_down_name, O_WRONLY);
-    if (llc_down == (mqd_t)-1)
-	return NULL;
-
-    int res;
+    uint8_t remote_sap;
     uint8_t buffer[1024];
-#if 0
-    unsigned int prio;
-    /*
-     * AWFULY HACKISH
-     *
-     * The nfcpy implementation blocks for data to be available, then sleep
-     * 2 seconds, then read the data.
-     *
-     * Such a behavior is not possible with mqueues.  When data arrive,
-     * prompty put it back in the up queue after increasing it's priority
-     * so that it will be the next message to be read.  Then sleep 2
-     * seconds, and read it again.
-     */
-    int res = mq_receive (llc_up, (char *) buffer, sizeof (buffer), &prio);
-    pthread_testcancel ();
 
-    mq_send (llc_up, (char *) buffer, res, prio + 1);
-    pthread_testcancel ();
-#endif
+    int len = llc_connection_recv (connection, buffer, sizeof (buffer), &remote_sap);
 
-#if 0
-    struct timespec ts;
-    ts.tv_sec = 2;
-    ts.tv_nsec = 0;
-
-    struct timespec ts2 = ts;
-    do {
-	ts2 = ts;
-    } while (0 != nanosleep (&ts2, &ts));
-#endif
-
-    /*
-     * Read message (for real this time
-     */
-    res = mq_receive (llc_up, (char *) buffer, sizeof (buffer), NULL);
-    pthread_testcancel ();
-
-    /*
-     * Exchange SSAP and DSAP
-     */
-    uint8_t a, b;
-    a = buffer[0] >> 2;
-    b = buffer[1] & 0x3f;
-    buffer[0] = (b << 2) | (buffer[0] & 0x03);
-    buffer[1] = (buffer[1] & 0xc0) | a;
-
-    /*
-     * Send back the reply
-     */
-    res = mq_send (llc_down, (char *) buffer, res, 0);
-    pthread_testcancel ();
+    llc_link_send_data (connection->link, connection->service_sap, remote_sap, buffer, len);
 
     llc_connection_stop (connection);
     return NULL;
