@@ -77,8 +77,8 @@ void		 pdu_free (struct pdu *pdu);
 #define pdu_new_cc(dsap, ssap) pdu_new (dsap, PDU_CC, ssap, 0, 0, NULL, 0)
 #define pdu_new_i(dsap, ssap, conn, info, len) pdu_new (dsap, PDU_I, ssap, conn->state.r, conn->state.s, info, len)
 //#define pdu_new_rr(dsap, ssap, conn) pdu_new (dsap, PDU_RR, ssap, conn->state.r, conn->state.s, NULL, 0)
-#define pdu_new_rr(conn) pdu_new (conn->ssap, PDU_RR, conn->dsap, conn->state.r, conn->state.s, NULL, 0)
-#define pdu_new_rnr(conn) pdu_new (conn->ssap, PDU_RNR, conn->dsap, conn->state.r, conn->state.s, NULL, 0)
+#define pdu_new_rr(conn) pdu_new (conn->remote_sap, PDU_RR, conn->local_sap, conn->state.r, conn->state.s, NULL, 0)
+#define pdu_new_rnr(conn) pdu_new (conn->remote_sap, PDU_RNR, conn->local_sap, conn->state.r, conn->state.s, NULL, 0)
 #define pdu_new_dm(dsap, ssap, reason) pdu_new (dsap, PDU_DM, ssap, 0, 0, reason, 1)
 #define pdu_new_ui(dsap, ssap, info, len) pdu_new (dsap, PDU_I, ssap, 0, 0, info, len)
 

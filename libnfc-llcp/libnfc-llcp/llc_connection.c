@@ -45,10 +45,10 @@
 #define LLC_CONNECTION_MSG(priority, message) llcp_log_log (LOG_LLC_CONNECTION, priority, "%s", message)
 #define LLC_CONNECTION_LOG(priority, format, ...) llcp_log_log (LOG_LLC_CONNECTION, priority, format, __VA_ARGS__)
 
-struct llc_connection *llc_connection_new (struct llc_link *link, uint8_t ssap, uint8_t dsap);
+struct llc_connection *llc_connection_new (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap);
 
 struct llc_connection *
-llc_connection_new (struct llc_link *link, uint8_t ssap, uint8_t dsap)
+llc_connection_new (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap)
 {
     assert (link);
 
@@ -57,9 +57,9 @@ llc_connection_new (struct llc_link *link, uint8_t ssap, uint8_t dsap)
     if ((res = malloc (sizeof *res))) {
 	res->link = link;
 	res->thread = 0;
-	res->sap = 0;
-	res->dsap = dsap;
-	res->ssap = ssap;
+	res->service_sap = 0;
+	res->local_sap = local_sap;
+	res->remote_sap = remote_sap;
 	res->status = DLC_DISCONNECTED;
 
 	res->state.s  = 0;
@@ -192,10 +192,10 @@ llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int 
 	return NULL;
     }
 
-    if ((res = llc_connection_new (link, pdu->ssap, connection_dsap))) {
+    if ((res = llc_connection_new (link, connection_dsap, pdu->ssap))) {
 	assert (!link->transmission_handlers[connection_dsap]);
 	link->transmission_handlers[connection_dsap] = res;
-	res->sap = service_sap;
+	res->service_sap = service_sap;
 	res->status = DLC_NEW;
 	res->rwr = rw;
 	res->remote_miu = miu;
@@ -217,7 +217,7 @@ llc_outgoing_data_link_connection_new (struct llc_link *link, uint8_t local_sap,
 
     if ((res = llc_connection_new (link, local_sap, remote_sap))) {
 	link->transmission_handlers[local_sap] = res;
-	res->sap = local_sap;
+	res->service_sap = local_sap;
 	res->status = DLC_NEW;
 	//res->rwr = rw;
 	//res->remote_miu = miu;
@@ -253,7 +253,7 @@ llc_logical_data_link_new (struct llc_link *link, const struct pdu *pdu)
 	return NULL;
     }
 
-    if ((res = llc_connection_new (link, pdu->ssap, pdu->dsap))) {
+    if ((res = llc_connection_new (link, pdu->dsap, pdu->ssap))) {
 	link->datagram_handlers[sap] = res;
 
 	if (llc_connection_start (res) < 0) {
@@ -270,16 +270,16 @@ llc_connection_connect (struct llc_connection *connection)
 {
     assert (connection);
     assert (connection->link);
-    assert (!connection->link->transmission_handlers[connection->ssap]);
+    assert (!connection->link->transmission_handlers[connection->local_sap]);
 
-    struct pdu *pdu = pdu_new (connection->dsap, PDU_CONNECT, connection->ssap, 0, 0, NULL, 0);
+    struct pdu *pdu = pdu_new (connection->remote_sap, PDU_CONNECT, connection->local_sap, 0, 0, NULL, 0);
     uint8_t buffer[BUFSIZ];
     int len = pdu_pack (pdu, buffer, sizeof (buffer));
     pdu_free (pdu);
 
     int res = mq_send (connection->link->llc_down, (char *) buffer, len, 0);
 
-    connection->link->transmission_handlers[connection->ssap] = connection;
+    connection->link->transmission_handlers[connection->local_sap] = connection;
 
     llc_connection_start (connection);
 
@@ -291,7 +291,7 @@ llc_connection_accept (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
 
-    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accepted", connection->ssap, connection->dsap);
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accepted", connection->local_sap, connection->remote_sap);
 
     connection->status = DLC_ACCEPTED;
     connection->thread = 0;
@@ -303,7 +303,7 @@ llc_connection_reject (struct llc_connection *connection)
 {
     assert (connection->thread == pthread_self ());
 
-    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] rejected", connection->ssap, connection->dsap);
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] rejected", connection->local_sap, connection->remote_sap);
 
     connection->status = DLC_REJECTED;
     connection->thread = 0;
@@ -315,7 +315,7 @@ llc_connection_send (struct llc_connection *connection, const uint8_t *data, siz
 {
     int res;
 
-    struct pdu *pdu = pdu_new_i (connection->dsap, connection->ssap, connection, data, len);
+    struct pdu *pdu = pdu_new_i (connection->remote_sap, connection->local_sap, connection, data, len);
     uint8_t buffer[BUFSIZ];
     len = pdu_pack (pdu, buffer, sizeof (buffer));
     pdu_free (pdu);
@@ -353,7 +353,7 @@ llc_connection_stop (struct llc_connection *connection)
 {
     assert (connection);
 
-    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Stopping Data Link Connection [%d -> %d]", connection->ssap, connection->dsap);
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Stopping Data Link Connection [%d -> %d]", connection->local_sap, connection->remote_sap);
 
     if (connection->thread == pthread_self ()) {
 	connection->status = DLC_DISCONNECTED;
@@ -370,7 +370,7 @@ llc_connection_free (struct llc_connection *connection)
 {
     assert (connection);
 
-    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Freeing Data Link Connection [%d -> %d]", connection->ssap, connection->dsap);
+    LLC_CONNECTION_LOG (LLC_PRIORITY_TRACE, "Freeing Data Link Connection [%d -> %d]", connection->local_sap, connection->remote_sap);
 
     if (connection->llc_up != (mqd_t) -1)
 	mq_close (connection->llc_up);

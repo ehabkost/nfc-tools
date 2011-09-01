@@ -171,17 +171,17 @@ spawn_logical_data_link:
 	    }
 
 	    if (pthread_create (&connection->thread, NULL, link->available_services[pdu->dsap]->thread_routine, connection) < 0) {
-		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Logical Data Link [%d -> %d] thread", connection->ssap, connection->dsap);
+		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Logical Data Link [%d -> %d] thread", connection->local_sap, connection->remote_sap);
 		break;
 	    }
 #if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
-	    asprintf (&thread_name, "LDL on SAP %d", connection->sap);
+	    asprintf (&thread_name, "LDL on SAP %d", connection->service_sap);
 	    pthread_set_name_np (connection->thread, thread_name);
 	    free (thread_name);
 #endif
 
 	    if (mq_send (connection->llc_up, (char *) buffer, res, 0) < 0) {
-		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot send data to Logical Data Link [%d -> %d]", connection->ssap, connection->dsap);
+		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot send data to Logical Data Link [%d -> %d]", connection->local_sap, connection->remote_sap);
 		break;
 	    }
 
@@ -215,17 +215,17 @@ spawn_logical_data_link:
 		}
 		break;
 	    }
-	    if (pthread_create (&connection->thread, NULL, link->available_services[connection->sap]->accept_routine, connection) < 0) {
-		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Data Link Connection [%d -> %d] accept routine", connection->ssap, connection->dsap);
+	    if (pthread_create (&connection->thread, NULL, link->available_services[connection->service_sap]->accept_routine, connection) < 0) {
+		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Data Link Connection [%d -> %d] accept routine", connection->local_sap, connection->remote_sap);
 		break;
 	    }
 #if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
-	    asprintf (&thread_name, "DLC Accept on SAP %d", connection->sap);
+	    asprintf (&thread_name, "DLC Accept on SAP %d", connection->service_sap);
 	    pthread_set_name_np (connection->thread, thread_name);
 	    free (thread_name);
 #endif
 
-	    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accept routine launched (service %d)", connection->ssap, connection->dsap, connection->sap);
+	    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accept routine launched (service %d)", connection->local_sap, connection->remote_sap, connection->service_sap);
 	    break;
 	case PDU_DISC:
 	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_TRACE, "Disconnect PDU");
@@ -252,7 +252,7 @@ spawn_logical_data_link:
 	case PDU_CC:
 	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_FATAL, "Connection Complete PDU");
 	    connection = link->transmission_handlers[pdu->dsap];
-	    connection->dsap = pdu->ssap;
+	    connection->remote_sap = pdu->ssap;
 	    connection->status = DLC_RECEIVED_CC;
 	    break;
 	case PDU_DM:
@@ -357,7 +357,7 @@ spawn_logical_data_link:
 			 * The service is not running anymore and it's down
 			 * queue is empty.  It can be garbage collected.
 			 */
-			LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Garbage-collecting Logical Data Link [%d -> %d]", link->datagram_handlers[i]->ssap, link->datagram_handlers[i]->dsap);
+			LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Garbage-collecting Logical Data Link [%d -> %d]", link->datagram_handlers[i]->local_sap, link->datagram_handlers[i]->remote_sap);
 			llc_connection_free (link->datagram_handlers[i]);
 			link->datagram_handlers[i] = NULL;
 		    }
@@ -393,7 +393,7 @@ spawn_logical_data_link:
 			    /*
 			     * We can't send data now
 			     */
-			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_WARN, "Data Link Connection [%d -> %d] send-window is full.  Postponing message delivery", link->transmission_handlers[i]->ssap, link->transmission_handlers[i]->dsap);
+			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_WARN, "Data Link Connection [%d -> %d] send-window is full.  Postponing message delivery", link->transmission_handlers[i]->local_sap, link->transmission_handlers[i]->remote_sap);
 			    mq_send (link->transmission_handlers[i]->llc_down, (char *) buffer, length, 1);
 			    length = -1;
 			    continue;
@@ -449,19 +449,19 @@ spawn_logical_data_link:
 			     */
 			    break;
 			case DLC_ACCEPTED:
-			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accepted (service %d).  Sending CC", connection->ssap, connection->dsap, connection->sap);
-			    reply = pdu_new_cc (connection->ssap, connection->dsap);
+			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accepted (service %d).  Sending CC", connection->local_sap, connection->remote_sap, connection->service_sap);
+			    reply = pdu_new_cc (connection->remote_sap, connection->local_sap);
 			    length = pdu_pack (reply, buffer, sizeof (buffer));
 			    pdu_free (reply);
 			    /* FALLTHROUGH */
 			case DLC_RECEIVED_CC:
-			    if (pthread_create (&connection->thread, NULL, connection->link->available_services[connection->sap]->thread_routine, connection) < 0) {
+			    if (pthread_create (&connection->thread, NULL, connection->link->available_services[connection->service_sap]->thread_routine, connection) < 0) {
 				LLC_SERVICE_LLC_MSG (LLC_PRIORITY_FATAL, "Cannot start Data Link Connection thread");
 				link->transmission_handlers[i]->status = DLC_DISCONNECTED;
 				break;
 			    }
 #if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
-			    asprintf (&thread_name, "DLC on SAP %d", connection->sap);
+			    asprintf (&thread_name, "DLC on SAP %d", connection->service_sap);
 			    pthread_set_name_np (connection->thread, thread_name);
 			    free (thread_name);
 #endif
@@ -472,7 +472,7 @@ spawn_logical_data_link:
 			    link->transmission_handlers[i]->status = DLC_DISCONNECTED;
 			    /* FALLTHROUGH */
 			case DLC_DISCONNECTED:
-			    reply = pdu_new_dm (connection->ssap, connection->dsap, reason);
+			    reply = pdu_new_dm (connection->remote_sap, connection->local_sap, reason);
 			    length = pdu_pack (reply, buffer, sizeof (buffer));
 			    pdu_free (reply);
 			    link->transmission_handlers[i]->status = DLC_TERMINATED;
@@ -482,7 +482,7 @@ spawn_logical_data_link:
 			     * The service is not running anymore and it's down
 			     * queue is empty.  It can be garbage collected.
 			     */
-			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Garbage-collecting Data Link Connection [%d -> %d]", link->transmission_handlers[i]->ssap, link->transmission_handlers[i]->dsap);
+			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Garbage-collecting Data Link Connection [%d -> %d]", link->transmission_handlers[i]->local_sap, link->transmission_handlers[i]->remote_sap);
 			    llc_connection_free (link->transmission_handlers[i]);
 			    link->transmission_handlers[i] = NULL;
 			    break;

@@ -32,9 +32,9 @@ struct pdu;
 struct llc_link;
 
 struct llc_connection {
-    uint8_t sap;
-    uint8_t dsap;
-    uint8_t ssap;
+    uint8_t service_sap;
+    uint8_t remote_sap;
+    uint8_t local_sap;
     enum {
 	DLC_NEW,
 	DLC_ACCEPTED,

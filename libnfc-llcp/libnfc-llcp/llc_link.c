@@ -404,27 +404,27 @@ llc_link_deactivate (struct llc_link *link)
 	}
     }
 
-    uint8_t ssap;
-    uint8_t dsap;
+    uint8_t local_sap;
+    uint8_t remote_sap;
 
     for (int i = 0; i <= MAX_LOGICAL_DATA_LINK; i++) {
 	if (link->datagram_handlers[i]) {
-	    dsap = link->datagram_handlers[i]->dsap;
-	    ssap = link->datagram_handlers[i]->ssap;
-	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping Logical Data Link [%d -> %d]", ssap, dsap);
+	    remote_sap = link->datagram_handlers[i]->remote_sap;
+	    local_sap = link->datagram_handlers[i]->local_sap;
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping Logical Data Link [%d -> %d]", local_sap, remote_sap);
 	    llc_connection_stop (link->datagram_handlers[i]);
 	    llc_connection_free (link->datagram_handlers[i]);
 	    link->datagram_handlers[i] = NULL;
-	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Logical Data Link [%d -> %d] stopped", ssap, dsap);
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Logical Data Link [%d -> %d] stopped", local_sap, remote_sap);
 	}
     }
     for (int i = 0; i <= MAX_LLC_LINK_SERVICE; i++) {
 	if (link->transmission_handlers[i]) {
-	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping Data Link Connection [%d -> %d]", ssap, dsap);
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Stopping Data Link Connection [%d -> %d]", local_sap, remote_sap);
 	    llc_connection_stop (link->transmission_handlers[i]);
 	    llc_connection_free (link->transmission_handlers[i]);
 	    link->transmission_handlers[i] = NULL;
-	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Data Link Connection [%d -> %d] stopped", ssap, dsap);
+	    LLC_LINK_LOG (LLC_PRIORITY_INFO, "Data Link Connection [%d -> %d] stopped", local_sap, remote_sap);
 	}
     }
 

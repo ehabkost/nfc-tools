@@ -86,18 +86,18 @@ test_llc_data_link_connection_new (void)
 
     connection1 = llc_data_link_connection_new (llc_link, pdu, &reason);
     cut_assert_not_null (connection1, cut_message ("llc_data_link_connection_new"));
-    cut_assert_equal_int (17, connection1->sap, cut_message ("Wrong SAP"));
-    cut_assert_equal_int (17, connection1->dsap, cut_message ("Wrong DSAP"));
-    cut_assert_equal_int (32, connection1->ssap, cut_message ("Wrong SSAP"));
+    cut_assert_equal_int (17, connection1->service_sap, cut_message ("Wrong SAP"));
+    cut_assert_equal_int (17, connection1->local_sap, cut_message ("Wrong DSAP"));
+    cut_assert_equal_int (32, connection1->remote_sap, cut_message ("Wrong SSAP"));
 
     connection1->status = DLC_DISCONNECTED;
 
     connection2 = llc_data_link_connection_new (llc_link, pdu, &reason);
     cut_assert_not_null (connection2, cut_message ("llc_data_link_connection_new()"));
 
-    cut_assert_equal_int (17, connection2->sap, cut_message ("Wrong SAP"));
-    cut_assert_equal_int (18, connection2->dsap, cut_message ("Wrong DSAP"));
-    cut_assert_equal_int (32, connection2->ssap, cut_message ("Wrong SSAP"));
+    cut_assert_equal_int (17, connection2->service_sap, cut_message ("Wrong SAP"));
+    cut_assert_equal_int (18, connection2->local_sap, cut_message ("Wrong DSAP"));
+    cut_assert_equal_int (32, connection2->remote_sap, cut_message ("Wrong SSAP"));
 
     llc_link_service_unbind (llc_link, 17);
 
@@ -137,16 +137,16 @@ test_llc_logical_data_link_new (void)
     connection1 = llc_logical_data_link_new (llc_link, pdu);
     cut_assert_not_null (connection1, cut_message ("llc_logical_data_link_new"));
 
-    cut_assert_equal_int (0, connection1->sap, cut_message ("Wrong SAP"));
-    cut_assert_equal_int (32, connection1->dsap, cut_message ("Wrong DSAP"));
-    cut_assert_equal_int (24, connection1->ssap, cut_message ("Wrong SSAP"));
+    cut_assert_equal_int (0, connection1->service_sap, cut_message ("Wrong SAP"));
+    cut_assert_equal_int (32, connection1->local_sap, cut_message ("Wrong DSAP"));
+    cut_assert_equal_int (24, connection1->remote_sap, cut_message ("Wrong SSAP"));
 
     connection2 = llc_logical_data_link_new (llc_link, pdu);
     cut_assert_not_null (connection2, cut_message ("llc_logical_data_link_new()"));
 
-    cut_assert_equal_int (0, connection2->sap, cut_message ("Wrong SAP"));
-    cut_assert_equal_int (32, connection2->dsap, cut_message ("Wrong DSAP"));
-    cut_assert_equal_int (24, connection2->ssap, cut_message ("Wrong SSAP"));
+    cut_assert_equal_int (0, connection2->service_sap, cut_message ("Wrong SAP"));
+    cut_assert_equal_int (32, connection2->local_sap, cut_message ("Wrong DSAP"));
+    cut_assert_equal_int (24, connection2->remote_sap, cut_message ("Wrong SSAP"));
 
     llc_link_service_unbind (llc_link, 32);
 
