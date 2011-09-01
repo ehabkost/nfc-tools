@@ -318,8 +318,10 @@ test_03_service (void *arg)
 
     printf ("Received %d bytes: %s\n", len, buffer2);
 
-    // Let the service receive the acknoledgement.
-    sleep (1);
+    // XXX Let the service receive the acknoledgement.
+    while ((connection->state.r != connection->state.ra) ||
+	   (connection->state.s != connection->state.sa))
+	sleep (1);
 
     return 0;
 }
