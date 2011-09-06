@@ -344,35 +344,46 @@ llc_link_find_sap_by_uri (const struct llc_link *link, const char *uri)
 }
 
 int
-llc_link_send_data (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap, const uint8_t *data, size_t len)
+llc_link_send_pdu (struct llc_link *link, const struct pdu *pdu)
 {
     assert (link);
     assert (link->status == LL_ACTIVATED);
-
-    struct pdu *pdu;
-    if (!(pdu = pdu_new (remote_sap, PDU_UI, local_sap, 0, 0, data, len)))
+    if (!pdu) {
+	LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Can't send empty PDU");
 	return -1;
+    }
+
     uint8_t buffer[BUFSIZ];
-    len = pdu_pack (pdu, buffer, sizeof (buffer));
-    pdu_free (pdu);
+    int len = pdu_pack (pdu, buffer, sizeof (buffer));
 
-    if (mq_send (link->llc_down, (char *) buffer, len, 0) < 0)
+    if (mq_send (link->llc_down, (char *) buffer, len, 0) < 0) {
+	LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Error enqueuing PDU");
 	return -1;
+    }
 
     return 0;
 }
 
+int
+llc_link_send_data (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap, const uint8_t *data, size_t len)
+{
+    struct pdu *pdu = pdu_new (remote_sap, PDU_UI, local_sap, 0, 0, data, len);
+    int res = llc_link_send_pdu (link, pdu);
+    pdu_free (pdu);
+
+    return res;
+}
 
 int
 llc_link_connect (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap)
 {
     struct pdu *pdu = pdu_new (remote_sap, PDU_CONNECT, local_sap, 0, 0, NULL, 0);
-    uint8_t buffer[BUFSIZ];
-    int len = pdu_pack (pdu, buffer, sizeof (buffer));
+    int res = llc_link_send_pdu (link, pdu);
     pdu_free (pdu);
 
-    int res = mq_send (link->llc_down, (char *) buffer, len, 0);
-    link->transmission_handlers[local_sap]->status = DLC_NEW;
+    if (res >= 0) {
+	link->transmission_handlers[local_sap]->status = DLC_NEW;
+    }
 
     return res;
 }

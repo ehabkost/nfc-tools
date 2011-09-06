@@ -119,14 +119,9 @@ int
 llcp_disconnect (struct llc_link *link)
 {
     assert (link);
-    struct pdu *pdu;
-    if (!(pdu = pdu_new (0, PDU_DISC, 0, 0, 0, NULL, 0)))
-	return -1;
-    uint8_t buffer[BUFSIZ];
-    int len = pdu_pack (pdu, buffer, sizeof (buffer));
+    struct pdu *pdu = pdu_new (0, PDU_DISC, 0, 0, 0, NULL, 0);
+    int res = llc_link_send_pdu (link, pdu);
     pdu_free (pdu);
-
-    int res = mq_send (link->llc_down, (char *) buffer, len, 0);
 
     llc_link_deactivate (link);
 

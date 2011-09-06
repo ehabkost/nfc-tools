@@ -273,15 +273,13 @@ llc_connection_connect (struct llc_connection *connection)
     assert (!connection->link->transmission_handlers[connection->local_sap]);
 
     struct pdu *pdu = pdu_new (connection->remote_sap, PDU_CONNECT, connection->local_sap, 0, 0, NULL, 0);
-    uint8_t buffer[BUFSIZ];
-    int len = pdu_pack (pdu, buffer, sizeof (buffer));
+    int res = llc_link_send_pdu (connection->link, pdu);
     pdu_free (pdu);
 
-    int res = mq_send (connection->link->llc_down, (char *) buffer, len, 0);
-
-    connection->link->transmission_handlers[connection->local_sap] = connection;
-
-    llc_connection_start (connection);
+    if (res >= 0) {
+	connection->link->transmission_handlers[connection->local_sap] = connection;
+	llc_connection_start (connection);
+    }
 
     return res;
 }
@@ -313,14 +311,9 @@ llc_connection_reject (struct llc_connection *connection)
 int
 llc_connection_send (struct llc_connection *connection, const uint8_t *data, size_t len)
 {
-    int res;
-
     struct pdu *pdu = pdu_new_i (connection->remote_sap, connection->local_sap, connection, data, len);
-    uint8_t buffer[BUFSIZ];
-    len = pdu_pack (pdu, buffer, sizeof (buffer));
+    int res = llc_link_send_pdu (connection->link, pdu);
     pdu_free (pdu);
-
-    res = mq_send (connection->llc_down, (char *) buffer, len, 0);
 
     return res;
 }
