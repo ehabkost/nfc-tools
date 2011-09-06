@@ -68,7 +68,6 @@ int		 llc_link_encode_parameters (const struct llc_link *link, uint8_t *paramete
 uint8_t		 llc_link_find_sap_by_uri (const struct llc_link *link, const char *uri);
 int		 llc_link_send_pdu (struct llc_link *link, const struct pdu *pdu);
 int		 llc_link_send_data (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap, const uint8_t *data, size_t len);
-int		 llc_link_connect (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap);
 void		 llc_link_deactivate (struct llc_link *link);
 void		 llc_link_free (struct llc_link *link);
 

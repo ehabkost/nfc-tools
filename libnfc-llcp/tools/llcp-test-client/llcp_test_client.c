@@ -338,10 +338,11 @@ test_03 (struct llc_link *link)
 
     service = llc_service_new (NULL, test_03_service);
     int sap = llc_link_service_bind (link, service, 19);
-    if (!(llc_outgoing_data_link_connection_new (link, sap, 17)))
+    struct llc_connection * con = llc_outgoing_data_link_connection_new (link, sap, 17);
+    if (!con)
 	return 1;
 
-    if (llc_link_connect (link, sap, 17) < 0)
+    if (llc_connection_connect (con) < 0)
 	return 1;
 
     sleep (5);

@@ -270,7 +270,6 @@ llc_connection_connect (struct llc_connection *connection)
 {
     assert (connection);
     assert (connection->link);
-    assert (!connection->link->transmission_handlers[connection->local_sap]);
 
     struct pdu *pdu = pdu_new (connection->remote_sap, PDU_CONNECT, connection->local_sap, 0, 0, NULL, 0);
     int res = llc_link_send_pdu (connection->link, pdu);
@@ -278,6 +277,7 @@ llc_connection_connect (struct llc_connection *connection)
 
     if (res >= 0) {
 	connection->link->transmission_handlers[connection->local_sap] = connection;
+	connection->status = DLC_NEW;
 	llc_connection_start (connection);
     }
 
