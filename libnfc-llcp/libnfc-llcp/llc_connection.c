@@ -60,6 +60,7 @@ llc_connection_new (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap
 	res->service_sap = local_sap;
 	res->local_sap = local_sap;
 	res->remote_sap = remote_sap;
+	res->remote_uri = NULL;
 	res->status = DLC_DISCONNECTED;
 
 	res->state.s  = 0;
@@ -233,6 +234,29 @@ llc_outgoing_data_link_connection_new (struct llc_link *link, uint8_t local_sap,
 }
 
 struct llc_connection *
+llc_outgoing_data_link_connection_new_by_uri (struct llc_link *link, uint8_t local_sap, const char *remote_uri)
+{
+    struct llc_connection *res;
+
+    if ((res = llc_connection_new (link, local_sap, 1))) {
+	link->transmission_handlers[local_sap] = res;
+	res->service_sap = local_sap;
+	res->status = DLC_NEW;
+	//res->rwr = rw;
+	//res->remote_miu = miu;
+	res->local_miu  = link->available_services[local_sap]->miu;
+	res->remote_uri = strdup (remote_uri);
+
+	if (llc_connection_start (res) < 0) {
+	    llc_connection_free (res);
+	    return NULL;
+	}
+    }
+
+    return res;
+}
+
+struct llc_connection *
 llc_logical_data_link_new (struct llc_link *link, const struct pdu *pdu)
 {
     assert (link);
@@ -271,7 +295,15 @@ llc_connection_connect (struct llc_connection *connection)
     assert (connection);
     assert (connection->link);
 
-    struct pdu *pdu = pdu_new (connection->remote_sap, PDU_CONNECT, connection->local_sap, 0, 0, NULL, 0);
+    uint8_t buffer[BUFSIZ];
+    size_t len = 0;
+    if (connection->remote_uri) {
+	int r = parameter_encode_sn (buffer, sizeof (buffer) - len, connection->remote_uri);
+	if (r >= 0)
+	    len += r;
+    }
+
+    struct pdu *pdu = pdu_new (connection->remote_sap, PDU_CONNECT, connection->local_sap, 0, 0, buffer, len);
     int res = llc_link_send_pdu (connection->link, pdu);
     pdu_free (pdu);
 
@@ -398,5 +430,6 @@ llc_connection_free (struct llc_connection *connection)
 
     free (connection->mq_up_name);
     free (connection->mq_down_name);
+    free (connection->remote_uri);
     free (connection);
 }

@@ -35,6 +35,7 @@ struct llc_connection {
     uint8_t service_sap;
     uint8_t remote_sap;
     uint8_t local_sap;
+    char *remote_uri;
     enum {
 	DLC_NEW,
 	DLC_ACCEPTED,
@@ -65,6 +66,7 @@ struct llc_connection {
 struct llc_connection *llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int *reason);
 struct llc_connection *llc_logical_data_link_new (struct llc_link *link, const struct pdu *pdu);
 struct llc_connection *llc_outgoing_data_link_connection_new (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap);
+struct llc_connection *llc_outgoing_data_link_connection_new_by_uri (struct llc_link *link, uint8_t local_sap, const char *remote_uri);
 int		 llc_connection_connect (struct llc_connection *connection);
 void		 llc_connection_accept (struct llc_connection *connection);
 void		 llc_connection_reject (struct llc_connection *connection);

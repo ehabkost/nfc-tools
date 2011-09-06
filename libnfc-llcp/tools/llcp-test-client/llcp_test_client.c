@@ -67,6 +67,7 @@ struct {
 int	test_01 (struct llc_link *link);
 int	test_02 (struct llc_link *link);
 int	test_03 (struct llc_link *link);
+int	test_04 (struct llc_link *link);
 
 struct {
     int enabled;
@@ -76,6 +77,7 @@ struct {
     { 0, "Link activation, symmetry and desactivation", test_01 },
     { 0, "Connectionless information transfer", test_02 },
     { 0, "Connected information transfer", test_03 },
+    { 0, "Connected information transfer (using SN)", test_04 },
 };
 
 void
@@ -339,6 +341,36 @@ test_03 (struct llc_link *link)
     service = llc_service_new (NULL, test_03_service);
     int sap = llc_link_service_bind (link, service, 19);
     struct llc_connection * con = llc_outgoing_data_link_connection_new (link, sap, 17);
+    if (!con)
+	return 1;
+
+    if (llc_connection_connect (con) < 0)
+	return 1;
+
+    sleep (5);
+
+    printf ("===> Disconnecting\n");
+    if (llcp_disconnect (link) < 0)
+	return 1;
+
+    printf ("===> Deactivating link\n");
+    llc_link_deactivate (link);
+    return 0;
+}
+
+int
+test_04 (struct llc_link *link)
+{
+    if (activate_link (link) < 0) {
+	fprintf (stderr, "Cannot activate link\n");
+	return 1;
+    }
+
+    struct llc_service *service;
+
+    service = llc_service_new (NULL, test_03_service);
+    int sap = llc_link_service_bind (link, service, 19);
+    struct llc_connection * con = llc_outgoing_data_link_connection_new_by_uri (link, sap, "urn:nfc:sn:co-echo");
     if (!con)
 	return 1;
 
