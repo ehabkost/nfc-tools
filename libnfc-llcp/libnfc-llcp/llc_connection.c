@@ -309,10 +309,32 @@ llc_connection_reject (struct llc_connection *connection)
 }
 
 int
+llc_connection_send_pdu (struct llc_connection *connection, const struct pdu *pdu)
+{
+    assert (connection);
+    assert (connection->status == DLC_CONNECTED);
+
+    if (!pdu) {
+	LLC_CONNECTION_MSG (LLC_PRIORITY_ERROR, "Can't send empty PDU");
+	return -1;
+    }
+
+    uint8_t buffer[BUFSIZ];
+    int len = pdu_pack (pdu, buffer, sizeof (buffer));
+
+    if (mq_send (connection->llc_down, (char *) buffer, len, 0) < 0) {
+	LLC_CONNECTION_MSG (LLC_PRIORITY_ERROR, "Error enqueuing PDU");
+	return -1;
+    }
+
+    return 0;
+}
+
+int
 llc_connection_send (struct llc_connection *connection, const uint8_t *data, size_t len)
 {
     struct pdu *pdu = pdu_new_i (connection->remote_sap, connection->local_sap, connection, data, len);
-    int res = llc_link_send_pdu (connection->link, pdu);
+    int res = llc_connection_send_pdu (connection, pdu);
     pdu_free (pdu);
 
     return res;

@@ -67,6 +67,7 @@ struct llc_connection *llc_logical_data_link_new (struct llc_link *link, const s
 struct llc_connection *llc_outgoing_data_link_connection_new (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap);
 void		 llc_connection_accept (struct llc_connection *connection);
 void		 llc_connection_reject (struct llc_connection *connection);
+int		 llc_connection_send_pdu (struct llc_connection *connection, const struct pdu *pdu);
 int		 llc_connection_send (struct llc_connection *connection, const uint8_t *data, size_t len);
 int		 llc_connection_recv (struct llc_connection *connection, uint8_t *data, size_t len, uint8_t *ssap);
 int		 llc_connection_stop (struct llc_connection *connection);
