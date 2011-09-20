@@ -81,6 +81,18 @@ llc_service_set_miu (struct llc_service *service, uint16_t miu)
     service->miu = miu;
 }
 
+uint8_t
+llc_service_get_rw (const struct llc_service *service)
+{
+    return service->rw;
+}
+
+void
+llc_service_set_rw (struct llc_service *service, uint8_t rw)
+{
+    service->rw = rw;
+}
+
 const char *
 llc_service_get_uri (const struct llc_service *service)
 {
