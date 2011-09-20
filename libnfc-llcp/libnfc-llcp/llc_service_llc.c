@@ -215,6 +215,10 @@ spawn_logical_data_link:
 		}
 		break;
 	    }
+	    if (!link->available_services[connection->service_sap]->accept_routine) {
+		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Data Link Connection [%d -> %d] accepted (no accept routine provided)", connection->local_sap, connection->remote_sap);
+		connection->status = DLC_ACCEPTED;
+	    } else
 	    if (pthread_create (&connection->thread, NULL, link->available_services[connection->service_sap]->accept_routine, connection) < 0) {
 		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Data Link Connection [%d -> %d] accept routine", connection->local_sap, connection->remote_sap);
 		break;
@@ -450,7 +454,7 @@ spawn_logical_data_link:
 			    break;
 			case DLC_ACCEPTED:
 			    LLC_SERVICE_LLC_LOG (LLC_PRIORITY_TRACE, "Data Link Connection [%d -> %d] accepted (service %d).  Sending CC", connection->local_sap, connection->remote_sap, connection->service_sap);
-			    reply = pdu_new_cc (connection->remote_sap, connection->local_sap);
+			    reply = pdu_new_cc (connection);
 			    length = pdu_pack (reply, buffer, sizeof (buffer));
 			    pdu_free (reply);
 			    /* FALLTHROUGH */

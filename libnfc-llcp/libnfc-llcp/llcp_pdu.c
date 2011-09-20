@@ -28,6 +28,7 @@
 
 #include "llc_connection.h"
 #include "llcp_log.h"
+#include "llcp_parameters.h"
 #include "llcp_pdu.h"
 
 #define LOG_LLC_PDU "libnfc-llcp.llc.pdu"
@@ -89,6 +90,25 @@ pdu_new (uint8_t dsap, uint8_t ptype, uint8_t ssap, uint8_t nr, uint8_t ns, cons
     }
 
     return pdu;
+}
+
+struct pdu *
+pdu_new_cc (const struct llc_connection *connection)
+{
+    struct pdu *res;
+
+    uint8_t buffer[BUFSIZ];
+    int len = 0, r;
+
+    r = parameter_encode_miux (buffer + len, sizeof (buffer) - len, connection->local_miu);
+    if (r >= 0)
+	len += r;
+    r = parameter_encode_rw (buffer + len, sizeof (buffer) - len, connection->rwl);
+    if (r >= 0)
+	len += r;
+
+    res = pdu_new (connection->remote_sap, PDU_CC, connection->local_sap, 0, 0, buffer, len);
+    return res;
 }
 
 struct pdu *
