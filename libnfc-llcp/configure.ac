@@ -93,6 +93,8 @@ fi
 AC_OUTPUT([
 	   Makefile
 	   doc/Makefile
+	   examples/Makefile
+	   examples/nexus-get-tag/Makefile
 	   libnfc-llcp/Makefile
 	   test/Makefile
 	   tools/Makefile

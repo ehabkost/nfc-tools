@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = doc libnfc-llcp test tools
+SUBDIRS = doc libnfc-llcp test tools examples
 
 dist-hook:
 	@if ! grep -qi "$$(LC_ALL=C date +'%d %b %Y')" NEWS; then \
