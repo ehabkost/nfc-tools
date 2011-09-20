@@ -385,13 +385,13 @@ llc_connection_recv (struct llc_connection *connection, uint8_t *data, size_t le
     }
 
     struct pdu *pdu = pdu_unpack (buffer, res);
-    pdu_free (pdu);
     len = MIN (pdu->information_size, len);
     memcpy (data, pdu->information, len);
 
     if (ssap)
 	*ssap = pdu->ssap;
 
+    pdu_free (pdu);
     return len;
 }
 
