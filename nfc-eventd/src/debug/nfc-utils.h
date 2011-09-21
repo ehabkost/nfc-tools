@@ -38,6 +38,46 @@
 
 #  include <stdlib.h>
 #  include <string.h>
+#  include <err.h>
+
+/**
+ * @macro DBG
+ * @brief Print a message of standard output only in DEBUG mode
+ */
+#ifdef DEBUG
+#  define DBG(...) do { \
+    warnx ("DBG %s:%d", __FILE__, __LINE__); \
+    warnx ("    " __VA_ARGS__ ); \
+  } while (0)
+#else
+#  define DBG(...) {}
+#endif
+
+/**
+ * @macro WARN
+ * @brief Print a warn message
+ */
+#ifdef DEBUG
+#  define WARN(...) do { \
+    warnx ("WARNING %s:%d", __FILE__, __LINE__); \
+    warnx ("    " __VA_ARGS__ ); \
+  } while (0)
+#else
+#  define WARN(...) warnx ("WARNING: " __VA_ARGS__ )
+#endif
+
+/**
+ * @macro ERR
+ * @brief Print a error message
+ */
+#ifdef DEBUG
+#  define ERR(...) do { \
+    warnx ("ERROR %s:%d", __FILE__, __LINE__); \
+    warnx ("    " __VA_ARGS__ ); \
+  } while (0)
+#else
+#  define ERR(...)  warnx ("ERROR: " __VA_ARGS__ )
+#endif
 
 byte_t  oddparity (const byte_t bt);
 void    oddparity_byte_ts (const byte_t * pbtData, const size_t szLen, byte_t * pbtPar);
@@ -48,6 +88,9 @@ void    print_hex_par (const byte_t * pbtData, const size_t szBits, const byte_t
 
 void    print_nfc_iso14443a_info (const nfc_iso14443a_info_t nai, bool verbose);
 void    print_nfc_iso14443b_info (const nfc_iso14443b_info_t nbi, bool verbose);
+void    print_nfc_iso14443bi_info (const nfc_iso14443bi_info_t nii, bool verbose);
+void    print_nfc_iso14443b2sr_info (const nfc_iso14443b2sr_info_t nsi, bool verbose);
+void    print_nfc_iso14443b2ct_info (const nfc_iso14443b2ct_info_t nci, bool verbose);
 void    print_nfc_felica_info (const nfc_felica_info_t nfi, bool verbose);
 void    print_nfc_jewel_info (const nfc_jewel_info_t nji, bool verbose);
 void    print_nfc_dep_info (const nfc_dep_info_t ndi, bool verbose);

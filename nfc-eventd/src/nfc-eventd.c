@@ -175,7 +175,8 @@ static int parse_config_file() {
                 nfc_device_desc->pcDriver = (char*)nfcconf_get_str( my_device, "driver", "" );
 		char* device_name = (char*)nfcconf_get_str( my_device, "name", "" );
 		strncpy(nfc_device_desc->acDevice, device_name, sizeof(nfc_device_desc->acDevice));
-                nfc_device_desc->pcPort   = (char*)nfcconf_get_str( my_device, "port", "" );
+                char* device_port   = (char*)nfcconf_get_str( my_device, "port", "" );
+		strncpy(nfc_device_desc->acPort, device_port, sizeof(nfc_device_desc->acPort));
                 nfc_device_desc->uiSpeed  = nfcconf_get_int( my_device, "speed", 9600 );
                 nfc_device_desc->uiBusIndex  = nfcconf_get_int( my_device, "index", 0 );
                 break;
@@ -303,12 +304,17 @@ typedef enum {
 nfc_target_t*
 ned_poll_for_tag(nfc_device_t* nfc_device, nfc_target_t* tag)
 {
-  static nfc_poll_mode mode = NFC_POLL_HARDWARE;
+  static nfc_poll_mode mode = NFC_POLL_SOFTWARE;
 
+/*
+  // With libnfc 1.6 serie, we could not check the internal chip any more.
+  // BTW, "Capabilities" have to be introduced in libnfc, once it will be available we could switch again to a conditional statement
+  // http://code.google.com/p/libnfc/issues/detail?id=165
   if((mode == NFC_POLL_HARDWARE) && (nfc_device->nc == NC_PN531)) {
     DBG("%s doesn't support hardware polling, falling back to software polling", nfc_device->acName);
     mode = NFC_POLL_SOFTWARE;
   }
+*/
 
   switch(mode) {
     case NFC_POLL_SOFTWARE:
