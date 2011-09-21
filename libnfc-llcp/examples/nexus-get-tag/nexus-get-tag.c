@@ -108,6 +108,10 @@ com_android_npp_thread (void *arg)
     char ndef_msg[1024];
     shexdump (ndef_msg, buffer + n, ndef_length);
     printf ("NDEF entry received (%u bytes): %s\n", ndef_length, ndef_msg);
+
+    llc_connection_stop (connection);
+
+    return NULL;
 }
 
 
