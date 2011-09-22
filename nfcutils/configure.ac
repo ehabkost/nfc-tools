@@ -59,7 +59,7 @@ fi
 AC_SUBST([DEBUG_CFLAGS])
 
 # Checks for pkg-config modules.
-LIBNFC_REQUIRED_VERSION=1.4.0
+LIBNFC_REQUIRED_VERSION=1.5.1
 PKG_CHECK_MODULES([libnfc], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], [AC_MSG_ERROR([libnfc >= $LIBNFC_REQUIRED_VERSION is mandatory.])])
 
 AC_SUBST(libnfc_LIBS)
