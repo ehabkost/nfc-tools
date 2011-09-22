@@ -152,9 +152,9 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     link->remote_miu = LLCP_DEFAULT_MIU;
     link->remote_wks = 0x0001;
     link->local_lto.tv_sec  = 0;
-    link->local_lto.tv_nsec = 100000000;
+    link->local_lto.tv_usec = 100000;
     link->remote_lto.tv_sec  = 0;
-    link->remote_lto.tv_nsec = 100000000;
+    link->remote_lto.tv_usec = 100000;
     link->local_lsc  = 3;
     link->remote_lsc = 3;
 
@@ -266,8 +266,8 @@ llc_link_configure (struct llc_link *link, const uint8_t *parameters, size_t len
 		LLC_LINK_MSG (LLC_PRIORITY_ERROR, "Invalid LTO TLV parameter");
 		return -1;
 	    }
-	    link->remote_lto.tv_sec = (lto * 10 * 1000000) / 1000000000;
-	    link->remote_lto.tv_nsec = (lto * 10 * 1000000) % 1000000000;
+	    link->remote_lto.tv_sec = (lto * 10 * 1000) / 1000000;
+	    link->remote_lto.tv_usec = (lto * 10 * 1000) % 1000000;
 	    LLC_LINK_LOG (LLC_PRIORITY_DEBUG, "LTO: %d ms (0x%02x)", 10 * lto, lto);
 	    break;
 	case LLCP_PARAMETER_OPT:
@@ -309,7 +309,7 @@ llc_link_encode_parameters (const struct llc_link *link, uint8_t *parameters, si
 	return -1;
     parameter += n; length -= n;
 
-    uint8_t lto = link->local_lto.tv_sec * 100 + link->local_lto.tv_nsec / 10000000;
+    uint8_t lto = link->local_lto.tv_sec * 100 + link->local_lto.tv_usec / 10000;
     if ((n = parameter_encode_lto (parameter, length, lto)) < 0)
 	return -1;
     parameter += n; length -= n;

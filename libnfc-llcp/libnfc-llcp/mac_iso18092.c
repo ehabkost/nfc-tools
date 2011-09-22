@@ -156,7 +156,7 @@ mac_link_activate_as_target (struct mac_link *mac_link)
     nt.nm.nmt = NMT_DEP;
     nt.nm.nbr = NBR_UNDEFINED;
     nt.nti.ndi.btPP = 0x32;
-    nt.nti.ndi.ndm  = NDM_UNDEFINED;
+    nt.nti.ndi.ndm  = NDM_PASSIVE;
 
 #if 1
     /* Not used */
@@ -227,10 +227,19 @@ mac_link_exchange_pdus (void *arg)
 	}
 
 	struct timespec ts;
-	ts.tv_sec = 0;
-	ts.tv_nsec = 10000000; // TODO Adjust me
+	ts.tv_sec = link->llc_link->local_lto.tv_sec;
+	ts.tv_nsec = link->llc_link->local_lto.tv_usec * 1000;
+
+	/* Wait LTO - 2ms */
+	if (ts.tv_nsec < 2000000) {
+	    ts.tv_sec -= 1;
+	    ts.tv_nsec = ts.tv_nsec + 1000000000 - 2000000;
+	} else {
+	    ts.tv_nsec -= 2000000;
+	}
 
 	len = mq_timedreceive (link->llc_link->llc_down, (char *) buffer, sizeof (buffer), NULL, &ts);
+
 	if (len < 0) {
 	    switch (errno) {
 	    case ETIMEDOUT:
@@ -394,10 +403,20 @@ pdu_send (struct mac_link *link, const void *buf, size_t nbytes)
     MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Sending %d bytes", nbytes);
     if (link->mode == MAC_LINK_INITIATOR) {
 	link->buffer_size = sizeof (link->buffer);
-	if (nfc_initiator_transceive_bytes (link->device, buf, nbytes, link->buffer, &link->buffer_size))
+	struct timeval timeout;
+	timeout.tv_sec = link->llc_link->local_lto.tv_sec + link->llc_link->remote_lto.tv_sec;
+	int us = link->llc_link->local_lto.tv_usec + link->llc_link->remote_lto.tv_usec;
+	if (us >= 1000000) {
+	    timeout.tv_sec += 1;
+	    timeout.tv_usec = us - 1000000;
+	} else {
+	    timeout.tv_usec = us;
+	}
+
+	if (nfc_initiator_transceive_bytes (link->device, buf, nbytes, link->buffer, &link->buffer_size, &timeout))
 	    res = nbytes;
     } else {
-	if (nfc_target_send_bytes (link->device, buf, nbytes))
+	if (nfc_target_send_bytes (link->device, buf, nbytes, NULL))
 	    res = nbytes;
     }
 
@@ -412,13 +431,15 @@ ssize_t
 pdu_receive (struct mac_link *link, void *buf, size_t nbytes)
 {
     ssize_t res;
+    struct timeval timeout = link->llc_link->local_lto;
+
     if (link->mode == MAC_LINK_INITIATOR) {
 	res = MIN (nbytes, link->buffer_size);
 	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d bytes (Requested %d, buffer size %d)", res, nbytes, link->buffer_size);
 	memcpy (buf, link->buffer, res);
 	return res;
     } else {
-	if (nfc_target_receive_bytes (link->device, buf, &nbytes)) {
+	if (nfc_target_receive_bytes (link->device, buf, &nbytes, &timeout)) {
 	    MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d bytes", nbytes);
 	    return nbytes;
 	}

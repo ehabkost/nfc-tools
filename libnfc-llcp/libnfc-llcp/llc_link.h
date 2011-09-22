@@ -38,8 +38,8 @@ struct llc_link {
     uint16_t local_miu;
     uint16_t remote_miu;
     uint16_t remote_wks;
-    struct timespec local_lto;
-    struct timespec remote_lto;
+    struct timeval local_lto;
+    struct timeval remote_lto;
     uint8_t local_lsc;
     uint8_t remote_lsc;
     uint8_t opt;

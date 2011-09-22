@@ -31,6 +31,8 @@
 
 #include "config.h"
 
+#include <sys/endian.h>
+
 #include <err.h>
 #include <signal.h>
 #include <stdlib.h>
