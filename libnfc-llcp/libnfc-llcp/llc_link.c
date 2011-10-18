@@ -151,8 +151,8 @@ llc_link_activate (struct llc_link *link, uint8_t flags, const uint8_t *paramete
     link->local_miu  = LLCP_DEFAULT_MIU;
     link->remote_miu = LLCP_DEFAULT_MIU;
     link->remote_wks = 0x0001;
-    link->local_lto.tv_sec  = 0;
-    link->local_lto.tv_usec = 100000;
+    link->local_lto.tv_sec  = 1;
+    link->local_lto.tv_usec = 0;
     link->remote_lto.tv_sec  = 0;
     link->remote_lto.tv_usec = 100000;
     link->local_lsc  = 3;
