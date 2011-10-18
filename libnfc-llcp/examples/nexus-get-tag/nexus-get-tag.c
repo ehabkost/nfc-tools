@@ -31,11 +31,12 @@
 
 #include "config.h"
 
-#include <sys/endian.h>
 
 #include <err.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 #include <llcp.h>
 #include <llc_service.h>
@@ -65,6 +66,9 @@ shexdump (char * dest, const uint8_t * buf, const size_t size)
     return res;
 }
 
+FILE* info_stream = NULL;
+FILE* ndef_stream = NULL;
+
 void *
 com_android_npp_thread (void *arg)
 {
@@ -75,24 +79,18 @@ com_android_npp_thread (void *arg)
     if ((len = llc_connection_recv (connection, buffer, sizeof (buffer), NULL)) < 0)
         return NULL;
 
-    // 00  01  00  00  00  01  01  00  00  00  16  d1  01  12  55  00  68  74  74  70  3a  2f  2f  6c  69  62  6e  66  63  2e  6f  72  67
-    uint8_t hexdump[1024];
-    shexdump (hexdump, buffer, len);
-    
-    printf ("NPP frame (%u bytes): %s\n", len, hexdump);
-
     if (len < 10) // NPP's header (5 bytes)  and NDEF entry header (5 bytes)
         return NULL;
 
     size_t n = 0;
 
     // Header
-    printf ("NDEF Push Protocol version: %02x\n", buffer[n]);
+    fprintf (info_stream, "NDEF Push Protocol version: %02x\n", buffer[n]);
     if (buffer[n++] != 0x01) // Protocol version
         return NULL; // Protocol not version supported
 
     uint32_t ndef_entries_count = be32toh (*((uint32_t *)(buffer + n))); // Number of NDEF entries
-    printf ("NDEF entries count: %u\n", ndef_entries_count);
+    fprintf (info_stream, "NDEF entries count: %u\n", ndef_entries_count);
     if (ndef_entries_count != 1) // In version 0x01 of the specification, this value will always be 0x00, 0x00, 0x00, 0x01.
         return NULL;
     n += 4;
@@ -109,18 +107,73 @@ com_android_npp_thread (void *arg)
 
     char ndef_msg[1024];
     shexdump (ndef_msg, buffer + n, ndef_length);
-    printf ("NDEF entry received (%u bytes): %s\n", ndef_length, ndef_msg);
+    fprintf (info_stream, "NDEF entry received (%u bytes): %s\n", ndef_length, ndef_msg);
 
+    if (ndef_stream) {
+        if (fwrite (buffer + n, 1, ndef_length, ndef_stream) != ndef_length) {
+            fprintf (stderr, "Could not write to file.\n");
+            fclose (ndef_stream);
+            ndef_stream = NULL;
+        } else {
+            fclose (ndef_stream);
+            ndef_stream = NULL;
+        }
+    }
+    // TODO Stop the LLCP when this is reached
     llc_connection_stop (connection);
 
     return NULL;
 }
 
+void
+print_usage(char *progname)
+{
+    fprintf (stderr, "usage: %s -o FILE\n", progname);
+    fprintf (stderr, "\nOptions:\n");
+    fprintf (stderr, "  -o     Extract NDEF message if available in FILE\n");
+}
 
 int
 main (int argc, char *argv[])
 {
-    
+    int ch;
+    char *ndef_output = NULL;
+    while ((ch = getopt (argc, argv, "ho:")) != -1) {
+        switch (ch) {
+        case 'h':
+            print_usage(argv[0]);
+            exit (EXIT_SUCCESS);
+            break;
+        case 'o':
+            ndef_output = optarg;
+            break;
+        case '?':
+            if (optopt == 'o')
+                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+        default:
+            print_usage (argv[0]);
+            exit (EXIT_FAILURE);
+        }
+    }
+
+    if (ndef_output == NULL) {
+        // No output sets by user
+        print_usage (argv[0]);
+        exit (EXIT_FAILURE);
+    }
+
+    if ((strlen (ndef_output) == 1) && (ndef_output[0] == '-')) {
+        info_stream = stderr;
+        ndef_stream = stdout;
+    } else {
+        info_stream = stdout;
+        ndef_stream = fopen(ndef_output, "wb");
+        if (!ndef_stream) {
+            fprintf (stderr, "Could not open file %s.\n", ndef_output);
+            exit (EXIT_FAILURE);
+        }
+    }
+
     if (llcp_init () < 0)
 	errx (EXIT_FAILURE, "llcp_init()");
 
