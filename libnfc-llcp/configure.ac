@@ -43,6 +43,7 @@ AC_CHECK_FUNCS([strdup])
 AC_CHECK_HEADERS([fcntl.h])
 AC_CHECK_HEADERS([sys/param.h])
 AC_CHECK_HEADERS([pthread_np.h])
+AC_CHECK_HEADERS([mqueue.h], [], AC_MSG_ERROR([mqueue.h is requiered.]))
 
 AC_CHECK_DECLS([pthread_set_name_np(pthread_t, const char *)], [], [], [[#include <pthread_np.h>]])
 
@@ -69,9 +70,16 @@ AC_PATH_PROG([MSCGEN], [mscgen])
 AC_SUBST(MSCGEN)
 AM_CONDITIONAL(HAS_MSCGEN, [test x"$MSCGEN" != x""])
 
+# Checks for pkg-config macros
+AC_PATH_PROG(PKG_CONFIG, pkg-config)
+if test -z "$PKG_CONFIG"; then
+    AC_MSG_ERROR(["pkg-config is requiered."])
+fi
+m4_ifdef([PKG_CHECK_MODULES], [], AC_MSG_ERROR(["pkg-config (with m4 macros) is requiered."]))
+
 # Checks for pkg-config modules.
 LIBNFC_REQUIRED_VERSION="1.5.1"
-PKG_CHECK_MODULES([LIBNFC], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], [AC_MSG_ERROR([libnfc >= $LIBNFC_REQUIRED_VERSION is mandatory.])])
+PKG_CHECK_MODULES([LIBNFC], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], AC_MSG_ERROR([libnfc >= $LIBNFC_REQUIRED_VERSION is mandatory.]))
 
 PKG_CONFIG_REQUIRES="libnfc"
 AC_SUBST([PKG_CONFIG_REQUIRES])
