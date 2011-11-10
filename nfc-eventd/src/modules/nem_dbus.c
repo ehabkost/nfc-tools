@@ -27,30 +27,19 @@ static nfcconf_block* _nem_dbus_config_block;
 static char * _tag_uid = NULL;
 
 void
-tag_get_uid(const nfc_device_t* nfc_device, const nfc_target_t* tag, char **dest) {
+tag_get_uid(nfc_device_t* nfc_device, const nfc_target_t* tag, char **dest) {
   DBG("tag_get_uid(%08x, %08x, %08x)", nfc_device, tag, dest);
 
-    nfc_target_info_t ti;
+    nfc_target_t target;
     debug_print_tag(tag);
     /// @TODO We don't need to reselect tag to get his UID: nfc_target_t contains this data.
     // Poll for a ISO14443A (MIFARE) tag
-    if ( nfc_initiator_select_passive_target ( nfc_device, tag->modulation, tag->ti.nai.abtUid, tag->ti.nai.szUidLen, &ti ) ) {
-        /*
-                        printf ( "The following (NFC) ISO14443A tag was found:\n\n" );
-                        printf ( "    ATQA (SENS_RES): " ); print_hex ( ti.nai.abtAtqa,2 );
-                        printf ( "       UID (NFCID%c): ", ( ti.nai.abtUid[0]==0x08?'3':'1' ) ); print_hex ( ti.nai.abtUid,ti.nai.szUidLen );
-                        printf ( "      SAK (SEL_RES): " ); print_hex ( &ti.nai.btSak,1 );
-                        if ( ti.nai.uiAtsLen )
-                        {
-                                printf ( "          ATS (ATR): " );
-                                print_hex ( ti.nai.abtAts,ti.nai.uiAtsLen );
-                        }
-        */
-        *dest = malloc(ti.nai.szUidLen*sizeof(char));
+    if ( nfc_initiator_select_passive_target ( nfc_device, tag->nm, tag->nti.nai.abtUid, tag->nti.nai.szUidLen, &target ) ) {
+        *dest = malloc(target.nti.nai.szUidLen*sizeof(char));
         size_t szPos;
         char *pcUid = *dest;
-        for (szPos=0; szPos < ti.nai.szUidLen; szPos++) {
-            sprintf(pcUid, "%02x",ti.nai.abtUid[szPos]);
+        for (szPos=0; szPos < target.nti.nai.szUidLen; szPos++) {
+            sprintf(pcUid, "%02x",target.nti.nai.abtUid[szPos]);
             pcUid += 2;
         }
         pcUid[0]='\0';
@@ -127,6 +116,7 @@ gboolean nfc_object_emit_hello_signal (NfcObject *obj, GError **error);
 static void
 nfc_object_init (NfcObject *obj)
 {
+  (void) obj;
 }
 
 static void
@@ -153,6 +143,7 @@ nfc_object_class_init (NfcObjectClass *klass)
 gboolean
 nfc_object_emit_hello_signal (NfcObject *obj, GError **error)
 {
+  (void) error;
   g_signal_emit (obj, signals[TAG_INSERTED], 0, "deadbeef");
   return TRUE;
 }

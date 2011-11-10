@@ -304,62 +304,34 @@ typedef enum {
 nfc_target_t*
 ned_poll_for_tag(nfc_device_t* nfc_device, nfc_target_t* tag)
 {
-  static nfc_poll_mode mode = NFC_POLL_SOFTWARE;
+  uint8_t uiPollNr;
+  const uint8_t uiPeriod = 2; /* 2 x 150 ms = 300 ms */
+  const nfc_modulation_t nm[1] = { { .nmt = NMT_ISO14443A, .nbr = NBR_106 } };
 
-/*
-  // With libnfc 1.6 serie, we could not check the internal chip any more.
-  // BTW, "Capabilities" have to be introduced in libnfc, once it will be available we could switch again to a conditional statement
-  // http://code.google.com/p/libnfc/issues/detail?id=165
-  if((mode == NFC_POLL_HARDWARE) && (nfc_device->nc == NC_PN531)) {
-    DBG("%s doesn't support hardware polling, falling back to software polling", nfc_device->acName);
-    mode = NFC_POLL_SOFTWARE;
+  if( tag != NULL ) {
+	/* We are looking for a previous tag */
+    /* In this case, to prevent for intensive polling we add a sleeping time */
+    sleep ( polling_time );
+    uiPollNr = 3; /* Polling duration : btPollNr * szTargetTypes * btPeriod * 150 = btPollNr * 300 = 900 */
+  } else {
+    /* We are looking for any tag */
+    uiPollNr = 0xff; /* We endless poll for a new tag */
   }
-*/
 
-  switch(mode) {
-    case NFC_POLL_SOFTWARE:
-      sleep ( polling_time );
-      return ned_select_tag(nfc_device, tag);
-    break;
-    case NFC_POLL_HARDWARE: {
-        byte_t btPollNr;
-        const byte_t btPeriod = 2; /* 2 x 150 ms = 300 ms */
-        const nfc_modulation_t nm[1] = { { .nmt = NMT_ISO14443A, .nbr = NBR_106 } };
-  
-        if( tag != NULL ) {
-  	/* We are looking for a previous tag */
-          /* In this case, to prevent for intensive polling we add a sleeping time */
-          sleep ( polling_time );
-          btPollNr = 3; /* Polling duration : btPollNr * szTargetTypes * btPeriod * 150 = btPollNr * 300 = 900 */
-        } else {
-          /* We are looking for any tag */
-          btPollNr = 0xff; /* We endless poll for a new tag */
-        }
-        nfc_target_t antTargets[2];
-        size_t szTargetFound;
-  
-        bool res = nfc_initiator_poll_targets (nfc_device, nm, 1, btPollNr, btPeriod, antTargets, &szTargetFound);
-        if (res) {
-          DBG ("%ld target(s) have been found.\n", (unsigned long) szTargetFound);
-          if( szTargetFound < 1 ) {
-            return NULL;
-          } else {
-            if ( (tag != NULL) && (0 == memcmp(tag->nti.nai.abtUid, antTargets[0].nti.nai.abtUid, antTargets[0].nti.nai.szUidLen)) ) {
-              return tag;
-            } else {
-              nfc_target_t* rv = malloc(sizeof(nfc_target_t));
-              memcpy(rv, &antTargets[0], sizeof(nfc_target_t));
-              nfc_initiator_deselect_target ( nfc_device );
-              return rv;
-            }
-          }
-        } else {
-          ERR ("%s", "Polling failed.");
-        }
+  nfc_target_t target;
+  bool res = nfc_initiator_poll_target (nfc_device, nm, 1, uiPollNr, uiPeriod, &target);
+  if (res) {
+    if ( (tag != NULL) && (0 == memcmp(tag->nti.nai.abtUid, target.nti.nai.abtUid, target.nti.nai.szUidLen)) ) {
+      return tag;
+    } else {
+      nfc_target_t* rv = malloc(sizeof(nfc_target_t));
+      memcpy(rv, &target, sizeof(nfc_target_t));
+      nfc_initiator_deselect_target ( nfc_device );
+      return rv;
     }
-    break;
+  } else {
+    return NULL;
   }
-  return NULL;
 }
 
 int

@@ -1,4 +1,4 @@
-AC_INIT(nfc-eventd, 0.1.4, rconty@il4p.fr)
+AC_INIT(nfc-eventd, 0.1.5, rconty@il4p.fr)
 
 AC_CONFIG_HEADER(config.h)
 
@@ -71,7 +71,7 @@ AC_MSG_RESULT($enable_dbus)
 AC_PATH_PROG(PKG_CONFIG, pkg-config, [AC_MSG_ERROR([pkg-config not found.])])
 
 ## libnfc
-LIBNFC_REQUIRED_VERSION="1.4.0"
+LIBNFC_REQUIRED_VERSION="1.5.1"
 PKG_CHECK_MODULES([LIBNFC], [libnfc >= $LIBNFC_REQUIRED_VERSION], [], [AC_MSG_ERROR([libnfc >= $LIBNFC_REQUIRED_VERSION is mandatory.])])
 
 AC_SUBST(LIBNFC_LIBS)
@@ -95,6 +95,9 @@ LIBNFCCONF="\${top_builddir}/src/nfcconf/libnfcconf.la"
 
 # Set C standard to C99
 CFLAGS="$CFLAGS -std=c99"
+
+# Help us to write great code ;-)
+CFLAGS="$CFLAGS -Wall -pedantic -Wextra"
 
 nemdir="\${pkglibdir}/modules"
 AC_SUBST(nemdir)
