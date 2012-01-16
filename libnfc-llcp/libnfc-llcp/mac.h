@@ -33,7 +33,7 @@ struct mac_link {
     uint8_t nfcid[10];
     uint8_t buffer[BUFSIZ];
     size_t buffer_size;
-    pthread_t exchange_pdus_thread;
+    pthread_t *__restrict__ exchange_pdus_thread;
 };
 
 struct mac_link	*mac_link_new (nfc_device *device, struct llc_link *llc_link);

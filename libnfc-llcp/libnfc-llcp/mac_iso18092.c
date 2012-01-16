@@ -67,6 +67,7 @@ mac_link_new (nfc_device *device, struct llc_link *llc_link)
 	res->device = device;
 	res->llc_link = llc_link;
 	res->llc_link->mac_link = res;
+	res->exchange_pdus_thread = NULL;
 
 	memcpy (res->nfcid, defaultid, sizeof (defaultid));
     }
@@ -315,12 +316,17 @@ mac_link_run (struct mac_link *link)
 {
     assert (link);
 
-    if (pthread_create (&link->exchange_pdus_thread, NULL, mac_link_exchange_pdus, (void *) link) < 0) {
+    if ((link->exchange_pdus_thread = malloc (sizeof (pthread_t))) == NULL) {
+	MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot allocate PDU exchanging thread structure");
+	return -1;
+    }
+
+    if (pthread_create (link->exchange_pdus_thread, NULL, mac_link_exchange_pdus, (void *) link) < 0) {
 	MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot create PDU exchanging thread");
 	return -1;
     }
 #if defined(HAVE_DECL_PTHREAD_SET_NAME_NP) && HAVE_DECL_PTHREAD_SET_NAME_NP
-    pthread_set_name_np (link->exchange_pdus_thread, "MAC Link");
+    pthread_set_name_np (*link->exchange_pdus_thread, "MAC Link");
 #endif
 
     return 1;
@@ -335,7 +341,7 @@ mac_link_wait (struct mac_link *link, void **value_ptr)
     *value_ptr = NULL;
 
     MAC_LINK_MSG (LLC_PRIORITY_TRACE, "Waiting for MAC Link PDU exchange thread to exit");
-    int res = pthread_join (link->exchange_pdus_thread, value_ptr);
+    int res = pthread_join (*link->exchange_pdus_thread, value_ptr);
     MAC_LINK_LOG (LLC_PRIORITY_TRACE, "MAC Link exchange PDU exchange thread terminated (returned %x)", *value_ptr);
 
     return res;
@@ -345,7 +351,7 @@ int
 mac_link_deactivate (struct mac_link *link, intptr_t reason)
 {
     assert (link);
-    assert (link->exchange_pdus_thread != pthread_self ());
+    assert (*link->exchange_pdus_thread != pthread_self ());
 
     MAC_LINK_LOG (LLC_PRIORITY_INFO, "MAC Link deactivation requested (reason: %d)", reason);
 
@@ -354,7 +360,7 @@ mac_link_deactivate (struct mac_link *link, intptr_t reason)
 	return 0;
     }
 
-    llcp_threadslayer (link->exchange_pdus_thread);
+    llcp_threadslayer (*link->exchange_pdus_thread);
     link->exchange_pdus_thread = NULL;
 
 
@@ -379,8 +385,8 @@ mac_link_deactivate (struct mac_link *link, intptr_t reason)
 	switch (reason) {
 	case MAC_DEACTIVATE_ON_REQUEST:
 	    MAC_LINK_MSG (LLC_PRIORITY_INFO, "Drain mode");
-	    st = 0 == pthread_create (&link->exchange_pdus_thread, NULL, mac_link_drain, link);
-	    pthread_join (link->exchange_pdus_thread, NULL);
+	    st = 0 == pthread_create (link->exchange_pdus_thread, NULL, mac_link_drain, link);
+	    pthread_join (*link->exchange_pdus_thread, NULL);
 	    link->exchange_pdus_thread = NULL;
 	    break;
 	case MAC_DEACTIVATE_ON_FAILURE:
@@ -454,6 +460,9 @@ pdu_receive (struct mac_link *link, void *buf, size_t nbytes)
 void
 mac_link_free (struct mac_link *mac_link)
 {
+    if (mac_link->exchange_pdus_thread)
+	free (mac_link->exchange_pdus_thread);
+
     if (mac_link && mac_link->llc_link)
 	mac_link->llc_link->mac_link = NULL;
     free (mac_link);
