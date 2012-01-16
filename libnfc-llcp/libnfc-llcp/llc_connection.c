@@ -76,6 +76,8 @@ llc_connection_new (struct llc_link *link, uint8_t local_sap, uint8_t remote_sap
 	res->mq_down_name = NULL;
 	res->llc_up   = (mqd_t) -1;
 	res->llc_down = (mqd_t) -1;
+
+	res->user_data = NULL;
     } else {
 	LLC_CONNECTION_MSG (LLC_PRIORITY_FATAL, "Cannot allocate memory");
     }

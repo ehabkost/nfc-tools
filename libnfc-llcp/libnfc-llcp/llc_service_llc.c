@@ -170,6 +170,7 @@ spawn_logical_data_link:
 		break;
 	    }
 
+	    connection->user_data = link->available_services[pdu->dsap]->user_data;
 	    if (pthread_create (&connection->thread, NULL, link->available_services[pdu->dsap]->thread_routine, connection) < 0) {
 		LLC_SERVICE_LLC_LOG (LLC_PRIORITY_ERROR, "Cannot launch Logical Data Link [%d -> %d] thread", connection->local_sap, connection->remote_sap);
 		break;
@@ -459,6 +460,7 @@ spawn_logical_data_link:
 			    pdu_free (reply);
 			    /* FALLTHROUGH */
 			case DLC_RECEIVED_CC:
+			    connection->user_data = link->available_services[connection->service_sap]->user_data;
 			    if (pthread_create (&connection->thread, NULL, connection->link->available_services[connection->service_sap]->thread_routine, connection) < 0) {
 				LLC_SERVICE_LLC_MSG (LLC_PRIORITY_FATAL, "Cannot start Data Link Connection thread");
 				link->transmission_handlers[i]->status = DLC_DISCONNECTED;

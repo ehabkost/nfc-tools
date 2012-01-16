@@ -42,13 +42,13 @@
 #define LLC_SERVICE_LOG(priority, format, ...) llcp_log_log (LOG_LLC_SERVICE, priority, format, __VA_ARGS__)
 
 struct llc_service *
-llc_service_new (void *(*accept_routine)(void *), void *(*thread_routine)(void *))
+llc_service_new (void *(*accept_routine)(void *), void *(*thread_routine)(void *), void *user_data)
 {
-    return llc_service_new_with_uri (accept_routine, thread_routine, NULL);
+    return llc_service_new_with_uri (accept_routine, thread_routine, NULL, user_data);
 }
 
 struct llc_service *
-llc_service_new_with_uri (void *(*accept_routine)(void *), void *(*thread_routine)(void *), char *uri)
+llc_service_new_with_uri (void *(*accept_routine)(void *), void *(*thread_routine)(void *), char *uri, void *user_data)
 {
     assert (thread_routine);
 
@@ -61,6 +61,7 @@ llc_service_new_with_uri (void *(*accept_routine)(void *), void *(*thread_routin
 	service->accept_routine = accept_routine;
 	service->thread_routine = thread_routine;
 	service->miu = LLCP_DEFAULT_MIU;
+	service->user_data = user_data;
     }
 
     return service;

@@ -289,7 +289,7 @@ test_02 (struct llc_link *link)
 	return 1;
     }
 
-    struct llc_service *service = llc_service_new (NULL, test_02_service);
+    struct llc_service *service = llc_service_new (NULL, test_02_service, NULL);
     int sap = llc_link_service_bind (link, service, 16);
 
     uint8_t buffer[] = "Hello World!";
@@ -338,7 +338,7 @@ test_03 (struct llc_link *link)
 
     struct llc_service *service;
 
-    service = llc_service_new (NULL, test_03_service);
+    service = llc_service_new (NULL, test_03_service, NULL);
     int sap = llc_link_service_bind (link, service, 19);
     struct llc_connection * con = llc_outgoing_data_link_connection_new (link, sap, 17);
     if (!con)
@@ -368,7 +368,7 @@ test_04 (struct llc_link *link)
 
     struct llc_service *service;
 
-    service = llc_service_new (NULL, test_03_service);
+    service = llc_service_new (NULL, test_03_service, NULL);
     int sap = llc_link_service_bind (link, service, 19);
     struct llc_connection * con = llc_outgoing_data_link_connection_new_by_uri (link, sap, "urn:nfc:sn:co-echo");
     if (!con)

@@ -61,6 +61,7 @@ struct llc_connection {
     uint8_t rwl;    /* Local Receive Window Size */
     uint8_t rwr;    /* Remote Receive Window Size */
     struct llc_link *link;
+    void *user_data;
 };
 
 struct llc_connection *llc_data_link_connection_new (struct llc_link *link, const struct pdu *pdu, int *reason);

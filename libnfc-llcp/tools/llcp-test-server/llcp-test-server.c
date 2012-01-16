@@ -150,8 +150,8 @@ main (int argc, char *argv[])
     }
 
     struct llc_link *llc_link = llc_link_new ();
-    struct llc_service *cl_echo_service = llc_service_new_with_uri (NULL, connectionless_echo_server_thread, "urn:nfc:sn:cl-echo");
-    struct llc_service *co_echo_service = llc_service_new_with_uri (connected_echo_server_accept, connected_echo_server_thread, "urn:nfc:sn:co-echo");
+    struct llc_service *cl_echo_service = llc_service_new_with_uri (NULL, connectionless_echo_server_thread, "urn:nfc:sn:cl-echo", NULL);
+    struct llc_service *co_echo_service = llc_service_new_with_uri (connected_echo_server_accept, connected_echo_server_thread, "urn:nfc:sn:co-echo", NULL);
 
     if (!llc_link || !cl_echo_service || !co_echo_service) {
 	errx (EXIT_FAILURE, "Cannot allocate LLC link data structures");

@@ -71,7 +71,7 @@ llc_link_new (void)
 	link->llc_up   = (mqd_t) -1;
 	link->llc_down = (mqd_t) -1;
 
-	struct llc_service *sdp_service = llc_service_new_with_uri (NULL, llc_service_sdp_thread, LLCP_SDP_URI);
+	struct llc_service *sdp_service = llc_service_new_with_uri (NULL, llc_service_sdp_thread, LLCP_SDP_URI, NULL);
 
 	if (llc_link_service_bind (link, sdp_service, LLCP_SDP_SAP) < 0) {
 	    LLC_LINK_MSG (LLC_PRIORITY_FATAL, "Cannot bind LLC service 1");

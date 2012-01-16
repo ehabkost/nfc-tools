@@ -32,10 +32,11 @@ struct llc_service {
     int8_t sap;
     uint8_t rw;
     uint16_t miu;
+    void *user_data;
 };
 
-struct llc_service *llc_service_new (void *(*accept_routine)(void *), void *(*thread_routine)(void *));
-struct llc_service *llc_service_new_with_uri (void *(*accept_routine)(void *), void *(*thread_routine)(void *), char *uri);
+struct llc_service *llc_service_new (void *(*accept_routine)(void *), void *(*thread_routine)(void *), void *user_data);
+struct llc_service *llc_service_new_with_uri (void *(*accept_routine)(void *), void *(*thread_routine)(void *), char *uri, void *user_data);
 uint16_t	 llc_service_get_miu (const struct llc_service *service);
 void		 llc_service_set_miu (struct llc_service *service, uint16_t miu);
 uint8_t		 llc_service_get_rw (const struct llc_service *service);
