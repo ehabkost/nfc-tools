@@ -28,7 +28,7 @@
 
 struct mac_link {
     enum { MAC_LINK_UNSET, MAC_LINK_INITIATOR, MAC_LINK_TARGET } mode;
-    nfc_device_t *device;
+    nfc_device *device;
     struct llc_link *llc_link;
     uint8_t nfcid[10];
     uint8_t buffer[BUFSIZ];
@@ -36,7 +36,7 @@ struct mac_link {
     pthread_t exchange_pdus_thread;
 };
 
-struct mac_link	*mac_link_new (nfc_device_t *device, struct llc_link *llc_link);
+struct mac_link	*mac_link_new (nfc_device *device, struct llc_link *llc_link);
 
 int		 mac_link_activate (struct mac_link *mac_link);
 int		 mac_link_activate_as_initiator (struct mac_link *mac_link);

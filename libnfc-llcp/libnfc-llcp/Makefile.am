@@ -8,6 +8,15 @@ AM_CFLAGS += $(log4c_CFLAGS)
 AM_LDFLAGS += $(log4c_LIBS)
 endif
 
+llcp_HEADERS = \
+		llc_connection.h \
+		llc_link.h \
+		llc_service.h \
+		llcp_pdu.h \
+		llcp.h \
+		mac.h
+llcpdir = $(includedir)/nfc
+
 lib_LTLIBRARIES = libnfc-llcp.la
 
 libnfc_llcp_la_SOURCES = \
@@ -25,14 +34,10 @@ if HAS_LOG4C
 libnfc_llcp_la_SOURCES += llcp_log.c
 endif
 
-EXTRA_DIST = llcp.h \
+EXTRA_DIST = \
 	     llcp_log.h \
-	     llcp_pdu.h \
 	     llcp_parameters.h \
 	     llc_connection.h \
-	     llc_link.h \
-	     llc_service.h \
 	     llc_service_llc.h \
-	     llc_service_sdp.h \
-	     mac.h
+	     llc_service_sdp.h
 CLEANFILES = *.gcno

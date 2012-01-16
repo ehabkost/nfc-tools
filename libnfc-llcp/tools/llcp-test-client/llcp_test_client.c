@@ -198,16 +198,16 @@ main (int argc, char *argv[])
     argc -= optind;
     argv += optind;
 
-    nfc_device_desc_t device_description[1];
+    nfc_connstring device_connstring[1];
 
-    size_t n;
-    nfc_list_devices (device_description, 1, &n);
+    int res;
+    res = nfc_list_devices (device_connstring, 1);
 
-    if (n < 1)
+    if (res < 1)
 	errx (EXIT_FAILURE, "No NFC device found");
 
-    nfc_device_t *device;
-    if (!(device = nfc_connect (device_description))) {
+    nfc_device *device;
+    if (!(device = nfc_connect (device_connstring[0]))) {
 	errx (EXIT_FAILURE, "Cannot connect to NFC device");
     }
 

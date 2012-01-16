@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <nfc/nfc.h>
 
@@ -53,7 +54,7 @@ static uint8_t defaultid[10] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 int		 mac_link_run (struct mac_link *link);
 
 struct mac_link *
-mac_link_new (nfc_device_t *device, struct llc_link *llc_link)
+mac_link_new (nfc_device *device, struct llc_link *llc_link)
 {
     assert (device);
     assert (llc_link);
@@ -97,14 +98,14 @@ mac_link_activate_as_initiator (struct mac_link *mac_link)
     assert (mac_link);
 
     int res = 0;
-    nfc_target_t nt;
+    nfc_target nt;
 
     /* Try to establish connection as an initiator */
-    MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) Attempting to activate LLCP Link as initiator", mac_link->device->acName);
-    if (nfc_initiator_init (mac_link->device)) {
-	MAC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%s) nfc_initiator_init() succeeded", mac_link->device->acName);
+    MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) Attempting to activate LLCP Link as initiator", nfc_device_get_name (mac_link->device));
+    if ((res = nfc_initiator_init (mac_link->device)) == 0) {
+	MAC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%s) nfc_initiator_init() succeeded", nfc_device_get_name (mac_link->device));
 
-	nfc_dep_info_t info;
+	nfc_dep_info info;
 	memcpy (info.abtNFCID3, mac_link->nfcid, sizeof (mac_link->nfcid));
 	memcpy (info.abtGB, llcp_magic_number, sizeof (llcp_magic_number));
 	info.szGB = sizeof (llcp_magic_number);
@@ -117,11 +118,12 @@ mac_link_activate_as_initiator (struct mac_link *mac_link)
 	info.ndm = NDM_PASSIVE;
 #endif
 
-	if (nfc_initiator_select_dep_target (mac_link->device, NDM_PASSIVE, NBR_424, &info, &nt)) {
-	    MAC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%s) nfc_initiator_select_dep_target() succeeded", mac_link->device->acName);
+	if ((res = nfc_initiator_poll_dep_target (mac_link->device, NDM_PASSIVE, NBR_424, &info, &nt, 10000)) > 0) {
+	    MAC_LINK_LOG (LLC_PRIORITY_DEBUG, "(%s) nfc_initiator_poll_dep_target() succeeded", nfc_device_get_name (mac_link->device));
+
 	    if ((nt.nti.ndi.szGB >= sizeof (llcp_magic_number)) &&
 		(0 == memcmp (nt.nti.ndi.abtGB, llcp_magic_number, sizeof (llcp_magic_number)))) {
-		MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) LLCP Link activated (initiator)", mac_link->device->acName);
+		MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) LLCP Link activated (initiator)", nfc_device_get_name (mac_link->device));
 
 		mac_link->mode = MAC_LINK_INITIATOR;
 		if (llc_link_activate (mac_link->llc_link, LLC_INITIATOR | LLC_PAX_PDU_PROHIBITED, NULL, 0) < 0) {
@@ -131,11 +133,18 @@ mac_link_activate_as_initiator (struct mac_link *mac_link)
 		    res = mac_link_run (mac_link);
 		}
 	    }
-	} else {
-	    MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) nfc_initiator_select_dep_target() failed", mac_link->device->acName);
+	} else if ((res == 0) || (res == NFC_ETIMEOUT)) {
+	    MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) No DEP target available.", nfc_device_get_name (mac_link->device));
+	    res = -1;
+	} else { 
+	    MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) nfc_initiator_poll_dep_target() failed", nfc_device_get_name (mac_link->device));
 	    nfc_perror (mac_link->device, "REASON");
 	    res = -1;
 	}
+    } else {
+	MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) nfc_initiator_init() failed", nfc_device_get_name (mac_link->device));
+	nfc_perror (mac_link->device, "REASON");
+	return -1;
     }
 
     return res;
@@ -146,8 +155,7 @@ mac_link_activate_as_target (struct mac_link *mac_link)
 {
     assert (mac_link);
 
-    nfc_target_t nt;
-    int res = 0;
+    nfc_target nt;
 
     uint8_t params[BUFSIZ];
     size_t params_len = llc_link_encode_parameters (mac_link->llc_link, params, sizeof (params));
@@ -171,20 +179,20 @@ mac_link_activate_as_target (struct mac_link *mac_link)
     memcpy (nt.nti.ndi.abtGB + sizeof (llcp_magic_number), params, params_len);
     nt.nti.ndi.szGB = sizeof (llcp_magic_number) + params_len;
 
-    size_t n;
+    int res = 0;
     uint8_t data[BUFSIZ];
 
-    MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) Attempting to activate LLCP Link as target (blocking)", mac_link->device->acName);
-    if (nfc_target_init (mac_link->device, &nt, data, &n)) {
-	MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) LLCP Link activated (target)", mac_link->device->acName);
+    MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) Attempting to activate LLCP Link as target (blocking)", nfc_device_get_name (mac_link->device));
+    if ((res = nfc_target_init (mac_link->device, &nt, data, sizeof(data), 5000)) >= 0) {
+	MAC_LINK_LOG (LLC_PRIORITY_INFO, "(%s) LLCP Link activated (target)", nfc_device_get_name (mac_link->device));
 	mac_link->mode = MAC_LINK_TARGET;
-	if (n < 20) {
+	if (res < 20) {
 	    MAC_LINK_MSG (LLC_PRIORITY_ERROR, "Frame too short");
 	    res = -1;
 	} else if (memcmp (data + 17, llcp_magic_number, sizeof (llcp_magic_number))) {
 	    MAC_LINK_MSG (LLC_PRIORITY_ERROR, "LLCP Magic Number not found");
 	    res = -1;
-	} else if (llc_link_activate (mac_link->llc_link, LLC_TARGET | LLC_PAX_PDU_PROHIBITED, data + 20, n - 20) < 0) {
+	} else if (llc_link_activate (mac_link->llc_link, LLC_TARGET | LLC_PAX_PDU_PROHIBITED, data + 20, res - 20) < 0) {
 	    MAC_LINK_MSG (LLC_PRIORITY_FATAL, "Error activating LLC Link");
 	    res = -1;
 	} else {
@@ -217,7 +225,7 @@ mac_link_exchange_pdus (void *arg)
 	    MAC_LINK_LOG (LLC_PRIORITY_WARN, "pdu_receive returned %d", len);
 	    break;
 	}
-	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d bytes", (int) len);
+	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d PDU bytes", (int) len);
 
 	if (LL_ACTIVATED == link->llc_link->status) {
 	if (mq_send (link->llc_link->llc_up, (char *) buffer, len, 0) < 0) {
@@ -265,8 +273,8 @@ mac_link_exchange_pdus (void *arg)
     link->exchange_pdus_thread = NULL;
 
     MAC_LINK_LOG (LLC_PRIORITY_ERROR, "NFC error: %s", nfc_strerror (link->device));
-    switch (link->device->iLastError ) {
-    case ETGREL:
+    switch (nfc_device_get_last_error (link->device)) {
+    case NFC_ETGRELEASED:
 	/* The initiator has left the target's field */
 	return (void *) MAC_DEACTIVATE_ON_FAILURE;
 	break;
@@ -393,6 +401,11 @@ mac_link_deactivate (struct mac_link *link, intptr_t reason)
     }
 }
 
+int timeval_to_ms (const struct timeval tv)
+{
+  return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+}
+
 ssize_t
 pdu_send (struct mac_link *link, const void *buf, size_t nbytes)
 {
@@ -403,21 +416,11 @@ pdu_send (struct mac_link *link, const void *buf, size_t nbytes)
     MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Sending %d bytes", nbytes);
     if (link->mode == MAC_LINK_INITIATOR) {
 	link->buffer_size = sizeof (link->buffer);
-	struct timeval timeout;
-	timeout.tv_sec = link->llc_link->local_lto.tv_sec + link->llc_link->remote_lto.tv_sec;
-	int us = link->llc_link->local_lto.tv_usec + link->llc_link->remote_lto.tv_usec;
-	if (us >= 1000000) {
-	    timeout.tv_sec += 1;
-	    timeout.tv_usec = us - 1000000;
-	} else {
-	    timeout.tv_usec = us;
-	}
-
-	if (nfc_initiator_transceive_bytes (link->device, buf, nbytes, link->buffer, &link->buffer_size, &timeout))
-	    res = nbytes;
+	MAC_LINK_LOG (LLC_PRIORITY_TRACE, "LTOs: %d ms (local), %d ms (remote)", timeval_to_ms (link->llc_link->local_lto), timeval_to_ms (link->llc_link->remote_lto));
+	const int timeout = timeval_to_ms (link->llc_link->local_lto) + timeval_to_ms (link->llc_link->remote_lto);
+	res = nfc_initiator_transceive_bytes (link->device, buf, nbytes, link->buffer, &link->buffer_size, timeout);
     } else {
-	if (nfc_target_send_bytes (link->device, buf, nbytes, NULL))
-	    res = nbytes;
+	res = nfc_target_send_bytes (link->device, buf, nbytes, -1);
     }
 
     if (res < 0)
@@ -431,7 +434,7 @@ ssize_t
 pdu_receive (struct mac_link *link, void *buf, size_t nbytes)
 {
     ssize_t res;
-    struct timeval timeout = link->llc_link->local_lto;
+    int timeout = timeval_to_ms (link->llc_link->local_lto);
 
     if (link->mode == MAC_LINK_INITIATOR) {
 	res = MIN (nbytes, link->buffer_size);
@@ -439,12 +442,12 @@ pdu_receive (struct mac_link *link, void *buf, size_t nbytes)
 	memcpy (buf, link->buffer, res);
 	return res;
     } else {
-	if (nfc_target_receive_bytes (link->device, buf, &nbytes, &timeout)) {
-	    MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d bytes", nbytes);
-	    return nbytes;
+	if ((res = nfc_target_receive_bytes (link->device, buf, nbytes, timeout + 2000)) >= 0) {
+	    MAC_LINK_LOG (LLC_PRIORITY_TRACE, "Received %d bytes", res);
+	    return res;
 	}
     }
-    MAC_LINK_LOG (LLC_PRIORITY_FATAL, "MAC Level error on PDU reception", nbytes);
+    MAC_LINK_LOG (LLC_PRIORITY_FATAL, "MAC Level error on PDU reception (%d)", res);
     return -1;
 }
 
