@@ -19,9 +19,8 @@ AM_SILENT_RULES([yes])
 AC_ARG_ENABLE([debug],AS_HELP_STRING([--enable-debug],[Enable debug output]),[enable_debug=$enableval],[enable_debug="no"])
 AM_CONDITIONAL(WITH_DEBUG, [test x"$enable_debug" = xyes])
 if test x"$enable_debug" == x"yes"; then
-    AC_DEFINE([HAVE_DEBUG], [1], [Define to 1 for extra debugging.])
-else
-    CFLAGS="$CFLAGS -DNDEBUG"
+    AC_DEFINE([WITH_DEBUG], [1], [Define to 1 for extra debugging.])
+    CFLAGS="$CFLAGS -DDEBUG"
 fi
 
 AC_DEFINE([_XOPEN_SOURCE], [600], [Define to 500 if Single Unix conformance is wanted, 600 for sixth revision.])
@@ -48,17 +47,6 @@ AC_CHECK_HEADERS([mqueue.h], [], AC_MSG_ERROR([mqueue.h is requiered.]))
 AC_CHECK_DECLS([pthread_set_name_np(pthread_t, const char *)], [], [], [[#include <pthread_np.h>]])
 
 CFLAGS="$CFLAGS -std=c99"
-
-# Checks for log4c
-AC_PATH_PROG([LOG4C_CONFIG], [log4c-config])
-if test x"$LOG4C_CONFIG" != x""; then
-    log4c_CFLAGS=`$LOG4C_CONFIG --cflags`
-    log4c_LIBS=`$LOG4C_CONFIG --libs`
-    AC_SUBST([log4c_CFLAGS])
-    AC_SUBST([log4c_LIBS])
-    AC_DEFINE([HAS_LOG4C], [1], [Define to 1 if log4c is available.])
-fi
-AM_CONDITIONAL(HAS_LOG4C, [test x"$LOG4C_CONFIG" != x""])
 
 # Checks for graphviz
 AC_PATH_PROG([DOT], [dot])

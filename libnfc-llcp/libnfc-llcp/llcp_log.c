@@ -22,67 +22,48 @@
 #include "config.h"
 
 #include <fcntl.h>
-#include <log4c.h>
 #include <semaphore.h>
 
 #include "llcp_log.h"
 
-sem_t *log_sem;
-const char *sem_name = "/libnfc-llcp";
-
 int
 llcp_log_init (void)
 {
-    if ((log_sem = sem_open (sem_name, O_CREAT, 0666, 1)) == SEM_FAILED) {
-	perror ("sem_open");
-	return -1;
-    }
-
-    return log4c_init ();
+    return 0;
 }
 
 int
 llcp_log_fini (void)
 {
-    sem_close (log_sem);
-    sem_unlink (sem_name);
-    return log4c_fini ();
+    return 0;
 }
 
 void
 llcp_log_log (char *category, int priority, char *format, ...)
 {
-    sem_wait (log_sem);
-
-    const log4c_category_t *cat = log4c_category_get (category);
-    if (log4c_category_is_priority_enabled (cat, priority)) {
-	/*
-	 * FIXME: Output colorisation should be done by custom log4c logger
-	 */
-	switch (priority) {
-	case LLC_PRIORITY_FATAL:
-	    printf ("\033[37;41;1m");
-	    break;
-	case LLC_PRIORITY_ALERT:
-	case LLC_PRIORITY_CRIT:
-	case LLC_PRIORITY_ERROR:
-	    printf ("\033[31;1m");
-	    break;
-	case LLC_PRIORITY_WARN:
-	    printf ("\033[33;1m");
-	    break;
-	case LLC_PRIORITY_NOTICE:
-	    printf ("\033[34;1m");
-	    break;
-	default:
-	    printf ("\033[32m");
-	}
-	va_list va;
-	va_start (va, format);
-	log4c_category_vlog (cat, priority, format, va);
-	printf("[0m");
-	fflush (stdout);
+    switch (priority) {
+    case LLC_PRIORITY_FATAL:
+	printf ("\033[37;41;1m");
+	break;
+    case LLC_PRIORITY_ALERT:
+    case LLC_PRIORITY_CRIT:
+    case LLC_PRIORITY_ERROR:
+	printf ("\033[31;1m");
+	break;
+    case LLC_PRIORITY_WARN:
+	printf ("\033[33;1m");
+	break;
+    case LLC_PRIORITY_NOTICE:
+	printf ("\033[34;1m");
+	break;
+    default:
+	printf ("\033[32m");
     }
-
-    sem_post (log_sem);
+    va_list va;
+    va_start (va, format);
+    printf ("%s\t", category);
+    vprintf (format, va);
+    printf("[0m");
+    printf ("\n");
+    fflush (stdout);
 }

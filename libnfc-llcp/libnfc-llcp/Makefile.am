@@ -3,11 +3,6 @@
 AM_CFLAGS = @LIBNFC_CFLAGS@
 AM_LDFLAGS = @LIBNFC_LIBS@ -lrt
 
-if HAS_LOG4C
-AM_CFLAGS += $(log4c_CFLAGS)
-AM_LDFLAGS += $(log4c_LIBS)
-endif
-
 llcp_HEADERS = \
 		llc_connection.h \
 		llc_link.h \
@@ -30,7 +25,7 @@ libnfc_llcp_la_SOURCES = \
 			 llc_service_sdp.c \
 			 mac_iso18092.c
 
-if HAS_LOG4C
+if WITH_DEBUG
 libnfc_llcp_la_SOURCES += llcp_log.c
 endif
 

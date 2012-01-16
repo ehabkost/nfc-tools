@@ -22,27 +22,21 @@
 #ifndef _LLC_LOG_H
 #define _LLC_LOG_H
 
-#include <semaphore.h>
-
-extern sem_t *log_sem;
-
-#ifdef HAS_LOG4C
-
-#include <log4c.h>
+#ifdef DEBUG
 
 int	 llcp_log_init (void);
 int	 llcp_log_fini (void);
 void	 llcp_log_log (char *category, int priority, char *format, ...);
 
-#define LLC_PRIORITY_FATAL  LOG4C_PRIORITY_FATAL
-#define LLC_PRIORITY_ALERT  LOG4C_PRIORITY_ALERT
-#define LLC_PRIORITY_CRIT   LOG4C_PRIORITY_CRIT
-#define LLC_PRIORITY_ERROR  LOG4C_PRIORITY_ERROR
-#define LLC_PRIORITY_WARN   LOG4C_PRIORITY_WARN
-#define LLC_PRIORITY_NOTICE LOG4C_PRIORITY_NOTICE
-#define LLC_PRIORITY_INFO   LOG4C_PRIORITY_INFO
-#define LLC_PRIORITY_DEBUG  LOG4C_PRIORITY_DEBUG
-#define LLC_PRIORITY_TRACE  LOG4C_PRIORITY_TRACE
+#define LLC_PRIORITY_FATAL  0
+#define LLC_PRIORITY_ALERT  1
+#define LLC_PRIORITY_CRIT   2
+#define LLC_PRIORITY_ERROR  3
+#define LLC_PRIORITY_WARN   4
+#define LLC_PRIORITY_NOTICE 5
+#define LLC_PRIORITY_INFO   6
+#define LLC_PRIORITY_DEBUG  7
+#define LLC_PRIORITY_TRACE  8
 
 #else
 
