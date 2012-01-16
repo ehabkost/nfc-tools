@@ -45,6 +45,7 @@
 #include <llc_connection.h>
 
 struct mac_link *mac_link;
+nfc_device *device;
 
 void
 stop_mac_link (int sig)
@@ -53,6 +54,13 @@ stop_mac_link (int sig)
 
     if (mac_link && mac_link->device)
 	nfc_abort_command (mac_link->device);
+}
+
+void
+bye (void)
+{
+    if (device)
+	nfc_disconnect (device);
 }
 
 size_t
@@ -178,16 +186,17 @@ main (int argc, char *argv[])
 	errx (EXIT_FAILURE, "llcp_init()");
 
     signal (SIGINT, stop_mac_link);
+    atexit (bye);
 
-    nfc_connstring connstring[1];
+    nfc_connstring device_connstring[1];
 
-    size_t n = nfc_list_devices (connstring, 1);
+    int res;
+    res = nfc_list_devices (device_connstring, 1);
 
-    if (n < 1)
+    if (res < 1)
 	errx (EXIT_FAILURE, "No NFC device found");
 
-    nfc_device *device;
-    if (!(device = nfc_connect (connstring[0]))) {
+    if (!(device = nfc_connect (device_connstring[0]))) {
 	errx (EXIT_FAILURE, "Cannot connect to NFC device");
     }
 
@@ -197,8 +206,7 @@ main (int argc, char *argv[])
     }
 
     struct llc_service *com_android_npp;
-    
-    if (!(com_android_npp = llc_service_new_with_uri (NULL, com_android_npp_thread, "com.android.npp")))
+    if (!(com_android_npp = llc_service_new_with_uri (NULL, com_android_npp_thread, "com.android.npp", NULL)))
 	errx (EXIT_FAILURE, "Cannot create com.android.npp service");
 
     llc_service_set_miu (com_android_npp, 512);
@@ -211,8 +219,9 @@ main (int argc, char *argv[])
     if (!mac_link)
 	errx (EXIT_FAILURE, "Cannot create MAC link");
 
-    if (mac_link_activate_as_target (mac_link) <0)
+    if (mac_link_activate_as_target (mac_link) < 0) {
 	errx (EXIT_FAILURE, "Cannot activate MAC link");
+    }
 
     void *err;
     mac_link_wait (mac_link, &err);
@@ -220,7 +229,7 @@ main (int argc, char *argv[])
     mac_link_free (mac_link);
     llc_link_free (llc_link);
 
-    nfc_disconnect (device);
+    nfc_disconnect (device); device = NULL;
 
     llcp_fini ();
     exit(EXIT_SUCCESS);

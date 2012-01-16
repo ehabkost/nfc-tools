@@ -1,3 +1,4 @@
 # $Id$
 
-SUBDIRS = nexus-get-tag
+SUBDIRS = \
+	npp-server
