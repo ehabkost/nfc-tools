@@ -90,6 +90,7 @@ AC_OUTPUT([
 	   Makefile
 	   doc/Makefile
 	   examples/Makefile
+	   examples/npp-client/Makefile
 	   examples/npp-server/Makefile
 	   libnfc-llcp/Makefile
 	   test/Makefile
