@@ -155,7 +155,7 @@ test_dummy_mac_link (void)
 
     initiator->cut_test_context = cut_get_current_test_context ();
 
-    service = llc_service_new (NULL, echo_service);
+    service = llc_service_new (NULL, echo_service, NULL);
     cut_assert_not_null (service, cut_message ("llc_service_new()"));
 
     res = llc_link_service_bind (initiator, service, ECHO_SAP);
@@ -175,8 +175,8 @@ test_dummy_mac_link (void)
     };
     pthread_create (&transport, NULL, dummy_mac_transport_thread, &eps);
 
-    mac_initiator.exchange_pdus_thread = transport;
-    mac_target.exchange_pdus_thread = transport;
+    mac_initiator.exchange_pdus_thread = &transport;
+    mac_target.exchange_pdus_thread = &transport;
 
     //initiator->mac_link = &mac_initiator;
     //target->mac_link = &mac_target;

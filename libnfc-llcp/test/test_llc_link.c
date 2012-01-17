@@ -63,7 +63,7 @@ test_llc_link_activate_as_initiator (void)
     cut_assert_equal_int (LLCP_DEFAULT_MIU, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x0001, link->remote_wks, cut_message ("Wrong remote WKS"));
     cut_assert_equal_int (0, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
-    cut_assert_equal_int (100000000, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO nsec"));
+    cut_assert_equal_int (100000, link->remote_lto.tv_usec, cut_message ("Wrong remote LTO nsec"));
     cut_assert_equal_int (3, link->remote_lsc, cut_message ("Wrong remote LSC"));
 
     llc_link_deactivate (link);
@@ -78,7 +78,7 @@ test_llc_link_activate_as_initiator (void)
     cut_assert_equal_int (LLCP_DEFAULT_MIU, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x0001, link->remote_wks, cut_message ("Wrong remote WKS"));
     cut_assert_equal_int (0, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
-    cut_assert_equal_int (100000000, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO nsec"));
+    cut_assert_equal_int (100000, link->remote_lto.tv_usec, cut_message ("Wrong remote LTO nsec"));
     cut_assert_equal_int (3, link->remote_lsc, cut_message ("Wrong remote LSC"));
 
     llc_link_deactivate (link);
@@ -93,7 +93,7 @@ test_llc_link_activate_as_initiator (void)
     cut_assert_equal_int (419, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x0001, link->remote_wks, cut_message ("Wrong remote WKS"));
     cut_assert_equal_int (0, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
-    cut_assert_equal_int (100000000, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO nsec"));
+    cut_assert_equal_int (100000, link->remote_lto.tv_usec, cut_message ("Wrong remote LTO nsec"));
     cut_assert_equal_int (3, link->remote_lsc, cut_message ("Wrong remote LSC"));
 
     llc_link_deactivate (link);
@@ -108,7 +108,7 @@ test_llc_link_activate_as_initiator (void)
     cut_assert_equal_int (419, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x1235, link->remote_wks, cut_message ("Wrong remote WKS"));
     cut_assert_equal_int (1, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
-    cut_assert_equal_int (0, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO nsec"));
+    cut_assert_equal_int (0, link->remote_lto.tv_usec, cut_message ("Wrong remote LTO nsec"));
     cut_assert_equal_int (2, link->remote_lsc, cut_message ("Wrong remote LSC"));
 
     llc_link_deactivate (link);
@@ -136,7 +136,7 @@ test_llc_link_activate_as_target (void)
     cut_assert_equal_int (LLCP_DEFAULT_MIU, link->remote_miu, cut_message ("Wrong remote MIU"));
     cut_assert_equal_int (0x0001, link->remote_wks, cut_message ("Wrong remote WKS"));
     cut_assert_equal_int (0, link->remote_lto.tv_sec, cut_message ("Wrong remote LTO sec"));
-    cut_assert_equal_int (100000000, link->remote_lto.tv_nsec, cut_message ("Wrong remote LTO nsec"));
+    cut_assert_equal_int (100000, link->remote_lto.tv_usec, cut_message ("Wrong remote LTO nsec"));
     cut_assert_equal_int (3, link->remote_lsc, cut_message ("Wrong remote LSC"));
 
     llc_link_deactivate (link);
@@ -168,7 +168,7 @@ test_llc_link_find_sap_by_uri (void)
     link = llc_link_new ();
     cut_assert_not_null (link, cut_message ("llc_link_new()"));
 
-    struct llc_service *service = llc_service_new_with_uri (NULL, void_service, "urn:nfc:xsn:foo");
+    struct llc_service *service = llc_service_new_with_uri (NULL, void_service, "urn:nfc:xsn:foo", NULL);
     res = llc_link_service_bind (link, service, -1);
     cut_assert_not_equal_int (-1, res, cut_message ("llc_link_service_bind()"));
 

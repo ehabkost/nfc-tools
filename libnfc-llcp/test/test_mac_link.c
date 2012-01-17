@@ -13,13 +13,13 @@
 #define TARGET    1
 
 pthread_t threads[2];
-nfc_device_desc_t device_descriptions[2];
-nfc_device_t *devices[2];
+nfc_connstring device_descriptions[2];
+nfc_device *devices[2];
 intptr_t result[2];
 
 struct test_thread_data {
     CutTestContext *context;
-    nfc_device_t *device;
+    nfc_device *device;
 };
 
 void
@@ -41,13 +41,13 @@ cut_setup (void)
 
     //cut_pend ("MAC link over DEP does not work");
 
-    nfc_list_devices (device_descriptions, 2, &n);
+    n = nfc_list_devices (device_descriptions, 2);
     if (n < 2) {
 	cut_omit ("At least two NFC devices must be plugged-in to run this test");
     }
 
-    devices[TARGET] = nfc_connect (&device_descriptions[TARGET]);
-    devices[INITIATOR] = nfc_connect (&device_descriptions[INITIATOR]);
+    devices[TARGET] = nfc_connect (device_descriptions[TARGET]);
+    devices[INITIATOR] = nfc_connect (device_descriptions[INITIATOR]);
 }
 
 void

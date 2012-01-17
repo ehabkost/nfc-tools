@@ -76,7 +76,7 @@ test_llc_data_link_connection_new (void)
     cut_assert_null (connection0, cut_message ("llc_data_link_connection_new"));
     cut_assert_equal_int (2, reason, cut_message ("Wrong reason"));
 
-    service = llc_service_new (NULL, void_thread);
+    service = llc_service_new (NULL, void_thread, NULL);
     cut_assert_not_null (service, cut_message ("llc_service_new()"));
 
     int sap;
@@ -126,7 +126,7 @@ test_llc_logical_data_link_new (void)
     connection0 = llc_logical_data_link_new (llc_link, pdu);
     cut_assert_null (connection0, cut_message ("llc_logical_data_link_new"));
 
-    service = llc_service_new (NULL, void_thread);
+    service = llc_service_new (NULL, void_thread, NULL);
     cut_assert_not_null (service, cut_message ("llc_service_new()"));
 
     int sap;
@@ -181,7 +181,7 @@ test_llc_connection_accept (void)
 {
     cut_pend ("Needs update");
     struct llc_service *service;
-    service = llc_service_new (accept_thread, void_thread);
+    service = llc_service_new (accept_thread, void_thread, NULL);
     cut_assert_not_null (service, cut_message ("llc_service_new()"));
 
     int sap;
@@ -223,7 +223,7 @@ test_llc_connection_reject (void)
     cut_pend ("Needs update");
 
     struct llc_service *service;
-    service = llc_service_new (reject_thread, void_thread);
+    service = llc_service_new (reject_thread, void_thread, NULL);
     cut_assert_not_null (service, cut_message ("llc_service_new()"));
 
     int sap;
