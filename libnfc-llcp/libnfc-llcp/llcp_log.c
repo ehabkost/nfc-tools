@@ -21,8 +21,9 @@
 
 #include "config.h"
 
+#include <stdio.h>
+#include <stdarg.h>
 #include <fcntl.h>
-#include <semaphore.h>
 
 #include "llcp_log.h"
 
