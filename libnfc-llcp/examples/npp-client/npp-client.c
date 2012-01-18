@@ -80,15 +80,26 @@ print_usage (char *progname)
     fprintf (stderr, "usage: %s\n", progname);
 }
 
-void* 
+void *
 com_android_npp_service (void *arg)
 {
     struct llc_connection *connection = (struct llc_connection *) arg;
 
-    uint8_t buffer[1024];
-    uint8_t ssap;
-    int len = llc_connection_recv (connection, buffer, sizeof (buffer), &ssap);
-    printf ("Received %d bytes from %d: %s\n", len, ssap, buffer);
+    sleep (1);
+    uint8_t frame[] = { 0x01, 		// Protocol version
+	0x00, 0x00, 0x00, 0x01,		// NDEF entries count
+	0x01,				// Action code
+	0x00, 0x00, 0x00, 33,		// NDEF length
+	// NDEF
+	0xd1, 0x02, 0x1c, 0x53, 0x70, 0x91, 0x01, 0x09, 0x54, 0x02,
+	0x65, 0x6e, 0x4c, 0x69, 0x62, 0x6e, 0x66, 0x63, 0x51, 0x01,
+	0x0b, 0x55, 0x03, 0x6c, 0x69, 0x62, 0x6e, 0x66, 0x63, 0x2e,
+	0x6f, 0x72, 0x67
+	};
+
+    llc_connection_send (connection, frame, sizeof (frame));
+
+    llc_connection_stop (connection);
 
     return NULL;
 }
@@ -143,22 +154,9 @@ main (int argc, char *argv[])
     if (llc_connection_connect (con) < 0)
         errx (EXIT_FAILURE, "Cannot connect llc_connection");
 
-    uint8_t frame[] = { 0x01, 		// Protocol version
-	0x00, 0x00, 0x00, 0x01,		// NDEF entries count
-	0x01,				// Action code
-	0x00, 0x00, 0x00, 33,		// NDEF length
-	// NDEF
-	0xd1, 0x02, 0x1c, 0x53, 0x70, 0x91, 0x01, 0x09, 0x54, 0x02,
-	0x65, 0x6e, 0x4c, 0x69, 0x62, 0x6e, 0x66, 0x63, 0x51, 0x01,
-	0x0b, 0x55, 0x03, 0x6c, 0x69, 0x62, 0x6e, 0x66, 0x63, 0x2e,
-	0x6f, 0x72, 0x67 
-	};
+    llc_connection_wait (con, NULL);
 
-    con->status = DLC_CONNECTED;
-    llc_connection_send (con, frame, sizeof (frame));
-
-    void *err;
-    mac_link_wait (mac_link, &err);
+    llc_link_deactivate (llc_link);
 
     mac_link_free (mac_link);
     llc_link_free (llc_link);
