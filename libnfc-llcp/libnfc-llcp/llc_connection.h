@@ -75,6 +75,7 @@ int		 llc_connection_send_pdu (struct llc_connection *connection, const struct p
 int		 llc_connection_send (struct llc_connection *connection, const uint8_t *data, size_t len);
 int		 llc_connection_recv (struct llc_connection *connection, uint8_t *data, size_t len, uint8_t *ssap);
 int		 llc_connection_stop (struct llc_connection *connection);
+int		 llc_connection_wait (struct llc_connection *connection, void **value_ptr);
 void		 llc_connection_free (struct llc_connection *connection);
 
 #endif /* !_LLC_CONNECTION_H */

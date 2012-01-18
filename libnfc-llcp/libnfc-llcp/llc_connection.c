@@ -312,7 +312,7 @@ llc_connection_connect (struct llc_connection *connection)
     if (res >= 0) {
 	connection->link->transmission_handlers[connection->local_sap] = connection;
 	connection->status = DLC_NEW;
-	llc_connection_start (connection);
+	res = llc_connection_start (connection);
     }
 
     return res;
@@ -412,6 +412,32 @@ llc_connection_stop (struct llc_connection *connection)
 	connection->thread = 0;
     }
     return 0;
+}
+
+int
+llc_connection_wait (struct llc_connection *connection, void **value_ptr)
+{
+    assert (connection);
+
+    struct timespec ts = {
+	.tv_sec = 0,
+	.tv_nsec = 100000
+    };
+
+    for (;;) {
+	switch (connection->status) {
+	case DLC_NEW:
+	case DLC_ACCEPTED:
+	case DLC_RECEIVED_CC:
+	    nanosleep (&ts, NULL);
+	    break;
+	case DLC_CONNECTED:
+	    return pthread_join (connection->thread, value_ptr);
+	    break;
+	default:
+	    return -1;
+	}
+    }
 }
 
 void

@@ -43,7 +43,6 @@ uint8_t		 llc_service_get_rw (const struct llc_service *service);
 void		 llc_service_set_rw (struct llc_service *service, uint8_t rw);
 const char	*llc_service_get_uri (const struct llc_service *service);
 const char	*llc_service_set_uri (struct llc_service *service, const char *uri);
-int		 llc_service_wait (struct llc_service *service, void **value_ptr);
 void		 llc_service_free (struct llc_service *service);
 
 #endif /* !_LLC_SERVICE_H */
