@@ -188,15 +188,14 @@ main (int argc, char *argv[])
     signal (SIGINT, stop_mac_link);
     atexit (bye);
 
-    nfc_connstring device_connstring[1];
+    nfc_connstring connstring;
+    if (!nfc_get_default_device (&connstring)) {
+	errx (EXIT_FAILURE, "No NFC device found");
+    }
 
     int res;
-    res = nfc_list_devices (device_connstring, 1);
 
-    if (res < 1)
-	errx (EXIT_FAILURE, "No NFC device found");
-
-    if (!(device = nfc_connect (device_connstring[0]))) {
+    if (!(device = nfc_connect (connstring))) {
 	errx (EXIT_FAILURE, "Cannot connect to NFC device");
     }
 

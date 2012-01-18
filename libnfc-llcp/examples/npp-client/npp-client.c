@@ -102,15 +102,13 @@ main (int argc, char *argv[])
     signal (SIGINT, stop_mac_link);
     atexit (bye);
 
-    nfc_connstring device_connstring[1];
+    nfc_connstring connstring;
+    if (!nfc_get_default_device (&connstring)) {
+	errx (EXIT_FAILURE, "No NFC device found");
+    }
 
     int res;
-    res = nfc_list_devices (device_connstring, 1);
-
-    if (res < 1)
-	errx (EXIT_FAILURE, "No NFC device found");
-
-    if (!(device = nfc_connect (device_connstring[0]))) {
+    if (!(device = nfc_connect (connstring))) {
 	errx (EXIT_FAILURE, "Cannot connect to NFC device");
     }
 
@@ -140,10 +138,10 @@ main (int argc, char *argv[])
 
     struct llc_connection * con = llc_outgoing_data_link_connection_new_by_uri (llc_link, sap, "com.android.npp");
     if (!con)
-	return EXIT_FAILURE;
+        errx (EXIT_FAILURE, "Cannot create llc_connection");
 
     if (llc_connection_connect (con) < 0)
-        return EXIT_FAILURE;
+        errx (EXIT_FAILURE, "Cannot connect llc_connection");
 
     uint8_t frame[] = { 0x01, 		// Protocol version
 	0x00, 0x00, 0x00, 0x01,		// NDEF entries count
@@ -156,6 +154,7 @@ main (int argc, char *argv[])
 	0x6f, 0x72, 0x67 
 	};
 
+    con->status = DLC_CONNECTED;
     llc_connection_send (con, frame, sizeof (frame));
 
     void *err;

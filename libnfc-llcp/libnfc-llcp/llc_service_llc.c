@@ -255,7 +255,7 @@ spawn_logical_data_link:
 	    }
 	    break;
 	case PDU_CC:
-	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_FATAL, "Connection Complete PDU");
+	    LLC_SERVICE_LLC_MSG (LLC_PRIORITY_INFO, "Connection Complete PDU");
 	    connection = link->transmission_handlers[pdu->dsap];
 	    connection->remote_sap = pdu->ssap;
 	    connection->status = DLC_RECEIVED_CC;
