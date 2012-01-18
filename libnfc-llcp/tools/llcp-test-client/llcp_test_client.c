@@ -207,8 +207,8 @@ main (int argc, char *argv[])
 	errx (EXIT_FAILURE, "No NFC device found");
 
     nfc_device *device;
-    if (!(device = nfc_connect (device_connstring[0]))) {
-	errx (EXIT_FAILURE, "Cannot connect to NFC device");
+    if (!(device = nfc_open (device_connstring[0]))) {
+	errx (EXIT_FAILURE, "Cannot open NFC device");
     }
 
     struct llc_link *llc_link = llc_link_new ();
@@ -241,7 +241,7 @@ main (int argc, char *argv[])
     mac_link_free (mac_link);
     llc_link_free (llc_link);
 
-    nfc_disconnect (device);
+    nfc_close (device);
 
     llcp_fini ();
     exit (ret);

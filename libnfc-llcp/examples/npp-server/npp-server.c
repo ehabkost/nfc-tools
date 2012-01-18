@@ -60,7 +60,7 @@ void
 bye (void)
 {
     if (device)
-	nfc_disconnect (device);
+	nfc_close (device);
 }
 
 size_t
@@ -195,7 +195,7 @@ main (int argc, char *argv[])
 
     int res;
 
-    if (!(device = nfc_connect (connstring))) {
+    if (!(device = nfc_open (connstring))) {
 	errx (EXIT_FAILURE, "Cannot connect to NFC device");
     }
 
@@ -228,7 +228,7 @@ main (int argc, char *argv[])
     mac_link_free (mac_link);
     llc_link_free (llc_link);
 
-    nfc_disconnect (device); device = NULL;
+    nfc_close (device); device = NULL;
 
     llcp_fini ();
     exit(EXIT_SUCCESS);
