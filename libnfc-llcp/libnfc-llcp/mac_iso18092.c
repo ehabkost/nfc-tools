@@ -336,6 +336,7 @@ int
 mac_link_wait (struct mac_link *link, void **value_ptr)
 {
     assert (link);
+    assert (link->exchange_pdus_thread);
     assert (value_ptr);
 
     *value_ptr = NULL;
@@ -351,7 +352,7 @@ int
 mac_link_deactivate (struct mac_link *link, intptr_t reason)
 {
     assert (link);
-    assert (*link->exchange_pdus_thread != pthread_self ());
+    assert ((link->exchange_pdus_thread == NULL) || (*link->exchange_pdus_thread != pthread_self ()));
 
     MAC_LINK_LOG (LLC_PRIORITY_INFO, "MAC Link deactivation requested (reason: %d)", reason);
 
@@ -362,7 +363,6 @@ mac_link_deactivate (struct mac_link *link, intptr_t reason)
 
     llcp_threadslayer (*link->exchange_pdus_thread);
     link->exchange_pdus_thread = NULL;
-
 
     bool st;
     if (link->mode == MAC_LINK_INITIATOR) {
@@ -385,8 +385,10 @@ mac_link_deactivate (struct mac_link *link, intptr_t reason)
 	switch (reason) {
 	case MAC_DEACTIVATE_ON_REQUEST:
 	    MAC_LINK_MSG (LLC_PRIORITY_INFO, "Drain mode");
+	    link->exchange_pdus_thread = malloc (sizeof (link->exchange_pdus_thread));
 	    st = 0 == pthread_create (link->exchange_pdus_thread, NULL, mac_link_drain, link);
 	    pthread_join (*link->exchange_pdus_thread, NULL);
+	    free (link->exchange_pdus_thread);
 	    link->exchange_pdus_thread = NULL;
 	    break;
 	case MAC_DEACTIVATE_ON_FAILURE:
