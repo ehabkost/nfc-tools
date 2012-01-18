@@ -46,15 +46,15 @@ cut_setup (void)
 	cut_omit ("At least two NFC devices must be plugged-in to run this test");
     }
 
-    devices[TARGET] = nfc_connect (device_descriptions[TARGET]);
-    devices[INITIATOR] = nfc_connect (device_descriptions[INITIATOR]);
+    devices[TARGET] = nfc_open (device_descriptions[TARGET]);
+    devices[INITIATOR] = nfc_open (device_descriptions[INITIATOR]);
 }
 
 void
 cut_teardown (void)
 {
-    nfc_disconnect (devices[TARGET]);
-    nfc_disconnect (devices[INITIATOR]);
+    nfc_close (devices[TARGET]);
+    nfc_close (devices[INITIATOR]);
 
     llcp_fini ();
 }
