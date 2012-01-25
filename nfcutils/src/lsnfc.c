@@ -39,7 +39,7 @@
 
 #include <nfc/nfc.h>
 
-static nfc_device_t *pnd;
+static nfc_device *pnd;
 
 #define ERR(x, ...) printf("ERROR: " x "\n", __VA_ARGS__ )
 
@@ -47,7 +47,7 @@ static nfc_device_t *pnd;
 #define MAX_TARGET_COUNT  16
 #define MAX_ATS_LENGTH    32
 
-typedef char* (*identication_hook)(const nfc_iso14443a_info_t nai);
+typedef char* (*identication_hook)(const nfc_iso14443a_info nai);
 
 struct iso14443a_tag {
     uint8_t SAK;
@@ -58,7 +58,7 @@ struct iso14443a_tag {
 };
 
 void
-print_hex (const byte_t* pbtData, size_t szData)
+print_hex (const uint8_t* pbtData, size_t szData)
 {
   for (size_t i = 0; i < szData; i++) {
     printf ("%02x", pbtData[i]);
@@ -66,29 +66,30 @@ print_hex (const byte_t* pbtData, size_t szData)
 }
 
 char* 
-mifare_ultralight_identification(const nfc_iso14443a_info_t nai)
+mifare_ultralight_identification(const nfc_iso14443a_info nai)
 {
-  byte_t abtCmd[2];
-  byte_t abtRx[265];
+  uint8_t abtCmd[2];
+  uint8_t abtRx[265];
   size_t szRxLen;
+  int res = 0;
 
   abtCmd[0] = 0x1A;  // MIFARE UltralightC Auth command
   abtCmd[1] = 0x00;  //
 
-  nfc_modulation_t nm = {
+  nfc_modulation nm = {
     .nmt = NMT_ISO14443A,
     .nbr = NBR_106
   };
-  if(nfc_initiator_select_passive_target(pnd, nm, nai.abtUid, nai.szUidLen, NULL) ) {
-    nfc_configure (pnd, NDO_EASY_FRAMING, false);
-    if (nfc_initiator_transceive_bytes(pnd, abtCmd,sizeof(abtCmd), abtRx, &szRxLen, NULL)) {
+  if((res = nfc_initiator_select_passive_target(pnd, nm, nai.abtUid, nai.szUidLen, NULL)) >= 0 ) {
+    nfc_device_set_property_bool (pnd, NP_EASY_FRAMING, false);
+    if ((res = nfc_initiator_transceive_bytes(pnd, abtCmd,sizeof(abtCmd), abtRx, &szRxLen, 0)) >= 0) {
       // AUTH step1 command success, so it's a Ultralight C
-      nfc_configure (pnd, NDO_EASY_FRAMING, true);
+      nfc_device_set_property_bool (pnd, NP_EASY_FRAMING, true);
       nfc_initiator_deselect_target(pnd);
       return strdup(" C");
     } else {
       // When a Auth failed, the tag returns in HALT state, so we don't need to deselect tag
-      nfc_configure (pnd, NDO_EASY_FRAMING, true);
+      nfc_device_set_property_bool (pnd, NP_EASY_FRAMING, true);
       return NULL;
     }
   } else {
@@ -105,25 +106,26 @@ Document used to code this function:
    DESFire EV1- Features and Hints
 */
 char*
-mifare_desfire_identification(const nfc_iso14443a_info_t nai)
+mifare_desfire_identification(const nfc_iso14443a_info nai)
 {
-  byte_t abtCmd[] = { 0x60 }; // MIFARE DESFire GetVersion command
-  byte_t abtRx[265];
+  uint8_t abtCmd[] = { 0x60 }; // MIFARE DESFire GetVersion command
+  uint8_t abtRx[265];
   size_t szRxLen;
-  byte_t abtDESFireVersion[14];
+  uint8_t abtDESFireVersion[14];
   char* res = NULL;
+  int nfcRes = 0;
   
-  nfc_modulation_t nm = {
+  nfc_modulation nm = {
     .nmt = NMT_ISO14443A,
     .nbr = NBR_106
   };
-  if(nfc_initiator_select_passive_target(pnd, nm, nai.abtUid, nai.szUidLen, NULL) ) {
-    if (nfc_initiator_transceive_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen, NULL)) {
+  if((nfcRes = nfc_initiator_select_passive_target(pnd, nm, nai.abtUid, nai.szUidLen, NULL)) >= 0 ) {
+    if ((nfcRes = nfc_initiator_transceive_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen, 0)) >= 0) {
       // MIFARE DESFire GetVersion command success, decoding...
       if( szRxLen == 8 ) { // GetVersion should reply 8 bytes
         memcpy( abtDESFireVersion, abtRx + 1, 7 );
         abtCmd[0] = 0xAF; // ask for GetVersion next bytes
-        if (nfc_initiator_transceive_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen, NULL)) {
+        if ((nfcRes = nfc_initiator_transceive_bytes(pnd, abtCmd, sizeof(abtCmd), abtRx, &szRxLen, 0)) >= 0) {
           if( szRxLen == 8 ) { // GetVersion should reply 8 bytes
             memcpy( abtDESFireVersion + 7, abtRx + 1, 7 );
             res = malloc(16); // We can alloc res: we will be able to provide information
@@ -169,7 +171,7 @@ struct iso14443a_tag iso14443a_tags[] = {
 };
 
 void
-print_iso14443a_name(const nfc_iso14443a_info_t nai)
+print_iso14443a_name(const nfc_iso14443a_info nai)
 {
   const char *tag_name[sizeof (iso14443a_tags) / sizeof (struct iso14443a_tag)];
   int matches=0;
@@ -236,28 +238,26 @@ main (int argc, const char *argv[])
   uint8_t device_tag_count = 0;	// per device
   uint8_t tag_count = 0;	// total
 
-  nfc_device_desc_t *pnddDevices;
   size_t szDeviceFound;
   size_t szTargetFound;
+  int res = 0;
   
   (void)(argc);
   (void)(argv);
 
+  nfc_init(NULL);
   // Try to open the NFC device
-  if (!(pnddDevices = malloc (MAX_DEVICE_COUNT * sizeof (*pnddDevices)))) {
-    ERR ("%s", "malloc() failed\n");
-    return EXIT_FAILURE;
-  }
+  nfc_connstring connstrings[MAX_DEVICE_COUNT];
 
-  nfc_list_devices (pnddDevices, MAX_DEVICE_COUNT, &szDeviceFound);
+  szDeviceFound = nfc_list_devices (NULL, connstrings, MAX_DEVICE_COUNT);
 
   if (szDeviceFound == 0) {
     ERR ("%s", "No device found.");
   }
 
   for (size_t i = 0; i < szDeviceFound; i++) {
-    pnd = nfc_connect (&(pnddDevices[i]));
-    nfc_target_t ant[MAX_TARGET_COUNT];
+    pnd = nfc_open (NULL, connstrings[i]);
+    nfc_target ant[MAX_TARGET_COUNT];
     
     device_count++;
     device_tag_count = 0;
@@ -269,32 +269,32 @@ main (int argc, const char *argv[])
     nfc_initiator_init (pnd);
 
     // Drop the field for a while
-    nfc_configure (pnd, NDO_ACTIVATE_FIELD, false);
+    nfc_device_set_property_bool (pnd, NP_ACTIVATE_FIELD, false);
 
     // Let the reader only try once to find a tag
-    nfc_configure (pnd, NDO_INFINITE_SELECT, false);
+    nfc_device_set_property_bool (pnd, NP_INFINITE_SELECT, false);
 
     // Enable field so more power consuming cards can power themselves up
-    nfc_configure (pnd, NDO_ACTIVATE_FIELD, true);
-
-    printf ("device = %s\n", pnd->acName);
+    nfc_device_set_property_bool (pnd, NP_ACTIVATE_FIELD, true);
     
-    nfc_modulation_t nm = {
+    printf ("NFC device: %s \n", nfc_device_get_name (pnd));
+    
+    nfc_modulation nm = {
       .nmt = NMT_ISO14443A,
       .nbr = NBR_106
     };
-    if (nfc_initiator_list_passive_targets(pnd, nm, ant, MAX_TARGET_COUNT, &szTargetFound )) {
+    if ((res = nfc_initiator_list_passive_targets(pnd, nm, ant, MAX_TARGET_COUNT )) >= 0) {
       size_t n;
-      for(n=0; n<szTargetFound; n++) {
+      for(n = 0; n < res; n++) {
         print_iso14443a_name (ant[n].nti.nai);
       }
     }
-    device_tag_count += szTargetFound;
+    device_tag_count += res;
     
     nm.nmt = NMT_ISO14443B;
-    if (nfc_initiator_list_passive_targets(pnd, nm, ant, MAX_TARGET_COUNT, &szTargetFound )) {
+    if ((res = nfc_initiator_list_passive_targets(pnd, nm, ant, MAX_TARGET_COUNT )) >= 0) {
       size_t n;
-      for(n=0; n<szTargetFound; n++) {
+      for(n=0; n<res; n++) {
         printf ("  ISO14443B: ");
         printf ("PUPI: ");
         print_hex (ant[n].nti.nbi.abtPupi, 4);
@@ -307,19 +307,20 @@ main (int argc, const char *argv[])
     } else {
       nfc_perror (pnd, "nfc_initiator_list_passive_targets");
     }
-    device_tag_count += szTargetFound;
+    device_tag_count += res;
     
     printf ("%d tag(s) on device.\n", device_tag_count);
     tag_count += device_tag_count;
 
     // Disable field 
-    nfc_configure (pnd, NDO_ACTIVATE_FIELD, false);
+    nfc_device_set_property_bool (pnd, NP_ACTIVATE_FIELD, false);
 
-    nfc_disconnect (pnd);
+    nfc_close (pnd);
   }
   if (device_count > 1) {
     printf ("Total: %d tag(s) on %d device(s).\n", tag_count, device_count);
   }
 
+  nfc_exit(NULL);
   return EXIT_SUCCESS;
 }
