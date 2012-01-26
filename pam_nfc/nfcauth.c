@@ -51,25 +51,26 @@ nfcauth_get_targets (char **targets[])
 {
     int ret = 0;
     *targets = malloc (MAX_TARGET * sizeof (char *));
-    nfc_device_desc_t devices[MAX_DEVICES];
+    nfc_connstring devices[MAX_DEVICES];
     size_t device_count;
     size_t target_count;
     int i;
+    
+    nfc_init(NULL);
+    device_count = nfc_list_devices(NULL, devices, MAX_DEVICES);
 
-    nfc_list_devices(devices, MAX_DEVICES, &device_count);
-
-    nfc_modulation_t nm = {
+    nfc_modulation nm = {
         .nmt = NMT_ISO14443A,
         .nbr = NBR_UNDEFINED
     };
 
     for (i = 0; i < device_count; i++) {
-        nfc_device_t* initiator = nfc_connect (&(devices[i]));
+        nfc_device* initiator = nfc_open (NULL, devices[i]);
         if (initiator) {
             nfc_initiator_init (initiator);
-            nfc_target_t ant[MAX_TARGET];
+            nfc_target ant[MAX_TARGET];
 
-            if (nfc_initiator_list_passive_targets (initiator, nm, ant, MAX_TARGET, &target_count)) {
+            if ((target_count = nfc_initiator_list_passive_targets (initiator, nm, ant, MAX_TARGET)) >= 0) {
                 size_t  iTarget;
                 for (iTarget = 0; iTarget < target_count; iTarget++) {
                     if ((*targets)[ret] = malloc (2 * ant[iTarget].nti.nai.szUidLen + 1)) {
@@ -82,8 +83,9 @@ nfcauth_get_targets (char **targets[])
                     }
                 }
             }
-            nfc_disconnect (initiator);
+            nfc_close (initiator);
         }
     }
+    nfc_exit(NULL);
     return ret;
 }
