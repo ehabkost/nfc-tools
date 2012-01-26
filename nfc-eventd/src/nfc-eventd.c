@@ -42,6 +42,8 @@
 /* Module common defines */
 #include "modules/nem_common.h"
 
+#include "debug/nfc-utils.h"
+
 #include "types.h"
 
 #define DEF_POLLING 1    /* 1 second timeout */
@@ -60,9 +62,9 @@ const nfcconf_block *root;
 
 typedef struct slot_st slot_t;
 
-static module_init_fct_t module_init_fct_ptr = NULL;
-static module_event_handler_fct_t module_event_handler_fct_ptr = NULL;
-static nfc_device_desc_t* nfc_device_desc = NULL;
+static module_init_fct module_init_fct_ptr = NULL;
+static module_event_handler_fct module_event_handler_fct_ptr = NULL;
+static nfc_connstring* connstring = NULL;
 
 /**
  * @brief Load and init specified (in config file) NEM module
@@ -126,7 +128,7 @@ static int load_module( void ) {
 /**
  * @brief Execute NEM function that handle events
  */
-static int execute_event ( const nfc_device_t *nfc_device, const nfc_target_t* tag, const nem_event_t event ) {
+static int execute_event ( const nfc_device *nfc_device, const nfc_target* tag, const nem_event_t event ) {
     return (*module_event_handler_fct_ptr)( nfc_device, tag, event );
 }
 
@@ -171,20 +173,20 @@ static int parse_config_file() {
             i++;
             if ( strcmp(my_device->name->data, nfc_device_str) == 0 ) {
                 INFO("Specified device %s have been found.", nfc_device_str);
-                nfc_device_desc = malloc(sizeof(nfc_device_desc_t));
-                nfc_device_desc->pcDriver = (char*)nfcconf_get_str( my_device, "driver", "" );
+                /*connstring = malloc(sizeof(nfc_connstring));
+                connstring->pcDriver = (char*)nfcconf_get_str( my_device, "driver", "" );
 		char* device_name = (char*)nfcconf_get_str( my_device, "name", "" );
-		strncpy(nfc_device_desc->acDevice, device_name, sizeof(nfc_device_desc->acDevice));
+		strncpy(connstring->acDevice, device_name, sizeof(connstring->acDevice));
                 char* device_port   = (char*)nfcconf_get_str( my_device, "port", "" );
-		strncpy(nfc_device_desc->acPort, device_port, sizeof(nfc_device_desc->acPort));
-                nfc_device_desc->uiSpeed  = nfcconf_get_int( my_device, "speed", 9600 );
-                nfc_device_desc->uiBusIndex  = nfcconf_get_int( my_device, "index", 0 );
+		strncpy(connstring->acPort, device_port, sizeof(connstring->acPort));
+                connstring->uiSpeed  = nfcconf_get_int( my_device, "speed", 9600 );
+                connstring->uiBusIndex  = nfcconf_get_int( my_device, "index", 0 );*/
                 break;
             }
             my_device = device_list[i];
         }
         DBG( "Found %d device configuration block(s).", i );
-        if ( nfc_device_desc == NULL ) {
+        if ( connstring == NULL ) {
             ERR("NFC device have been specified in configuration file but there is no device description. Unable to select specified device: %s.", nfc_device_str);
         }
         free ( device_list );
@@ -265,10 +267,10 @@ static int parse_args ( int argc, char *argv[] ) {
  * @brief try to find a valid tag
  * @return pointer on a valid tag or NULL.
  */
-nfc_target_t*
-ned_select_tag(nfc_device_t* nfc_device, nfc_target_t* tag) {
-  nfc_target_t* rv = malloc( sizeof(nfc_target_t) );
-  nfc_modulation_t nm = {
+nfc_target*
+ned_select_tag(nfc_device* nfc_device, nfc_target* tag) {
+  nfc_target* rv = malloc( sizeof(nfc_target) );
+  nfc_modulation nm = {
     .nmt = NMT_ISO14443A,
     .nbr = NBR_106
   };
@@ -276,14 +278,14 @@ ned_select_tag(nfc_device_t* nfc_device, nfc_target_t* tag) {
   if ( tag == NULL ) {
     // We are looking for any tag.
     // Poll for a ISO14443A (MIFARE) tag
-    if ( !nfc_initiator_select_passive_target ( nfc_device, nm, NULL, 0, rv ) ) {
+    if ( nfc_initiator_select_passive_target ( nfc_device, nm, NULL, 0, rv ) < 0 ) {
       free (rv);
       rv = NULL;
     }
   } else {
     // tag is not NULL, we are looking for specific tag
     // debug_print_tag(tag);
-    if ( !nfc_initiator_select_passive_target ( nfc_device, tag->nm, tag->nti.nai.abtUid, tag->nti.nai.szUidLen, rv ) ) {
+    if ( nfc_initiator_select_passive_target ( nfc_device, tag->nm, tag->nti.nai.abtUid, tag->nti.nai.szUidLen, rv ) < 0 ) {
       free (rv);
       rv = NULL;
     }
@@ -301,12 +303,12 @@ typedef enum {
   NFC_POLL_SOFTWARE,
 } nfc_poll_mode;
 
-nfc_target_t*
-ned_poll_for_tag(nfc_device_t* nfc_device, nfc_target_t* tag)
+nfc_target*
+ned_poll_for_tag(nfc_device* nfc_device, nfc_target* tag)
 {
   uint8_t uiPollNr;
   const uint8_t uiPeriod = 2; /* 2 x 150 ms = 300 ms */
-  const nfc_modulation_t nm[1] = { { .nmt = NMT_ISO14443A, .nbr = NBR_106 } };
+  const nfc_modulation nm[1] = { { .nmt = NMT_ISO14443A, .nbr = NBR_106 } };
 
   if( tag != NULL ) {
 	/* We are looking for a previous tag */
@@ -318,14 +320,14 @@ ned_poll_for_tag(nfc_device_t* nfc_device, nfc_target_t* tag)
     uiPollNr = 0xff; /* We endless poll for a new tag */
   }
 
-  nfc_target_t target;
-  bool res = nfc_initiator_poll_target (nfc_device, nm, 1, uiPollNr, uiPeriod, &target);
-  if (res) {
+  nfc_target target;
+  int res = nfc_initiator_poll_target (nfc_device, nm, 1, uiPollNr, uiPeriod, &target);
+  if (res >= 0) {
     if ( (tag != NULL) && (0 == memcmp(tag->nti.nai.abtUid, target.nti.nai.abtUid, target.nti.nai.szUidLen)) ) {
       return tag;
     } else {
-      nfc_target_t* rv = malloc(sizeof(nfc_target_t));
-      memcpy(rv, &target, sizeof(nfc_target_t));
+      nfc_target* rv = malloc(sizeof(nfc_target));
+      memcpy(rv, &target, sizeof(nfc_target));
       nfc_initiator_deselect_target ( nfc_device );
       return rv;
     }
@@ -336,8 +338,8 @@ ned_poll_for_tag(nfc_device_t* nfc_device, nfc_target_t* tag)
 
 int
 main ( int argc, char *argv[] ) {
-    nfc_target_t* old_tag = NULL;
-    nfc_target_t* new_tag;
+    nfc_target* old_tag = NULL;
+    nfc_target* new_tag;
 
     int expire_count = 0;
 
@@ -366,11 +368,12 @@ main ( int argc, char *argv[] ) {
      * so the way we proceed is to look for an tag
      * Any ideas will be welcomed
      */
-    nfc_device_t* nfc_device = NULL;
+    nfc_device* nfc_device = NULL;
 
 //connect:
+    nfc_init(NULL);
     // Try to open the NFC device
-    if ( nfc_device == NULL ) nfc_device = nfc_connect( nfc_device_desc );
+    if ( nfc_device == NULL ) nfc_device = nfc_open( NULL, NULL );
 //init:
     if ( nfc_device == NULL ) {
         ERR( "%s", "NFC device not found" );
@@ -379,18 +382,18 @@ main ( int argc, char *argv[] ) {
     nfc_initiator_init ( nfc_device );
 
     // Drop the field for a while
-    nfc_configure ( nfc_device, NDO_ACTIVATE_FIELD, false );
+    nfc_device_set_property_bool ( nfc_device, NP_ACTIVATE_FIELD, false );
 
-    nfc_configure ( nfc_device, NDO_INFINITE_SELECT, false );
+    nfc_device_set_property_bool ( nfc_device, NP_INFINITE_SELECT, false );
 
     // Configure the CRC and Parity settings
-    nfc_configure ( nfc_device, NDO_HANDLE_CRC, true );
-    nfc_configure ( nfc_device, NDO_HANDLE_PARITY, true );
+    nfc_device_set_property_bool ( nfc_device, NP_HANDLE_CRC, true );
+    nfc_device_set_property_bool ( nfc_device, NP_HANDLE_PARITY, true );
 
     // Enable field so more power consuming cards can power themselves up
-    nfc_configure ( nfc_device, NDO_ACTIVATE_FIELD, true );
+    nfc_device_set_property_bool ( nfc_device, NP_ACTIVATE_FIELD, true );
 
-    INFO( "Connected to NFC device: %s", nfc_device->acName, nfc_device );
+    INFO( "Connected to NFC device: %s", nfc_device_get_name(nfc_device), nfc_device );
 
     do {
 detect:
@@ -421,13 +424,14 @@ detect:
     } while ( 1 );
 //disconnect:
     if ( nfc_device != NULL ) {
-        nfc_disconnect(nfc_device);
+        nfc_close(nfc_device);
         DBG ( "NFC device (0x%08x) is disconnected", nfc_device );
         nfc_device = NULL;
     }
 
     /* If we get here means that an error or exit status occurred */
     DBG ( "%s", "Exited from main loop" );
+    nfc_exit(NULL);
     exit ( EXIT_FAILURE );
 } /* main */
 

@@ -19,6 +19,6 @@
 #define NFC_DBUS_INTERFACE    "org.freedevice.NFC"
 
 void nem_dbus_init(nfcconf_context *module_context, nfcconf_block* module_block);
-int nem_dbus_event_handler(const nfc_device_t* nfc_device, const nfc_target_t* tag, const nem_event_t event);
+int nem_dbus_event_handler(const nfc_device* nfc_device, const nfc_target* tag, const nem_event_t event);
 
 #endif /* __NEM_DBUS__ */

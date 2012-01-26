@@ -77,7 +77,7 @@ void debug_print(int level, const char *file, int line, const char *format, ...)
     }
 }
 
-void _debug_print_tag(const nfc_target_t* tag)
+void _debug_print_tag(const nfc_target* tag)
 {
   print_nfc_target(*tag, false);
 }

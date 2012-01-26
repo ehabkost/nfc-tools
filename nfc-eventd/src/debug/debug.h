@@ -30,7 +30,6 @@
   #include <config.h>
 #endif
 
-#define ERR(x,...) debug_print(-1, __FILE__, __LINE__, x, ## __VA_ARGS__ )
 #define INFO(x,...) debug_print(0, __FILE__, __LINE__, x, ## __VA_ARGS__ )
 
 #ifndef DEBUG
@@ -76,7 +75,7 @@ DEBUG_EXTERN void debug_print(int level, const char *file, int line, const char 
 
 #ifdef DEBUG
 #include "../types.h"
-  void _debug_print_tag(const nfc_target_t* tag);
+  void _debug_print_tag(const nfc_target* tag);
 #define debug_print_tag( X ) \
          printf("%s:%s:%d: ", "\033[34mDEBUG", __FILE__, __LINE__); \
          _debug_print_tag( X ); \

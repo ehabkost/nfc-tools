@@ -80,10 +80,10 @@ nem_execute_init( nfcconf_context *module_context, nfcconf_block* module_block )
 }
 
 void
-tag_get_uid(nfc_device_t* nfc_device, nfc_target_t* tag, char **dest) {
+tag_get_uid(nfc_device* nfc_device, nfc_target* tag, char **dest) {
   debug_print_tag(tag);
 
-  /// @TODO We don't need to reselect tag to get his UID: nfc_target_t contains this data.
+  /// @TODO We don't need to reselect tag to get his UID: nfc_target contains this data.
   // Poll for a ISO14443A (MIFARE) tag
   if ( nfc_initiator_select_passive_target ( nfc_device, tag->nm, tag->nti.nai.abtUid, tag->nti.nai.szUidLen, tag ) ) {
       *dest = malloc(tag->nti.nai.szUidLen*sizeof(char)*2+1);
@@ -104,7 +104,7 @@ tag_get_uid(nfc_device_t* nfc_device, nfc_target_t* tag, char **dest) {
 }
 
 int
-nem_execute_event_handler(nfc_device_t* nfc_device, nfc_target_t* tag, const nem_event_t event) {
+nem_execute_event_handler(nfc_device* nfc_device, nfc_target* tag, const nem_event_t event) {
     int onerr;
     const char *onerrorstr;
     const nfcconf_list *actionlist;
