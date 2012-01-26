@@ -91,6 +91,8 @@ main (int argc, char *argv[])
     int ch;
     char junk;
 
+    nfc_init(NULL);
+    
     if (llcp_init () < 0)
 	errx (EXIT_FAILURE, "llcp_init()");
 
@@ -139,13 +141,13 @@ main (int argc, char *argv[])
     nfc_connstring device_connstring[1];
 
     int res;
-    res = nfc_list_devices (device_connstring, 1);
+    res = nfc_list_devices (NULL, device_connstring, 1);
 
     if (res < 1)
 	errx (EXIT_FAILURE, "No NFC device found");
 
     nfc_device *device;
-    if (!(device = nfc_open (device_connstring[0]))) {
+    if (!(device = nfc_open (NULL, device_connstring[0]))) {
 	errx (EXIT_FAILURE, "Cannot connect to NFC device");
     }
 
@@ -204,5 +206,6 @@ main (int argc, char *argv[])
     nfc_close (device);
 
     llcp_fini ();
+    nfc_exit(NULL);
     exit(EXIT_SUCCESS);
 }

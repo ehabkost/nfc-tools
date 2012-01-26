@@ -36,18 +36,20 @@ void
 cut_setup (void)
 {
     size_t n;
+    
+    nfc_init(NULL);
 
     llcp_init ();
 
     //cut_pend ("MAC link over DEP does not work");
 
-    n = nfc_list_devices (device_descriptions, 2);
+    n = nfc_list_devices (NULL, device_descriptions, 2);
     if (n < 2) {
 	cut_omit ("At least two NFC devices must be plugged-in to run this test");
     }
 
-    devices[TARGET] = nfc_open (device_descriptions[TARGET]);
-    devices[INITIATOR] = nfc_open (device_descriptions[INITIATOR]);
+    devices[TARGET] = nfc_open (NULL, device_descriptions[TARGET]);
+    devices[INITIATOR] = nfc_open (NULL, device_descriptions[INITIATOR]);
 }
 
 void
@@ -57,6 +59,7 @@ cut_teardown (void)
     nfc_close (devices[INITIATOR]);
 
     llcp_fini ();
+    nfc_exit(NULL);
 }
 
 void *
