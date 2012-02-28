@@ -57,12 +57,18 @@ struct iso14443a_tag {
     identication_hook identication_fct;
 };
 
+struct felica_tag {
+  uint8_t  abtSysCode[2]; 
+  const char *name;
+};
+
 void
 print_hex (const uint8_t* pbtData, size_t szData)
 {
   for (size_t i = 0; i < szData; i++) {
     printf ("%02x", pbtData[i]);
   }
+  printf ("\n");
 }
 
 char* 
@@ -231,6 +237,29 @@ print_iso14443a_name(const nfc_iso14443a_info nai)
   }
 }
 
+struct felica_tag felica_tags[] = {
+  { { 0x88, 0xb4 }, "FeliCa Lite" },
+  { { 0x12, 0xfc }, "NFC Forum (NDEF)" },
+  { { 0xfe, 0xe1 }, "NFC Dynamic Tag (FeliCa Plug)" },
+};
+
+void
+print_nfc_felica_info (const nfc_felica_info nfi)
+{
+  printf ("        ID (NFCID2): ");
+  print_hex (nfi.abtId, 8);
+  printf ("    Parameter (PAD): ");
+  print_hex (nfi.abtPad, 8);
+  printf ("    System Code (SC): ");
+  print_hex (nfi.abtSysCode, 2);
+  
+  for (size_t i = 0; i < sizeof (felica_tags) / sizeof (struct felica_tag); i++) {
+    if ( (nfi.abtSysCode[0] == felica_tags[i].abtSysCode[0]) && (nfi.abtSysCode[1] == felica_tags[i].abtSysCode[1]) ) {
+      printf ("    %s\n", felica_tags[i].name);
+    }
+  }
+}
+
 int
 main (int argc, const char *argv[])
 {
@@ -288,8 +317,8 @@ main (int argc, const char *argv[])
       for(n = 0; n < res; n++) {
         print_iso14443a_name (ant[n].nti.nai);
       }
-    }
-    device_tag_count += res;
+      device_tag_count += res;
+    }    
     
     nm.nmt = NMT_ISO14443B;
     if ((res = nfc_initiator_list_passive_targets(pnd, nm, ant, MAX_TARGET_COUNT )) >= 0) {
@@ -304,10 +333,32 @@ main (int argc, const char *argv[])
         print_hex (ant[n].nti.nbi.abtProtocolInfo, 3);
         printf ("\n");
       }
+      device_tag_count += res;
     } else {
       nfc_perror (pnd, "nfc_initiator_list_passive_targets");
+    }    
+    
+    nm.nmt = NMT_FELICA;
+    nm.nbr = NBR_212;
+    // List Felica tags
+    if ((res = nfc_initiator_list_passive_targets (pnd, nm, ant, MAX_TARGET_COUNT)) >= 0) {
+      int n;
+      for (n = 0; n < res; n++) {
+        print_nfc_felica_info (ant[n].nti.nfi);
+        printf ("\n");
+      }
+      device_tag_count += res;
     }
-    device_tag_count += res;
+
+    nm.nbr = NBR_424;
+    if ((res = nfc_initiator_list_passive_targets (pnd, nm, ant, MAX_TARGET_COUNT)) >= 0) {
+      int n;
+      for (n = 0; n < res; n++) {
+        print_nfc_felica_info (ant[n].nti.nfi);
+        printf ("\n");
+      }
+      device_tag_count += res;
+    }
     
     printf ("%d tag(s) on device.\n", device_tag_count);
     tag_count += device_tag_count;
