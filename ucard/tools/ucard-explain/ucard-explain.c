@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
- * $Id: ucard-explain.c 641M 2012-03-02 12:23:33Z (local) $
+ * $Id$
  */
 
 #include <err.h>

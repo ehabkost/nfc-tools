@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
- * $Id: ucard_version.h 460 2010-10-22 23:43:13Z romain $
+ * $Id$
  */
 
 #ifndef _UCARD_VERSION_H

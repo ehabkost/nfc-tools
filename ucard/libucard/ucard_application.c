@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
- * $Id: ucard_application.c 642 2011-01-16 12:08:19Z romain $
+ * $Id$
  */
 
 #include <sys/types.h>

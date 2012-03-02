@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
- * $Id: ucard_internal.h 565M 2012-03-02 12:12:20Z (local) $
+ * $Id$
  */
 
 #ifndef _UCARD_INTERNAL_H

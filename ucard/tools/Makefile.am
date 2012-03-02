@@ -1,4 +1,4 @@
-# $Id: Makefile.am 584 2011-01-01 16:12:20Z romain $
+# $Id$
 
 SUBDIRS = \
 	  ucard-explain \

@@ -1,4 +1,4 @@
-# $Id: Makefile.am 493 2010-10-29 08:59:44Z audrey $
+# $Id$
 
 SUBDIRS = barber-application \
 	  cardlock-application \

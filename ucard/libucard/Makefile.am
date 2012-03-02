@@ -1,4 +1,4 @@
-# $Id: Makefile.am 575 2010-12-27 17:43:07Z romain $
+# $Id$
 
 lib_LTLIBRARIES = libucard.la
 

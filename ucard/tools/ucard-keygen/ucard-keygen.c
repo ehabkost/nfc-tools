@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
- * $Id: ucard-keygen.c 505 2010-11-15 18:14:47Z romain $
+ * $Id$
  */
 
 #include <err.h>

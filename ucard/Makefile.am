@@ -1,4 +1,4 @@
-# $Id: Makefile.am 583 2011-01-01 16:09:54Z romain $
+# $Id$
 
 ACLOCAL_AMFLAGS = -I m4
 

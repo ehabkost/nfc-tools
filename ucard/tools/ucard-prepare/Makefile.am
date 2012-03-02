@@ -1,4 +1,4 @@
-# $Id: Makefile.am 580 2010-12-29 23:04:24Z romain $
+# $Id$
 
 AM_CFLAGS = @LIBFREEFARE_CFLAGS@
 INCLUDES = -I $(top_srcdir)/libucard

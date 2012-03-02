@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
- * $Id: ucard.c 579 2010-12-29 23:03:14Z romain $
+ * $Id$
  */
 
 #include <stdlib.h>

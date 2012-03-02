@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
- * $Id: ucard_application_create.c 641 2011-01-16 12:07:05Z romain $
+ * $Id$
  */
 
 #include <openssl/rand.h>

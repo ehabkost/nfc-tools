@@ -1,4 +1,4 @@
-# $Id: Makefile.am 497 2010-10-29 10:36:21Z romain $
+# $Id$
 
 bin_PROGRAMS = ucard-keygen
 
