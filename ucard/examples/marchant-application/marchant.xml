@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<applications xmlns="http://il4p.fr/TR/UCard" version="-1">
+    <application name="marchant" aid="0x00798020" version="1">
+        <keys>
+            <key name="master-key" data="0xf466a630e4b8de00bdb7bde7810173a1" type="3DES" />
+            <key name="public-key" data="0x0000000000000000" type="DES" />
+        </keys>
+        <files>
+            <file type="value-file" name="reduction" read-key="public-key" read-write-key="master-key">
+                <lower-limit>0</lower-limit>
+                <upper-limit>100</upper-limit>
+                <value>0</value>
+            </file>
+            <file type="std-data-file" name="date" read-key="public-key" write-key="master-key">
+                <file-size>10</file-size>
+            </file>
+        </files>
+    </application>
+</applications>
+

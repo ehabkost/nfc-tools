@@ -1,0 +1,20 @@
+The Barber Shop
+---------------
+
+This application use the low-level API of libucard.
+
+The application is described bellow:
+
+Key 0: Master Key
+	Type:		3DES
+	Value:		0x984a80664a602ea6e569a1bfb7051d5f
+
+Key 1: Public Key
+	Type:		DES
+	Value:		0x0000000000000000
+
+File 0: counter (counts number of hair cuts)
+	Read Key:	1
+	Write Key:	0
+	Read-Write Key:	0
+	Settings Key:	0

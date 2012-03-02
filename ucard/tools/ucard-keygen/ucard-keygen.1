@@ -1,0 +1,63 @@
+.\" Copyright (C) 2010 Romain Tartiere
+.\"
+.\" This program is free software: you can redistribute it and/or modify it
+.\" under the terms of the GNU Lesser General Public License as published by the
+.\" Free Software Foundation, either version 3 of the License, or (at your
+.\" option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful, but WITHOUT
+.\" ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+.\" FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+.\" more details.
+.\"
+.\" You should have received a copy of the GNU Lesser General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>
+.\"
+.\" $Id: ucard-keygen.1 552 2010-12-07 13:09:10Z romain $
+.\"
+.Dd October 16, 2010
+.Dt UCARD-KEYGEN 1
+.Os
+.Sh NAME
+.Nm ucard-keygen
+.Nd UCard Keys Generator
+.Sh SYNOPSIS
+.Nm
+.Op Fl 1 | Fl 3
+.Op Fl c
+.Op Fl n Ar count
+.Op Fl v Ar version
+.Sh DESCRIPTION
+The
+.Nm
+utility generates random keys suitable for UCard applications. By default,
+.Nm
+generates a
+.Dq 3DES
+key with
+.Ar version
+set to
+.Vt 0 .
+.Pp
+The options are as follows:
+.Bl -tag -width -v_version
+.It Fl 1
+Generate a
+.Dq DES
+single-DES key;
+.It Fl 3
+Generate a
+.Dq 3DES
+triple-DES key;
+.It Fl c
+Output the key as a C array;
+.It Fl n Ar count
+Generate
+.Ar count
+keys.
+.It Fl v Ar version
+Set the key version to
+.Ar version .
+.El
+.Sh AUTHORS
+.An Romain Tartiere Aq rtartiere@il4p.fr

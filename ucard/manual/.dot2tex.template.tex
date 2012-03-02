@@ -1,0 +1,80 @@
+\documentclass{article}
+
+\XeTeXdefaultencoding utf-8
+
+\usepackage{fontspec}	% An automatic interface to feature-rich fonts
+\usepackage{xunicode}	% Generate Unicode characters from accented glyphs
+\usepackage{xltxtra}	% "Extras" for LaTeX users of XeTeX
+
+% Flexible and complete interface to document dimensions
+% \usepackage{geometry}
+% \geometry{a4paper}
+
+%\usepackage{graphicx}
+%\usepackage[colorlinks]{hyperref}
+
+
+% \usepackage[francais]{babel} % Multilingual support for Plain TeX or LaTeX
+
+\defaultfontfeatures{Mapping=tex-text}
+
+%%%%%%%%%%%%%%%%%%%%%
+% Fonts in document %
+%%%%%%%%%%%%%%%%%%%%%
+
+% Use open fonts
+% --------------
+
+ \setmainfont{Linux Libertine}
+ \setsansfont{Andika Basic}
+ \setmonofont{Inconsolata}
+
+% Use Microsoft fonts
+% -------------------
+
+% \setmainfont{Constantia}
+% \setsansfont{Corbel}
+% \setmonofont{Consolas}
+
+\usepackage[x11names, rgb]{xcolor}
+%\usepackage[<<textencoding>>]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+<<startpreprocsection>>%
+\usepackage[active,auctex]{preview}
+<<endpreprocsection>>%
+<<gvcols>>%
+<<cropcode>>%
+<<docpreamble>>%
+
+\begin{document}
+\pagestyle{empty}
+%
+<<startpreprocsection>>%
+<<preproccode>>
+<<endpreprocsection>>%
+%
+<<startoutputsection>>
+\enlargethispage{100cm}
+% Start of code
+% \begin{tikzpicture}[anchor=mid,>=latex',join=bevel,<<graphstyle>>]
+\begin{tikzpicture}[>=latex',join=bevel,<<graphstyle>>]
+\pgfsetlinewidth{1bp}
+<<figpreamble>>%
+<<drawcommands>>
+<<figpostamble>>%
+\end{tikzpicture}
+% End of code
+<<endoutputsection>>
+%
+\end{document}
+%
+<<startfigonlysection>>
+\begin{tikzpicture}[>=latex,join=bevel,<<graphstyle>>]
+\pgfsetlinewidth{1bp}
+<<figpreamble>>%
+<<drawcommands>>
+<<figpostamble>>%
+\end{tikzpicture}
+<<endfigonlysection>>

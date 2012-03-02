@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="170.09407"
+   height="192.49847"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="layers.svg">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="5.6568544"
+     inkscape:cx="95.947126"
+     inkscape:cy="132.3469"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1280"
+     inkscape:window-height="947"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-323.93189,-593.50367)">
+    <g
+       id="g3632"
+       transform="translate(1e-4,-13.765353)">
+      <rect
+         style="opacity:0.4;fill:#fce94f;fill-opacity:1;stroke:none"
+         id="use3695"
+         width="153.05945"
+         height="38.499615"
+         x="323.93179"
+         y="761.26788"
+         inkscape:tile-x0="1082.8572"
+         inkscape:tile-y0="-73.352119" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text2816"
+         y="784.63391"
+         x="386.90878"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+         xml:space="preserve"><tspan
+           y="784.63391"
+           x="386.90878"
+           id="tspan2818"
+           sodipodi:role="line">libnfc</tspan></text>
+    </g>
+    <g
+       id="g3637"
+       transform="translate(1e-4,-7.9355387)">
+      <rect
+         style="opacity:0.40000000000000002;fill:#f5b800;fill-opacity:1;stroke:none"
+         id="use3693"
+         width="153.05945"
+         height="38.499615"
+         x="323.93179"
+         y="716.93835"
+         inkscape:tile-x0="1082.8572"
+         inkscape:tile-y0="-73.352119" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text2820"
+         y="740.30438"
+         x="376.09824"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+         xml:space="preserve"><tspan
+           y="740.30438"
+           x="376.09824"
+           id="tspan2822"
+           sodipodi:role="line">libfreefare</tspan></text>
+    </g>
+    <g
+       id="g3652"
+       transform="translate(1e-4,13.404001)">
+      <rect
+         style="opacity:0.6;fill:#729fcf;fill-opacity:1;stroke:none"
+         id="use3687"
+         width="153.05945"
+         height="38.499615"
+         x="323.93179"
+         y="580.09967"
+         inkscape:tile-x0="1082.8572"
+         inkscape:tile-y0="-73.352119" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text2828"
+         y="602.13562"
+         x="373.9537"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+         xml:space="preserve"><tspan
+           y="602.13562"
+           x="373.9537"
+           id="tspan2830"
+           sodipodi:role="line">application</tspan></text>
+    </g>
+    <g
+       id="g3657">
+      <g
+         transform="translate(1e-4,0.20433435)"
+         id="g3642">
+        <rect
+           inkscape:tile-y0="-73.352119"
+           inkscape:tile-x0="1082.8572"
+           y="670.29877"
+           x="323.93179"
+           height="38.499615"
+           width="153.05945"
+           id="use3691"
+           style="opacity:0.6;fill:#8ae234;fill-opacity:1;stroke:none" />
+        <text
+           xml:space="preserve"
+           style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+           x="367.73105"
+           y="693.66479"
+           id="text2824"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan2826"
+             x="367.73105"
+             y="693.66479">low-level API</tspan></text>
+      </g>
+      <g
+         transform="translate(1e-4,5.2641283)"
+         id="g3647">
+        <rect
+           inkscape:tile-y0="-73.352119"
+           inkscape:tile-x0="1082.8572"
+           y="626.73926"
+           x="323.93179"
+           height="38.499615"
+           width="153.05945"
+           id="use3689"
+           style="opacity:0.8;fill:#8ae234;fill-opacity:1;stroke:none" />
+        <text
+           xml:space="preserve"
+           style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+           x="365.89706"
+           y="648.75171"
+           id="text2832"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan2834"
+             x="365.89706"
+             y="648.75171">high-level API</tspan></text>
+      </g>
+    </g>
+    <text
+       sodipodi:linespacing="125%"
+       id="text3729"
+       y="-485.64706"
+       x="650.92395"
+       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Linux Libertine;-inkscape-font-specification:Linux Libertine"
+       xml:space="preserve"
+       transform="matrix(0,1,-1,0,0,0)"
+       inkscape:transform-center-x="-4.2626953"><tspan
+         y="-485.64706"
+         x="650.92395"
+         id="tspan3731"
+         sodipodi:role="line">libucard</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 478.61149,632.02965 21.56676,0"
+       id="path2835" />
+    <path
+       id="path2837"
+       d="m 478.61149,708.92751 21.56676,0"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  </g>
+</svg>

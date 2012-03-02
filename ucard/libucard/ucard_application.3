@@ -1,0 +1,159 @@
+.\" Copyright (C) 2010 Romain Tartiere
+.\"
+.\" This program is free software: you can redistribute it and/or modify it
+.\" under the terms of the GNU Lesser General Public License as published by the
+.\" Free Software Foundation, either version 3 of the License, or (at your
+.\" option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful, but WITHOUT
+.\" ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+.\" FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+.\" more details.
+.\"
+.\" You should have received a copy of the GNU Lesser General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>
+.\"
+.\" $Id: ucard_application.3 575 2010-12-27 17:43:07Z romain $
+.\"
+.Dd December, 27 2010
+.Dt UCARD_APPLICATION 3
+.Os
+.\"  _   _
+.\" | \ | | __ _ _ __ ___   ___
+.\" |  \| |/ _` | '_ ` _ \ / _ \
+.\" | |\  | (_| | | | | | |  __/
+.\" |_| \_|\__,_|_| |_| |_|\___|
+.\"
+.Sh NAME
+.Fn ucard_application_new ,
+.Fn ucard_application_free ,
+.Fn ucard_application_set_aid ,
+.Fn ucard_application_get_aid ,
+.Fn ucard_application_set_name ,
+.Fn ucard_application_get_name ,
+.Fn ucard_application_set_application_setup ,
+.Fn ucard_application_set_action ,
+.Fn ucard_application_add_key ,
+.Fn ucard_application_get_key ,
+.Fn ucard_application_save_metadata ,
+.Nd UCard Applications Manipulation Functions
+.\"  _     _ _
+.\" | |   (_) |__  _ __ __ _ _ __ _   _
+.\" | |   | | '_ \| '__/ _` | '__| | | |
+.\" | |___| | |_) | | | (_| | |  | |_| |
+.\" |_____|_|_.__/|_|  \__,_|_|   \__, |
+.\"                               |___/
+.Sh LIBRARY
+UCard library (libucard, \-lucard)
+.\"  ____                              _
+.\" / ___| _   _ _ __   ___  _ __  ___(_)___
+.\" \___ \| | | | '_ \ / _ \| '_ \/ __| / __|
+.\"  ___) | |_| | | | | (_) | |_) \__ \ \__ \
+.\" |____/ \__, |_| |_|\___/| .__/|___/_|___/
+.\"        |___/            |_|
+.Sh SYNOPSIS
+.In ucard.h
+.Ft struct ucard_application *
+.Fn ucard_application_new "void"
+.Ft void
+.Fn ucard_application_free "struct ucard_application *application"
+.Ft void
+.Fn ucard_application_set_aid "struct ucard_application *application" "const uint32_t aid"
+.Ft uint32_t
+.Fn ucard_application_get_aid "const struct ucard_application *application"
+.Ft void
+.Fn ucard_application_set_name "struct ucard_application *application" "const char *name"
+.Ft const char *
+.Fn ucard_application_get_name "const struct ucard_application *application"
+.Ft void
+.Fn ucard_application_set_application_setup "struct ucard_application *application" "ucard_application_setup_callback application_setup"
+.Ft void
+.Fn ucard_application_set_action "struct ucard_application *application" "ucard_presented_callback on_ucard"
+.Ft int
+.Fn ucard_application_add_key "struct ucard_application *application" "const MifareDESFireKey key"
+.Ft MifareDESFireKey
+.Fn ucard_application_get_key "const struct ucard_application *application" "const uint8_t key_no"
+.Ft int
+.Fn ucard_application_save_metadata "struct ucard *ucard" "const struct ucard_application *application"
+.\"  ____                      _       _   _
+.\" |  _ \  ___  ___  ___ _ __(_)_ __ | |_(_) ___  _ __
+.\" | | | |/ _ \/ __|/ __| '__| | '_ \| __| |/ _ \| '_ \
+.\" | |_| |  __/\__ \ (__| |  | | |_) | |_| | (_) | | | |
+.\" |____/ \___||___/\___|_|  |_| .__/ \__|_|\___/|_| |_|
+.\"                             |_|
+.Sh DESCRIPTION
+The
+.Nm ucard_application_*
+set of functions allows low-level management of UCard Applications.
+.Pp
+The
+.Nm ucard_application_new
+function allocates the data structures required to describe an
+.Vt application .
+These structures must be freed using the
+.Nm ucard_application_free
+function.
+.Pp
+The AID of the application is defined using the
+.Nm ucard_application_set_aid
+function and can be retrieved using the
+.Nm ucard_application_get_aid
+function.
+.Pp
+The name of the application is set using the
+.Nm ucard_application_set_name
+function and can be retrieved using the
+.Nm ucard_application_get_name
+function.
+.Pp
+Keys are linearly added using the
+.Nm ucard_application_add_key
+function.  Then can be randomly retrieved using the
+.Nm ucard_application_get_key
+function.
+.Pp
+The
+.Nm ucard_application_set_application_setup
+associates the
+.Vt application_setup
+callback which is called when the application has to be created on a PICC.
+.Pp
+The
+.Nm ucard_application_set_action
+function associates an
+.Vt action
+to execute when a new tag is found.
+.Pp
+The
+.Nm ucard_application_save_metadata
+function saves the application metadata to the PICC.
+.\"  ____      _                                 _
+.\" |  _ \ ___| |_ _   _ _ __ _ __   __   ____ _| |_   _  ___  ___
+.\" | |_) / _ \ __| | | | '__| '_ \  \ \ / / _` | | | | |/ _ \/ __|
+.\" |  _ <  __/ |_| |_| | |  | | | |  \ V / (_| | | |_| |  __/\__ \
+.\" |_| \_\___|\__|\__,_|_|  |_| |_|   \_/ \__,_|_|\__,_|\___||___/
+.\"
+.Sh RETURN VALUES
+Unless stated otherwise, all functions return a value greater than or
+equal to
+.Va 0
+on success or
+.Va -1
+on failure.
+.\"  ____                    _
+.\" / ___|  ___  ___    __ _| |___  ___
+.\" \___ \ / _ \/ _ \  / _` | / __|/ _ \
+.\"  ___) |  __/  __/ | (_| | \__ \ (_) |
+.\" |____/ \___|\___|  \__,_|_|___/\___/
+.\"
+.Sh SEE ALSO
+.Xr ucard 3
+.Xr ucard_application_file 3
+.\"     _         _   _
+.\"    / \  _   _| |_| |__   ___  _ __ ___
+.\"   / _ \| | | | __| '_ \ / _ \| '__/ __|
+.\"  / ___ \ |_| | |_| | | | (_) | |  \__ \
+.\" /_/   \_\__,_|\__|_| |_|\___/|_|  |___/
+.\"
+.Sh AUTHORS
+.An Romain Tartiere Aq rtartiere@il4p.fr

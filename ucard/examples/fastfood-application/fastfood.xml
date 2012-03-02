@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<applications xmlns="http://il4p.fr/TR/UCard" version="-1">
+    <application name="fastfood" aid="0x00123456" version="1">
+	<keys>
+	    <key name="master-key" data="0x403e4eb4c4dacc96bd2797070d8ff9db" type="3DES" />
+	    <key name="public-key" data="0x0000000000000000" type="DES" />
+	</keys>
+	<files>
+	    <file type="value-file" name="sandwich" read-key="public-key" read-write-key="master-key">
+		<lower-limit>0</lower-limit>
+		<upper-limit>12</upper-limit>
+		<value>0</value>
+	    </file>
+	</files>
+    </application>
+</applications>

@@ -1,0 +1,187 @@
+.\" Copyright (C) 2010 Romain Tartiere
+.\"
+.\" This program is free software: you can redistribute it and/or modify it
+.\" under the terms of the GNU Lesser General Public License as published by the
+.\" Free Software Foundation, either version 3 of the License, or (at your
+.\" option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful, but WITHOUT
+.\" ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+.\" FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+.\" more details.
+.\"
+.\" You should have received a copy of the GNU Lesser General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>
+.\"
+.\" $Id: kiosk.3 575 2010-12-27 17:43:07Z romain $
+.\"
+.Dd December, 27 2010
+.Dt KIOSK 3
+.Os
+.\"  _   _
+.\" | \ | | __ _ _ __ ___   ___
+.\" |  \| |/ _` | '_ ` _ \ / _ \
+.\" | |\  | (_| | | | | | |  __/
+.\" |_| \_|\__,_|_| |_| |_|\___|
+.\"
+.Sh NAME
+.Fn kiosk_new ,
+.Fn kiosk_devices_scan ,
+.Fn kiosk_devices_add ,
+.Fn kiosk_setup ,
+.Fn kiosk_get_one_shot ,
+.Fn kiosk_set_one_shot ,
+.Fn kiosk_run ,
+.Fn kiosk_start ,
+.Fn kiosk_wait ,
+.Fn kiosk_select ,
+.Fn kiosk_stop ,
+.Fn kiosk_device_setup ,
+.Fn kiosk_device_set_one_shot ,
+.Fn kiosk_device_get_one_shot ,
+.Fn kiosk_device_enable ,
+.Fn kiosk_device_disable ,
+.Fn kiosk_free ,
+.Nd Kiosk Manipulation Functions
+.\"  _     _ _
+.\" | |   (_) |__  _ __ __ _ _ __ _   _
+.\" | |   | | '_ \| '__/ _` | '__| | | |
+.\" | |___| | |_) | | | (_| | |  | |_| |
+.\" |_____|_|_.__/|_|  \__,_|_|   \__, |
+.\"                               |___/
+.Sh LIBRARY
+UCard library (libucard, \-lucard)
+.\"  ____                              _
+.\" / ___| _   _ _ __   ___  _ __  ___(_)___
+.\" \___ \| | | | '_ \ / _ \| '_ \/ __| / __|
+.\"  ___) | |_| | | | | (_) | |_) \__ \ \__ \
+.\" |____/ \__, |_| |_|\___/| .__/|___/_|___/
+.\"        |___/            |_|
+.Sh SYNOPSIS
+.In ucard.h
+.Ft struct kiosk *
+.Fn kiosk_new "void"
+.Ft int
+.Fn kiosk_devices_scan "struct kiosk *kiosk"
+.Ft struct kiosk_device *
+.Fn kiosk_devices_add "struct kiosk *kiosk" "nfc_device_desc_t nfc_device_desc"
+.Ft void
+.Fn kiosk_setup "struct kiosk *kiosk" "struct ucard_application *application" "ucard_presented_callback action"
+.Ft int
+.Fn kiosk_get_one_shot "struct kiosk *kiosk" "bool *one_shot"
+.Ft int
+.Fn kiosk_set_one_shot "struct kiosk *kiosk" "const bool one_shot"
+.Ft void *
+.Fn kiosk_run "void *user_data"
+.Ft int
+.Fn kiosk_start "struct kiosk *kiosk"
+.Ft int
+.Fn kiosk_wait "struct kiosk *kiosk" "struct timeval *timeout"
+.Ft int
+.Fn kiosk_select "struct kiosk *kiosk" "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "struct timeval *timeout"
+.Ft void
+.Fn kiosk_stop "struct kiosk *kiosk"
+.Ft int
+.Fn kiosk_device_setup "struct kiosk_device *device" "struct ucard_application *application" "ucard_presented_callback action"
+.Ft int
+.Fn kiosk_device_set_one_shot "struct kiosk_device *device" "const bool one_shot"
+.Ft void
+.Fn kiosk_device_get_one_shot "const struct kiosk_device *device" "bool *one_shot"
+.Ft int
+.Fn kiosk_device_enable "struct kiosk_device *device"
+.Ft int
+.Fn kiosk_device_disable "struct kiosk_device *device"
+.Ft void
+.Fn kiosk_free "struct kiosk *kiosk"
+.\"  ____                      _       _   _
+.\" |  _ \  ___  ___  ___ _ __(_)_ __ | |_(_) ___  _ __
+.\" | | | |/ _ \/ __|/ __| '__| | '_ \| __| |/ _ \| '_ \
+.\" | |_| |  __/\__ \ (__| |  | | |_) | |_| | (_) | | | |
+.\" |____/ \___||___/\___|_|  |_| .__/ \__|_|\___/|_| |_|
+.\"                             |_|
+.Sh DESCRIPTION
+The
+.Nm kiosk_new
+function allocates a new
+.Vt kiosk
+structure which has to be freed using
+.Nm kiosk_free
+after usage.  This structure has to be linked to NFC devices using the
+.Nm kiosk_devices_add
+function, or the
+.Nm kiosk_devices_scan
+function to perfom an automatic detection and configuration of all NFC devices.
+.Pp
+A
+.Vt kiosk
+can be configured as at each NFC device level or globaly, using either the
+.Nm kiosk_device_setup
+or
+.Nm kiosk_setup
+functions.  This functions associates an
+.Vt action
+function which is lauched when a card with an application
+.Vt application
+is in the field of the PCD.
+.Pp
+By default, the
+.Vt action
+is triggered only once.  It is possible de change this behaviour using the
+.Nm kiosk_set_one_shot
+and
+.Nm kiosk_device_set_one_shot
+functions.  The current configuration can be retrieved using the
+.Nm kiosk_get_one_shot
+and
+.Nm kiosk_device_get_one_shot
+functions.
+.Pp
+A single device can be enabled or disabled using the
+.Nm kiosk_device_enable
+and
+.Nm kiosk_device_disable
+functions.
+.Pp
+The kiosk is started using the
+.Nm kiosk_start
+function.
+.Pp
+The
+.Nm kiosk_wait
+and
+.Nm kiosk_select
+functions provide convenient ways to sleep until some processing is required.
+.Pp
+The
+.Nm kiosk_stop
+function stops the threads of the kiosk.
+.\"  ____      _                                 _
+.\" |  _ \ ___| |_ _   _ _ __ _ __   __   ____ _| |_   _  ___  ___
+.\" | |_) / _ \ __| | | | '__| '_ \  \ \ / / _` | | | | |/ _ \/ __|
+.\" |  _ <  __/ |_| |_| | |  | | | |  \ V / (_| | | |_| |  __/\__ \
+.\" |_| \_\___|\__|\__,_|_|  |_| |_|   \_/ \__,_|_|\__,_|\___||___/
+.\"
+.Sh RETURN VALUES
+Unless stated otherwise, all functions return a value greater than or
+equal to
+.Va 0
+on success or
+.Va -1
+on failure.
+.\"  ____                    _
+.\" / ___|  ___  ___    __ _| |___  ___
+.\" \___ \ / _ \/ _ \  / _` | / __|/ _ \
+.\"  ___) |  __/  __/ | (_| | \__ \ (_) |
+.\" |____/ \___|\___|  \__,_|_|___/\___/
+.\"
+.Sh SEE ALSO
+.Xr ucard 3 ,
+.Xr ucard_application 3
+.\"     _         _   _
+.\"    / \  _   _| |_| |__   ___  _ __ ___
+.\"   / _ \| | | | __| '_ \ / _ \| '__/ __|
+.\"  / ___ \ |_| | |_| | | | (_) | |  \__ \
+.\" /_/   \_\__,_|\__|_| |_|\___/|_|  |___/
+.\"
+.Sh AUTHORS
+.An Romain Tartiere Aq rtartiere@il4p.fr

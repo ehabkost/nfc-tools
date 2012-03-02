@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<applications xmlns="http://il4p.fr/TR/UCard" version="-1">
+    <application name="cardlock" aid="0x00944782" version="1">
+	<keys>
+            <key name="master-key" data="0x4a1852225ee032e297278939fb09b96b" type="3DES" />
+            <key name="public-key" data="0x0000000000000000" type="DES" />
+	</keys>
+	<files>
+	    <file type="linear-record-file" name="access-deny-log" read-key="public-key" read-write-key="master-key">
+		<record-size>26</record-size>
+		<record-count>3</record-count>
+	    </file>
+	    <file type="cyclic-record-file" name="access-grant-log" read-key="public-key" read-write-key="master-key">
+		<record-size>26</record-size>
+		<record-count>3</record-count>
+	    </file>
+	</files>
+    </application>
+</applications>

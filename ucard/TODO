@@ -1,0 +1,6 @@
+[ ] Hook on application creation (when using the high-level API).
+[ ] Wrappers for changing keys.
+[ ] Wrappers to retrieve files information.
+[ ] System to trigger actions on card detection with a short initialisation in applications.
+[X] Move some structures from ucard.h to ucard_internal.h.
+[ ] Mandatory Metadata files.

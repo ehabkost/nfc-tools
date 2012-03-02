@@ -1,0 +1,13 @@
+digraph code_generation {
+	node [shape="house"];
+	app [label="application.xml"];
+
+	node [shape="rectangle"];
+	ucard   [label="ucard.xsl"];
+
+	node [shape="invhouse"];
+	c_src [label="application.c"];
+	h_hdr [label="application.h"];
+
+	app -> ucard -> { h_hdr, c_src };
+};

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<applications xmlns="http://il4p.fr/TR/UCard" version="-1">
+    <application name="fidelite" aid="0x00122344" version="1">
+        <keys>
+            <key name="user-key" data="0xd4a23a64a818f4c09fc5cf55732ddded" type="3DES" />
+            <key name="public-key" data="0x0000000000000000" type="DES" />
+            <key name="master-key" data="0x9a4e0c0a321444c61507cd9fa52b0f83" type="3DES" />
+        </keys>
+        <files>
+            <file type="value-file" name="point" read-key="user-key" read-write-key="master-key">
+                <lower-limit>0</lower-limit>
+                <upper-limit>100</upper-limit>
+                <value>0</value>
+            </file>
+            <file type="std-data-file" name="time"        read-key="user-key" read-write-key="master-key" ><file-size>19</file-size></file>
+        </files>
+    </application>
+</applications>

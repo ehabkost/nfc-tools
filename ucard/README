@@ -1,0 +1,13 @@
+Rolling a new tarball
+---------------------
+
+1. Update version info in the following files:
+     - NEWS;
+     - configure.ac;
+     - libucard/ucard_version.h.
+2. Run `make distcheck' to ensure everything is fine;
+3. Commit;
+4. Tag;
+5. Checkout the tag;
+6. Run `make dist'.
+

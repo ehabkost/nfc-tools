@@ -1,0 +1,94 @@
+.\" Copyright (C) 2010 Romain Tartiere
+.\"
+.\" This program is free software: you can redistribute it and/or modify it
+.\" under the terms of the GNU Lesser General Public License as published by the
+.\" Free Software Foundation, either version 3 of the License, or (at your
+.\" option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful, but WITHOUT
+.\" ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+.\" FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+.\" more details.
+.\"
+.\" You should have received a copy of the GNU Lesser General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>
+.\"
+.\" $Id: ucard_clear_record_file.3 575 2010-12-27 17:43:07Z romain $
+.\"
+.Dd December, 27 2010
+.Dt UCARD_CLEAR_RECORD_FILE 3
+.Os
+.\"  _   _
+.\" | \ | | __ _ _ __ ___   ___
+.\" |  \| |/ _` | '_ ` _ \ / _ \
+.\" | |\  | (_| | | | | | |  __/
+.\" |_| \_|\__,_|_| |_| |_|\___|
+.\"
+.Sh NAME
+.Fn ucard_clear_record_file ,
+.Nd UCard Record File Manipulation Functions
+.\"  _     _ _
+.\" | |   (_) |__  _ __ __ _ _ __ _   _
+.\" | |   | | '_ \| '__/ _` | '__| | | |
+.\" | |___| | |_) | | | (_| | |  | |_| |
+.\" |_____|_|_.__/|_|  \__,_|_|   \__, |
+.\"                               |___/
+.Sh LIBRARY
+UCard library (libucard, \-lucard)
+.\"  ____                              _
+.\" / ___| _   _ _ __   ___  _ __  ___(_)___
+.\" \___ \| | | | '_ \ / _ \| '_ \/ __| / __|
+.\"  ___) | |_| | | | | (_) | |_) \__ \ \__ \
+.\" |____/ \__, |_| |_|\___/| .__/|___/_|___/
+.\"        |___/            |_|
+.Sh SYNOPSIS
+.In ucard.h
+.Ft int
+.Fn ucard_clear_record_file "struct ucard *ucard" "const struct ucard_application *application" "const uint8_t file_no" "const uint8_t key_no" "MifareDESFireKey key"
+.\"  ____                      _       _   _
+.\" |  _ \  ___  ___  ___ _ __(_)_ __ | |_(_) ___  _ __
+.\" | | | |/ _ \/ __|/ __| '__| | '_ \| __| |/ _ \| '_ \
+.\" | |_| |  __/\__ \ (__| |  | | |_) | |_| | (_) | | | |
+.\" |____/ \___||___/\___|_|  |_| .__/ \__|_|\___/|_| |_|
+.\"                             |_|
+.Sh DESCRIPTION
+The
+.Nm ucard_clear_record_file
+function clears the record file
+.Vt file_no
+from the application
+.Vt application
+on the UCard
+.Vt ucard
+after authenticating with the key
+.Vt key .
+.\"  ____      _                                 _
+.\" |  _ \ ___| |_ _   _ _ __ _ __   __   ____ _| |_   _  ___  ___
+.\" | |_) / _ \ __| | | | '__| '_ \  \ \ / / _` | | | | |/ _ \/ __|
+.\" |  _ <  __/ |_| |_| | |  | | | |  \ V / (_| | | |_| |  __/\__ \
+.\" |_| \_\___|\__|\__,_|_|  |_| |_|   \_/ \__,_|_|\__,_|\___||___/
+.\"
+.Sh RETURN VALUES
+The function returns
+equal to
+.Va 0
+on success or
+.Va -1
+on failure.
+.\"  ____                    _
+.\" / ___|  ___  ___    __ _| |___  ___
+.\" \___ \ / _ \/ _ \  / _` | / __|/ _ \
+.\"  ___) |  __/  __/ | (_| | \__ \ (_) |
+.\" |____/ \___|\___|  \__,_|_|___/\___/
+.\"
+.Sh SEE ALSO
+.Xr ucard 3 ,
+.Xr ucard_application 3
+.\"     _         _   _
+.\"    / \  _   _| |_| |__   ___  _ __ ___
+.\"   / _ \| | | | __| '_ \ / _ \| '__/ __|
+.\"  / ___ \ |_| | |_| | | | (_) | |  \__ \
+.\" /_/   \_\__,_|\__|_| |_|\___/|_|  |___/
+.\"
+.Sh AUTHORS
+.An Romain Tartiere Aq rtartiere@il4p.fr

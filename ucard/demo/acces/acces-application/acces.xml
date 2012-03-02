@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<applications xmlns="http://il4p.fr/TR/UCard" version="-1">
+    <application name="acces" aid="0x00144566" version="1">
+        <keys>
+            <key name="user-key" data="0xd4a23a64a818f4c09fc5cf55732ddded" type="3DES" />
+            <key name="public-key" data="0x0000000000000000" type="DES" />
+            <key name="master-key" data="0x78689cf83c14f61c6d43d9973bc9ab43" type="3DES" />
+        </keys>
+        <files>
+            <file type="std-data-file" name="Name"        read-key="user-key" write-key="master-key" read-write-key="master-key" ><file-size>50</file-size></file>
+            <file type="std-data-file" name="Key"        read-key="user-key" write-key="master-key" read-write-key="master-key" ><file-size>50</file-size></file>
+            <file type="value-file" name="Access_right" read-key="user-key" read-write-key="master-key" >
+                <lower-limit>0</lower-limit>
+                <upper-limit>1</upper-limit>
+                <value>0</value>
+            </file>
+        </files>
+    </application>
+</applications>

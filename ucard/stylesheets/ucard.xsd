@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://il4p.fr/TR/UCard" elementFormDefault="qualified">
+    <xs:element name="applications">
+	<xs:complexType>
+	    <xs:sequence>
+		<xs:element name="application">
+		    <xs:complexType>
+			<xs:sequence>
+			    <xs:element name="keys">
+				<xs:complexType>
+				    <xs:sequence>
+					<xs:element name="key" maxOccurs="unbounded">
+					    <xs:complexType>
+						<xs:attribute name="name" type="xs:string" use="required" />
+						<xs:attribute name="data" type="xs:string" use="required" />
+						<xs:attribute name="type" use="required">
+						    <xs:simpleType>
+							<xs:restriction base="xs:string">
+							    <xs:pattern value="DES|3DES|AES" />
+							</xs:restriction>
+						    </xs:simpleType>
+						</xs:attribute>
+					    </xs:complexType>
+					</xs:element>
+				    </xs:sequence>
+				</xs:complexType>
+			    </xs:element>
+			    <xs:element name="files">
+				<xs:complexType>
+				    <xs:sequence>
+					<xs:element name="file" maxOccurs="unbounded">
+					    <xs:complexType>
+						<xs:choice>
+						    <!-- std-data-file / backup-data-file -->
+						    <xs:sequence>
+							<xs:element name="file-size">
+							    <xs:simpleType>
+								<xs:restriction base="xs:integer">
+								    <xs:minInclusive value="0" />
+								</xs:restriction>
+							    </xs:simpleType>
+							</xs:element>
+						    </xs:sequence>
+
+						    <!-- linear-record-file -->
+						    <xs:sequence>
+							<xs:element name="record-size">
+							    <xs:simpleType>
+								<xs:restriction base="xs:integer">
+								    <xs:minInclusive value="0" />
+								</xs:restriction>
+							    </xs:simpleType>
+							</xs:element>
+							<xs:element name="record-count">
+							    <xs:simpleType>
+								<xs:restriction base="xs:integer">
+								    <xs:minInclusive value="0" />
+								</xs:restriction>
+							    </xs:simpleType>
+							</xs:element>
+						    </xs:sequence>
+
+						    <!-- value-file -->
+						    <xs:sequence>
+							<xs:element name="lower-limit" minOccurs="0">
+							    <xs:complexType>
+								<xs:simpleContent>
+								    <xs:extension base="xs:integer" />
+								</xs:simpleContent>
+							    </xs:complexType>
+							</xs:element>
+							<xs:element name="upper-limit" minOccurs="0">
+							    <xs:complexType>
+								<xs:simpleContent>
+								    <xs:extension base="xs:integer" />
+								</xs:simpleContent>
+							    </xs:complexType>
+							</xs:element>
+							<xs:element name="value" minOccurs="0">
+							    <xs:complexType>
+								<xs:simpleContent>
+								    <xs:extension base="xs:integer" />
+								</xs:simpleContent>
+							    </xs:complexType>
+							</xs:element>
+							<xs:element name="limited-credit-enabed" minOccurs="0">
+							    <xs:complexType>
+								<xs:simpleContent>
+								    <xs:extension base="xs:boolean" />
+								</xs:simpleContent>
+							    </xs:complexType>
+							</xs:element>
+						    </xs:sequence>
+						</xs:choice>
+						<xs:attribute name="type" use="required">
+						    <xs:simpleType>
+							<xs:restriction base="xs:string">
+							    <xs:pattern value="std-data-file|backup-data-file|value-file|linear-record-file|cyclic-record-file" />
+							</xs:restriction>
+						    </xs:simpleType>
+						</xs:attribute>
+						<xs:attribute name="name" type="xs:string" use="required" />
+						<xs:attribute name="read-key" type="xs:string" />
+						<xs:attribute name="write-key" type="xs:string" />
+						<xs:attribute name="read-write-key" type="xs:string" />
+						<xs:attribute name="change-settings-key" type="xs:string" />
+					    </xs:complexType>
+					</xs:element>
+				    </xs:sequence>
+				</xs:complexType>
+			    </xs:element>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string" use="required" />
+			<xs:attribute name="aid" type="xs:string" use="required" />
+			<xs:attribute name="version" type="xs:string" use="required" />
+		    </xs:complexType>
+		</xs:element>
+	    </xs:sequence>
+	    <xs:attribute name="version" use="required" />
+	</xs:complexType>
+    </xs:element>
+</xs:schema>
