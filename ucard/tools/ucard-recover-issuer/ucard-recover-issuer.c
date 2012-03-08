@@ -70,6 +70,8 @@ main (void)
 		    goto end;
 		}
 
+		issuer_info[res] = '\0';
+
 		printf ("Issuer: %s\n", issuer_info);
 
 end:

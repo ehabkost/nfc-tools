@@ -79,6 +79,8 @@ main (void)
 		    goto end;
 		}
 
+		owner_info[res] = '\0';
+
 		printf ("Owner: %s\n", owner_info);
 
 end:
