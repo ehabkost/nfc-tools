@@ -2,7 +2,7 @@
  *
  * See http://code.google.com/p/libnfc/ for libnfc source and docs.
  */
- 
+
 #include <nfc/nfc.h>
 
 #define IMPLEMENT_ME ((void)0)
@@ -31,6 +31,13 @@ int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation n
 {
 	IMPLEMENT_ME;
 }
+
+
+/* NOTE: we will probably need some tricks to be able to send raw commands
+ * without CRC using the Android API. I hope the system allow us to do
+ * that.  :(
+ */
+
 
 int nfc_initiator_transceive_bytes (nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, uint8_t *pbtRx, size_t *pszRx, int timeout)
 {
