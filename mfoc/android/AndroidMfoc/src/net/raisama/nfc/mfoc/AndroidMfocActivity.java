@@ -14,5 +14,7 @@ public class AndroidMfocActivity extends Activity {
         NativeImplementation i = new NativeImplementation();
         TextView t = (TextView)findViewById(R.id.sumResult);
         t.setText(java.lang.String.format("%d", i.sum(10, 20)));
+        
+        i.callMain();
     }
 }

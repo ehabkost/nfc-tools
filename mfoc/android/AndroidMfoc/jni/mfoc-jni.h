@@ -15,6 +15,14 @@ extern "C" {
 JNIEXPORT jint JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_sum
   (JNIEnv *, jobject, jint, jint);
 
+/*
+ * Class:     net_raisama_nfc_mfoc_NativeImplementation
+ * Method:    callMain
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_callMain
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

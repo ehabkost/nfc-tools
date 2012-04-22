@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := include
 LOCAL_MODULE    := mfoc
-LOCAL_SRC_FILES := fake-libnfc.c mfoc.c ../../../src/mfoc.c ../../../src/crapto1.c ../../../src/crypto1.c ../../../src/mifare.c ../../../src/nfc-utils.c
+LOCAL_SRC_FILES := fake-libnfc.c mfoc.c \
+	../../../src/mfoc.c ../../../src/crapto1.c ../../../src/crypto1.c ../../../src/mifare.c ../../../src/nfc-utils.c
 
 include $(BUILD_SHARED_LIBRARY)

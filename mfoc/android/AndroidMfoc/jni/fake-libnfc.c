@@ -5,31 +5,51 @@
 
 #include <nfc/nfc.h>
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #define IMPLEMENT_ME ((void)0)
 
 void nfc_perror (const nfc_device *pnd, const char *s)
 {
-	IMPLEMENT_ME;
+	fprintf(stderr, "nfc_perror called for device %p: %s\n", pnd, s?s:"(null)");;
 }
+
+struct nfc_device
+{
+	char *connstring;
+};
 
 nfc_device *nfc_open (nfc_context *context, const nfc_connstring connstring)
 {
-	IMPLEMENT_ME;
+	fprintf(stderr, "nfc_open: connstring: %s\n", connstring?connstring:"(null)");
+	nfc_device *newdev = malloc(sizeof(nfc_device));
+	if (connstring)
+		newdev->connstring = strdup(connstring);
+	return newdev;
 }
 
 void nfc_close (nfc_device *pnd)
 {
-	IMPLEMENT_ME;
+	if (pnd->connstring)
+		free(pnd->connstring);
+	free(pnd);
 }
 
 int nfc_initiator_init (nfc_device *pnd)
 {
-	IMPLEMENT_ME;
+	fprintf(stderr, "nfc_initiator init called on dev %p\n", pnd);
+	return 0;
 }
 
 int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation nm, const uint8_t *pbtInitData, const size_t szInitData, nfc_target *pnt)
 {
+	fprintf(stderr, "nfc_initiator_select_passive_target called: %p, nm: %d/%d, initdata: %p, szInitData: %ld, target: %p\n", pnd, (int)nm.nmt, (int)nm.nbr, pbtInitData, (long)szInitData, pnt);
+
+	/*TODO: fill data from the card on *pnt, here */
 	IMPLEMENT_ME;
+	memset(pnt, 0, sizeof(*pnt));
+	return 0;
 }
 
 
@@ -51,12 +71,12 @@ int nfc_initiator_transceive_bits (nfc_device *pnd, const uint8_t *pbtTx, const 
 
 void nfc_init(nfc_context *context)
 {
-	IMPLEMENT_ME;
+	fprintf(stderr, "nfc_init called\n");
 }
 
 void nfc_exit(nfc_context *context)
 {
-	IMPLEMENT_ME;
+	fprintf(stderr, "nfc_exit called\n");
 }
 
 
