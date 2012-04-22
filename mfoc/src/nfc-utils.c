@@ -30,6 +30,7 @@
 
 #include <nfc/nfc.h>
 #include <err.h>
+#include <stdio.h>
 
 #include "nfc-utils.h"
 
