@@ -23,7 +23,6 @@ public class NativeImplementation {
 	public void setRunningActivity(AndroidMfocActivity a)
 	{
 		fake_stdio.setRunningActivity(a);
-        fake_stdio.printUiMessage("running activity is initialized\n");
 	}
 	
 	static public NativeImplementation singleton()

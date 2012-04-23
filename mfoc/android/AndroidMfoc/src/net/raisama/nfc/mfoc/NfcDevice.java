@@ -6,4 +6,9 @@ public class NfcDevice {
 	{
 		return 0;
 	}
+	
+	public NfcTarget initiator_select_passive_target()
+	{
+		return new NfcTarget();
+	}
 }

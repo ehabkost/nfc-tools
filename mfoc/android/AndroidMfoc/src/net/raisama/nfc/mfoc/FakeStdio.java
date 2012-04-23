@@ -1,14 +1,11 @@
 package net.raisama.nfc.mfoc;
 
-import 	android.widget.TextView;
-
 public class FakeStdio {
 	AndroidMfocActivity runningActivity;
 	
 	public void printUiMessage(String s)
 	{
-		TextView t = (TextView)runningActivity.findViewById(R.id.textOutput);
-		t.append(s);
+		runningActivity.printUiMessage(s);
 	}
 	
 	public void setRunningActivity(AndroidMfocActivity a)

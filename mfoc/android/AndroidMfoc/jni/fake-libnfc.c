@@ -75,8 +75,33 @@ int nfc_initiator_init (nfc_device *pnd)
 
 int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation nm, const uint8_t *pbtInitData, const size_t szInitData, nfc_target *pnt)
 {
-	fprintf(stderr, "nfc_initiator_select_passive_target called: %p, nm: %d/%d, initdata: %p, szInitData: %ld, target: %p\n", pnd, (int)nm.nmt, (int)nm.nbr, pbtInitData, (long)szInitData, pnt);
+	int ret;
 
+	fprintf(stderr, "nfc_initiator_select_passive_target called: %p, modulation: %d/%d, initdata: %p, szInitData: %ld, target: %p\n", pnd, (int)nm.nmt, (int)nm.nbr, pbtInitData, (long)szInitData, pnt);
+
+	JNIEnv *env = global_env;
+	jclass cls = (*env)->GetObjectClass(env, pnd->obj);
+	jmethodID mid = (*env)->GetMethodID(env, cls, "initiator_select_passive_target", "()Lnet/raisama/nfc/mfoc/NfcTarget;");
+	if (mid == NULL)
+		abort();
+	jobject target_info = (*env)->CallObjectMethod(env, pnd->obj, mid);
+
+/*
+Fields to fill up:
+	nfc_target_info nti;
+		nfc_iso14443a_info nai;
+			uint8_t  abtAtqa[2];
+			uint8_t  btSak;
+			size_t  szUidLen;
+			uint8_t  abtUid[10];
+			size_t  szAtsLen;
+			uint8_t  abtAts[254]; // Maximal theoretical ATS is FSD-2, FSD=256 for FSDI=8 in RATS
+	nfc_modulation nm;
+		nfc_modulation_type nmt;
+			NMT_ISO14443A = 1,
+		nfc_baud_rate nbr;
+
+*/
 	/*TODO: fill data from the card on *pnt, here */
 	IMPLEMENT_ME;
 	memset(pnt, 0, sizeof(*pnt));
@@ -113,7 +138,7 @@ void nfc_exit(nfc_context *context)
 
 int nfc_device_set_property_bool (nfc_device *pnd, const nfc_property property, const bool bEnable)
 {
-	IMPLEMENT_ME;
+	fprintf(stderr, "set_property_bool(%d, %d) called\n", property, bEnable);
 }
 
 void iso14443a_crc_append (uint8_t *pbtData, size_t szLen)
