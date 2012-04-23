@@ -8,7 +8,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define IMPLEMENT_ME ((void)0)
+#include <jni.h>
+
+#define IMPLEMENT_ME do { fprintf(stderr, "ERROR: function %s not implemented. exiting.\n", __FUNCTION__); exit(42); } while (0)
+
+jobject fake_libnfc;
+
+JNIEXPORT void JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_setFakeLibNFC
+  (JNIEnv *env, jobject obj, jobject nfc)
+{
+	fake_libnfc = (*env)->NewGlobalRef(env, nfc);
+}
 
 void nfc_perror (const nfc_device *pnd, const char *s)
 {
@@ -18,14 +28,30 @@ void nfc_perror (const nfc_device *pnd, const char *s)
 struct nfc_device
 {
 	char *connstring;
+	jobject obj;
 };
 
 nfc_device *nfc_open (nfc_context *context, const nfc_connstring connstring)
 {
 	fprintf(stderr, "nfc_open: connstring: %s\n", connstring?connstring:"(null)");
 	nfc_device *newdev = malloc(sizeof(nfc_device));
+	if (!newdev)
+		abort();
+
+	memset(newdev, 0, sizeof(*newdev));
 	if (connstring)
 		newdev->connstring = strdup(connstring);
+
+	JNIEnv *env = global_env;
+	jclass cls = (*env)->GetObjectClass(env, fake_libnfc);
+    jmethodID mid = (*env)->GetMethodID(env, cls, "nfc_open", "()Lnet/raisama/nfc/mfoc/NfcDevice;");
+	if (mid == NULL)
+		abort();
+    newdev->obj = (*env)->CallObjectMethod(env, fake_libnfc, mid);
+    if (!newdev->obj)
+    	abort();
+    newdev->obj = (*env)->NewGlobalRef(env, newdev->obj);
+
 	return newdev;
 }
 
@@ -38,8 +64,13 @@ void nfc_close (nfc_device *pnd)
 
 int nfc_initiator_init (nfc_device *pnd)
 {
-	fprintf(stderr, "nfc_initiator init called on dev %p\n", pnd);
-	return 0;
+	fprintf(stderr, "nfc_initiator init called on dev %p. obj is: %p\n", pnd, pnd->obj);
+	JNIEnv *env = global_env;
+	jclass cls = (*env)->GetObjectClass(env, pnd->obj);
+	jmethodID mid = (*env)->GetMethodID(env, cls, "initiator_init", "()I");
+	if (mid == NULL)
+		abort();
+	return (*env)->CallIntMethod(env, pnd->obj, mid);
 }
 
 int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation nm, const uint8_t *pbtInitData, const size_t szInitData, nfc_target *pnt)

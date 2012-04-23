@@ -9,19 +9,27 @@ extern "C" {
 #endif
 /*
  * Class:     net_raisama_nfc_mfoc_NativeImplementation
- * Method:    sum
- * Signature: (II)I
+ * Method:    nativeMain
+ * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_sum
-  (JNIEnv *, jobject, jint, jint);
+JNIEXPORT jint JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_nativeMain
+  (JNIEnv *, jobject);
 
 /*
  * Class:     net_raisama_nfc_mfoc_NativeImplementation
- * Method:    callMain
- * Signature: ()V
+ * Method:    setFakeStdioObject
+ * Signature: (Lnet/raisama/nfc/mfoc/FakeStdio;Lnet/raisama/nfc/mfoc/FakeFile;Lnet/raisama/nfc/mfoc/FakeFile;)V
  */
-JNIEXPORT void JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_callMain
-  (JNIEnv *, jobject);
+JNIEXPORT void JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_setFakeStdioObject
+  (JNIEnv *, jobject, jobject, jobject, jobject);
+
+/*
+ * Class:     net_raisama_nfc_mfoc_NativeImplementation
+ * Method:    setFakeLibNFC
+ * Signature: (Lnet/raisama/nfc/mfoc/FakeLibNFC;)V
+ */
+JNIEXPORT void JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_setFakeLibNFC
+  (JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus
 }
