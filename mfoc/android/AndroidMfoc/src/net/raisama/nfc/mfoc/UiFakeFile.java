@@ -21,7 +21,11 @@ public class UiFakeFile extends FakeFile {
 		try {
 			mStdio.printUiMessage(new String(s, "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
-			mStdio.printUiMessage("INTERNAL ERROR. This shouldn't have happened, sorry.");
+			mStdio.printUiMessage(String.format("INTERNAL ERROR. This shouldn't have happened, sorry. (%s)\n", mPrefix));
+			for (int i = 0; i < s.length; i++) {
+				mStdio.printUiMessage(String.format(" %02x", s[i]));
+			}
+			mStdio.printUiMessage("\n");
 		}
 	}
 }

@@ -26,7 +26,7 @@
 
 #include <jni.h>
 
-#define IMPLEMENT_ME do { fprintf(stderr, "ERROR: function %s not implemented. exiting.\n", __FUNCTION__); exit(42); } while (0)
+#define IMPLEMENT_ME do { fprintf(stderr, "ERROR: function %s not implemented. exiting.\n", __FUNCTION__); abort(); } while (0)
 
 jobject fake_libnfc;
 
@@ -34,11 +34,14 @@ jobject fake_libnfc;
 /* Helper to call simple int method */
 static int call_method_int(JNIEnv *env, jobject obj, const char *name)
 {
+	int r;
 	jclass cls = (*env)->GetObjectClass(env, obj);
 	jmethodID mid = (*env)->GetMethodID(env, cls, name, "()I");
 	if (mid == NULL)
 		abort();
-	return (*env)->CallIntMethod(env, obj, mid);
+	r = (*env)->CallIntMethod(env, obj, mid);
+	(*env)->DeleteLocalRef(env, cls);
+	return r;
 }
 
 JNIEXPORT void JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_setFakeLibNFC
@@ -49,7 +52,7 @@ JNIEXPORT void JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_setFakeLib
 
 void nfc_perror (const nfc_device *pnd, const char *s)
 {
-	fprintf(stderr, "nfc_perror called for device %p: %s\n", pnd, s?s:"(null)");;
+	fprintf(stderr, "nfc perror: %s\n", s?s:"(null)");;
 }
 
 struct nfc_device
@@ -74,11 +77,13 @@ nfc_device *nfc_open (nfc_context *context, const nfc_connstring connstring)
     jmethodID mid = (*env)->GetMethodID(env, cls, "nfc_open", "()Lnet/raisama/nfc/mfoc/NfcDevice;");
 	if (mid == NULL)
 		abort();
-    newdev->obj = (*env)->CallObjectMethod(env, fake_libnfc, mid);
-    if (!newdev->obj)
+    jobject obj = (*env)->CallObjectMethod(env, fake_libnfc, mid);
+    if (!obj)
     	abort();
-    newdev->obj = (*env)->NewGlobalRef(env, newdev->obj);
+    newdev->obj = (*env)->NewGlobalRef(env, obj);
 
+	(*env)->DeleteLocalRef(env, obj);
+	(*env)->DeleteLocalRef(env, cls);
 	return newdev;
 }
 
@@ -98,7 +103,7 @@ int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation n
 {
 	int ret;
 
-	fprintf(stderr, "nfc_initiator_select_passive_target called: %p, modulation: %d/%d, initdata: %p, szInitData: %ld, target: %p\n", pnd, (int)nm.nmt, (int)nm.nbr, pbtInitData, (long)szInitData, pnt);
+	//fprintf(stderr, "nfc_initiator_select_passive_target called: %p, modulation: %d/%d, initdata: %p, szInitData: %ld, target: %p\n", pnd, (int)nm.nmt, (int)nm.nbr, pbtInitData, (long)szInitData, pnt);
 
 	JNIEnv *env = global_env;
 	jclass cls = (*env)->GetObjectClass(env, pnd->obj);
@@ -106,6 +111,8 @@ int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation n
 	if (mid == NULL)
 		abort();
 	jobject ti = (*env)->CallObjectMethod(env, pnd->obj, mid);
+	(*env)->DeleteLocalRef(env, cls);
+
 	cls = (*env)->GetObjectClass(env, ti);
 
 	memset(pnt, 0, sizeof(*pnt));
@@ -133,6 +140,10 @@ int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation n
 	pnt->nm.nmt = NMT_ISO14443A;
 	field(nm.nbr, getBaudRate);
 
+	(*env)->DeleteLocalRef(env, uid);
+	(*env)->DeleteLocalRef(env, ats);
+	(*env)->DeleteLocalRef(env, cls);
+	(*env)->DeleteLocalRef(env, ti);
 	return 0;
 }
 
@@ -145,7 +156,37 @@ int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation n
 
 int nfc_initiator_transceive_bytes (nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, uint8_t *pbtRx, size_t *pszRx, int timeout)
 {
-	IMPLEMENT_ME;
+	int r = 0;
+	JNIEnv *env = global_env;
+	jclass cls = (*env)->GetObjectClass(env, pnd->obj);
+	jmethodID mid = (*env)->GetMethodID(env, cls, "initiator_transceive_bytes", "([BI)[B");
+	if (mid == NULL)
+		abort();
+
+	jbyteArray tx = (*env)->NewByteArray(env, szTx);
+	(*env)->SetByteArrayRegion(env, tx, 0, szTx, pbtTx);
+	jbyteArray rx = (*env)->CallObjectMethod(env, pnd->obj, mid, tx, timeout);
+	if (!rx) {
+		//fprintf(stderr, "null response from initiator_transceive_bytes\n");
+		r = NFC_ERFTRANS;
+		goto out;
+	}
+	if ((*env)->ExceptionCheck(env)) {
+		(*env)->ExceptionClear(env);
+		fprintf(stderr, "Exception on initiator_transceive_bytes\n");
+		r = NFC_EIO;
+		goto out;
+	}
+	size_t rxlen = (*env)->GetArrayLength(env, rx);
+	if (rxlen > *pszRx)
+		rxlen = *pszRx;
+
+	(*env)->GetByteArrayRegion(env, rx, 0, rxlen, pbtRx);
+out:
+	(*env)->DeleteLocalRef(env, rx);
+	(*env)->DeleteLocalRef(env, tx);
+	(*env)->DeleteLocalRef(env, cls);
+	return r;
 }
 
 int nfc_initiator_transceive_bits (nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, const uint8_t *pbtTxPar, uint8_t *pbtRx, uint8_t *pbtRxPar)
@@ -172,6 +213,13 @@ int nfc_device_set_property_bool (nfc_device *pnd, const nfc_property property, 
 	if (mid == NULL)
 		abort();
 	(*env)->CallVoidMethod(env, pnd->obj, mid, (jint)property, (bool)bEnable);
+	(*env)->DeleteLocalRef(env, cls);
+	if ((*env)->ExceptionOccurred(env)) {
+		(*env)->ExceptionClear(env);
+		fprintf(stderr, "Exception when setting bool property\n");
+		return NFC_EIO;
+	}
+	return 0;
 }
 
 static void iso14443a_crc (uint8_t *pbtData, size_t szLen, uint8_t *pbtCrc)

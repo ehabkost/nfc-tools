@@ -40,6 +40,9 @@ FILE *fopen(const char *filename, const char *mode)
     if (!f)
     	abort();
     f->obj = (*env)->NewGlobalRef(env, obj);
+
+	(*env)->DeleteLocalRef(env, obj);
+	(*env)->DeleteLocalRef(env, cls);
     return f;
 }
 
@@ -67,7 +70,10 @@ static int vfprintf(FILE *f, const char *fmt, va_list ap)
 	if (mid == NULL)
 		abort();
     (*env)->CallVoidMethod(env, f->obj, mid, jbytes);
+
     free(formatted);
+	(*env)->DeleteLocalRef(env, cls);
+	(*env)->DeleteLocalRef(env, jbytes);
     return len;
 }
 

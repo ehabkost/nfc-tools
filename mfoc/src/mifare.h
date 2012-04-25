@@ -54,8 +54,8 @@ typedef enum {
 
 // MIFARE command params
 struct mifare_param_auth {
-  uint8_t  abtKey[6];
   uint8_t  abtUid[4];
+  uint8_t  abtKey[6];
 };
 
 struct mifare_param_data {

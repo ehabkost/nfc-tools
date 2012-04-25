@@ -1,5 +1,6 @@
 package net.raisama.nfc.mfoc;
 
+import java.io.IOException;
 import java.lang.Runnable;
 import android.app.Activity;
 import android.os.Bundle;
@@ -11,7 +12,7 @@ import android.content.IntentFilter;
 import android.content.IntentFilter.MalformedMimeTypeException;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
-import android.nfc.tech.NfcA;
+import android.nfc.tech.MifareClassic;
 import net.raisama.nfc.mfoc.NativeImplementation;
 
 public class AndroidMfocActivity extends Activity {
@@ -21,6 +22,7 @@ public class AndroidMfocActivity extends Activity {
 	//String[][] techListsArray;
 	PendingIntent pendingIntent;
 	Tag mTag;
+	MifareClassic mfc;
 	
 	private void setupNfc()
 	{
@@ -55,6 +57,11 @@ public class AndroidMfocActivity extends Activity {
 		return mTag;
 	}
 	
+	public MifareClassic mfc()
+	{
+		return mfc;
+	}
+	
 	public void gotNewTag(Intent intent)
 	{
 	    //do something with tagFromIntent
@@ -65,20 +72,32 @@ public class AndroidMfocActivity extends Activity {
 	    	printUiMessage("weird. No tag info on intent data?\n");
 	    	return;
 	    }
-	    NfcA nfca = NfcA.get(tag);
-	    if (nfca == null) {
-	    	printUiMessage("This tag is not of type NFC-A. Sorry.\n");
+	    mfc = MifareClassic.get(tag);
+	    if (mfc == null) {
+	    	printUiMessage("This tag is not Mifare Classic (or this device doesn't s upport it). Sorry.\n");
 	    	return;
 	    }
 	    
+		try {
+			mfc.connect();
+		} catch (IOException e) {
+			printUiMessage("ERROR: IOException while connecting to the tag.\n");
+			return;
+		}
+	    
 	    printUiMessage("running mfoc...\n");
-	    NativeImplementation.singleton().callMain();
+    	NativeImplementation.singleton().callMain();
 	}
 	
 	public void onNewIntent(Intent intent) {
+		final Intent fIntent = intent;
 		String action = intent.getAction();
 		if (action.equals(NfcAdapter.ACTION_TECH_DISCOVERED) || action.equals(NfcAdapter.ACTION_TAG_DISCOVERED) || action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED))
-			gotNewTag(intent);
+		    new Thread(new Runnable() {
+		        public void run() {
+					gotNewTag(fIntent);
+		        }
+		    }).start();
 		else
 			printUiMessage(String.format("Got an intent of unsupported type: %s\n", action));
 	}
@@ -97,12 +116,18 @@ public class AndroidMfocActivity extends Activity {
     
 	public void printUiMessage(String s)
 	{
-		TextView t = (TextView)findViewById(R.id.textOutput);
-		final ScrollView sv = (ScrollView)this.findViewById(R.id.scroll);
-		t.append(s);
-		t.post(new Runnable() {
-			public void run(){
-				sv.fullScroll(ScrollView.FOCUS_DOWN);
+		final AndroidMfocActivity that = this;
+		final String msg = s;
+		runOnUiThread(new Runnable() {
+			public void run() {
+				TextView t = (TextView)that.findViewById(R.id.textOutput);
+				final ScrollView sv = (ScrollView)that.findViewById(R.id.scroll);
+				t.append(msg);
+				t.post(new Runnable() {
+					public void run(){
+						sv.fullScroll(ScrollView.FOCUS_DOWN);
+					}
+				});
 			}
 		});
 	}
