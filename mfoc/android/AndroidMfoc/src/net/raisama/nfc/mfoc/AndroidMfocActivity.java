@@ -1,8 +1,10 @@
 package net.raisama.nfc.mfoc;
 
+import java.lang.Runnable;
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.ScrollView;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -10,7 +12,6 @@ import android.content.IntentFilter.MalformedMimeTypeException;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.NfcA;
-import android.nfc.tech.MifareClassic;
 import net.raisama.nfc.mfoc.NativeImplementation;
 
 public class AndroidMfocActivity extends Activity {
@@ -19,6 +20,7 @@ public class AndroidMfocActivity extends Activity {
 	//IntentFilter[] intentFiltersArray;
 	//String[][] techListsArray;
 	PendingIntent pendingIntent;
+	Tag mTag;
 	
 	private void setupNfc()
 	{
@@ -48,11 +50,17 @@ public class AndroidMfocActivity extends Activity {
 	    mAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
 	}
 
+	public Tag tag()
+	{
+		return mTag;
+	}
+	
 	public void gotNewTag(Intent intent)
 	{
 	    //do something with tagFromIntent
 	    printUiMessage("got new tag!\n");
 	    Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+	    mTag = tag;
 	    if (tag == null) {
 	    	printUiMessage("weird. No tag info on intent data?\n");
 	    	return;
@@ -63,8 +71,8 @@ public class AndroidMfocActivity extends Activity {
 	    	return;
 	    }
 	    
-	    short sak = nfca.getSak();
-	    printUiMessage(String.format("Sak is: %d\n", (int)sak));
+	    printUiMessage("running mfoc...\n");
+	    NativeImplementation.singleton().callMain();
 	}
 	
 	public void onNewIntent(Intent intent) {
@@ -85,12 +93,17 @@ public class AndroidMfocActivity extends Activity {
         
         NativeImplementation.singleton().setRunningActivity(this);
         printUiMessage("Ready. Please place the card near the device.\n");
-//        NativeImplementation.singleton().callMain();
     }
     
 	public void printUiMessage(String s)
 	{
 		TextView t = (TextView)findViewById(R.id.textOutput);
+		final ScrollView sv = (ScrollView)this.findViewById(R.id.scroll);
 		t.append(s);
+		t.post(new Runnable() {
+			public void run(){
+				sv.fullScroll(ScrollView.FOCUS_DOWN);
+			}
+		});
 	}
 }

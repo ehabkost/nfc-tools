@@ -1,6 +1,22 @@
 /** Fake libnfc implementation
  *
  * See http://code.google.com/p/libnfc/ for libnfc source and docs.
+ *
+ * Copyright (C) 2012, Eduardo Habkost
+ * Includes parts of libnfc, Copyright (C) 2009, Roel Verdult
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
 #include <nfc/nfc.h>
@@ -13,6 +29,17 @@
 #define IMPLEMENT_ME do { fprintf(stderr, "ERROR: function %s not implemented. exiting.\n", __FUNCTION__); exit(42); } while (0)
 
 jobject fake_libnfc;
+
+
+/* Helper to call simple int method */
+static int call_method_int(JNIEnv *env, jobject obj, const char *name)
+{
+	jclass cls = (*env)->GetObjectClass(env, obj);
+	jmethodID mid = (*env)->GetMethodID(env, cls, name, "()I");
+	if (mid == NULL)
+		abort();
+	return (*env)->CallIntMethod(env, obj, mid);
+}
 
 JNIEXPORT void JNICALL Java_net_raisama_nfc_mfoc_NativeImplementation_setFakeLibNFC
   (JNIEnv *env, jobject obj, jobject nfc)
@@ -64,13 +91,7 @@ void nfc_close (nfc_device *pnd)
 
 int nfc_initiator_init (nfc_device *pnd)
 {
-	fprintf(stderr, "nfc_initiator init called on dev %p. obj is: %p\n", pnd, pnd->obj);
-	JNIEnv *env = global_env;
-	jclass cls = (*env)->GetObjectClass(env, pnd->obj);
-	jmethodID mid = (*env)->GetMethodID(env, cls, "initiator_init", "()I");
-	if (mid == NULL)
-		abort();
-	return (*env)->CallIntMethod(env, pnd->obj, mid);
+	return call_method_int(global_env, pnd->obj, "initiator_init");
 }
 
 int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation nm, const uint8_t *pbtInitData, const size_t szInitData, nfc_target *pnt)
@@ -84,27 +105,34 @@ int nfc_initiator_select_passive_target (nfc_device *pnd, const nfc_modulation n
 	jmethodID mid = (*env)->GetMethodID(env, cls, "initiator_select_passive_target", "()Lnet/raisama/nfc/mfoc/NfcTarget;");
 	if (mid == NULL)
 		abort();
-	jobject target_info = (*env)->CallObjectMethod(env, pnd->obj, mid);
+	jobject ti = (*env)->CallObjectMethod(env, pnd->obj, mid);
+	cls = (*env)->GetObjectClass(env, ti);
 
-/*
-Fields to fill up:
-	nfc_target_info nti;
-		nfc_iso14443a_info nai;
-			uint8_t  abtAtqa[2];
-			uint8_t  btSak;
-			size_t  szUidLen;
-			uint8_t  abtUid[10];
-			size_t  szAtsLen;
-			uint8_t  abtAts[254]; // Maximal theoretical ATS is FSD-2, FSD=256 for FSDI=8 in RATS
-	nfc_modulation nm;
-		nfc_modulation_type nmt;
-			NMT_ISO14443A = 1,
-		nfc_baud_rate nbr;
-
-*/
-	/*TODO: fill data from the card on *pnt, here */
-	IMPLEMENT_ME;
 	memset(pnt, 0, sizeof(*pnt));
+
+	#define field(f, fn) pnt->f = (call_method_int(env, ti, #fn))
+
+	field(nti.nai.abtAtqa[0], getAtqa0);
+	field(nti.nai.abtAtqa[1], getAtqa1);
+	field(nti.nai.btSak, getSak);
+
+	mid = (*env)->GetMethodID(env, cls, "getUid", "()[B");
+	jbyteArray uid = (*env)->CallObjectMethod(env, ti, mid);
+	int uidlen = (*env)->GetArrayLength(env, uid);
+	if (uidlen > 10) uidlen = 10;
+	pnt->nti.nai.szUidLen = uidlen;
+	(*env)->GetByteArrayRegion(env, uid, 0, uidlen, pnt->nti.nai.abtUid);
+
+	mid = (*env)->GetMethodID(env, cls, "getAts", "()[B");
+	jbyteArray ats = (*env)->CallObjectMethod(env, ti, mid);
+	int atslen = (*env)->GetArrayLength(env, ats);
+	if (atslen > 10) atslen = 10;
+	pnt->nti.nai.szAtsLen = atslen;
+	(*env)->GetByteArrayRegion(env, ats, 0, atslen, pnt->nti.nai.abtAts);
+
+	pnt->nm.nmt = NMT_ISO14443A;
+	field(nm.nbr, getBaudRate);
+
 	return 0;
 }
 
@@ -138,10 +166,31 @@ void nfc_exit(nfc_context *context)
 
 int nfc_device_set_property_bool (nfc_device *pnd, const nfc_property property, const bool bEnable)
 {
-	fprintf(stderr, "set_property_bool(%d, %d) called\n", property, bEnable);
+	JNIEnv *env = global_env;
+	jclass cls = (*env)->GetObjectClass(env, pnd->obj);
+	jmethodID mid = (*env)->GetMethodID(env, cls, "set_property", "(IZ)V");
+	if (mid == NULL)
+		abort();
+	(*env)->CallVoidMethod(env, pnd->obj, mid, (jint)property, (bool)bEnable);
+}
+
+static void iso14443a_crc (uint8_t *pbtData, size_t szLen, uint8_t *pbtCrc)
+{
+  uint8_t  bt;
+  uint32_t wCrc = 0x6363;
+
+  do {
+    bt = *pbtData++;
+    bt = (bt ^ (uint8_t) (wCrc & 0x00FF));
+    bt = (bt ^ (bt << 4));
+    wCrc = (wCrc >> 8) ^ ((uint32_t) bt << 8) ^ ((uint32_t) bt << 3) ^ ((uint32_t) bt >> 4);
+  } while (--szLen);
+
+  *pbtCrc++ = (uint8_t) (wCrc & 0xFF);
+  *pbtCrc = (uint8_t) ((wCrc >> 8) & 0xFF);
 }
 
 void iso14443a_crc_append (uint8_t *pbtData, size_t szLen)
 {
-	IMPLEMENT_ME;
+	iso14443a_crc (pbtData, szLen, pbtData + szLen);
 }

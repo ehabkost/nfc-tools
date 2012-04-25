@@ -28,8 +28,9 @@ size_t fwrite(const void *ptr, size_t size, size_t nitems,
               FILE *stream);
 
 
-/* This one is not from stdio.h, but it's easier to redefine it here:
+/* These ones are not from stdio.h, but it's easier to redefine it here:
  */
 #define exit fake_exit
+#define abort fake_abort
 
 #endif /* __FAKE_STDIO_H__ */

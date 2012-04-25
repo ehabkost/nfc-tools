@@ -12,8 +12,10 @@ public class FakeStdio {
 	{
 		runningActivity = a;
 	}
+
 	public FakeFile fopen(String filename, String mode)
 	{
+		//runningActivity.printUiMessage(String.format("fopen(%s, %s) called", filename, mode));
 		return new UiFakeFile(this, filename);
 	}
 }

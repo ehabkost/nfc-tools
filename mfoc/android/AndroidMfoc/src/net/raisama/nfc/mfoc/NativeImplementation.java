@@ -20,9 +20,12 @@ public class NativeImplementation {
 		int r = nativeMain();
 		fake_stdio.printUiMessage(String.format("program exited with status %d\n", r));
 	}
+
 	public void setRunningActivity(AndroidMfocActivity a)
 	{
 		fake_stdio.setRunningActivity(a);
+		fake_nfc = new FakeLibNFC(a);
+        setFakeLibNFC(fake_nfc);
 	}
 	
 	static public NativeImplementation singleton()
@@ -32,11 +35,9 @@ public class NativeImplementation {
 
 	private NativeImplementation() {
 		fake_stdio = new FakeStdio();
-		fake_nfc = new FakeLibNFC();
 		stdout = new UiFakeFile(fake_stdio, "stdout");
 		stderr = new UiFakeFile(fake_stdio, "stderr");
         setFakeStdioObject(fake_stdio, stdout, stderr);
-        setFakeLibNFC(fake_nfc);
 	}
 	
 	static {
