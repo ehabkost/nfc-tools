@@ -15,4 +15,4 @@ APK
 ---
 
 If you still want to see it running, you can get an APK at:
-https://dl.dropbox.com/u/1626365/Sparrow/2593c8e2f6d844893327551414225b40/AndroidMfoc.apk
+https://github.com/downloads/ehabkost/nfc-tools/AndroidMfoc.apk
