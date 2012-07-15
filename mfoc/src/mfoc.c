@@ -690,11 +690,13 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce *d
 		exit(EXIT_FAILURE);
 	}
 
+	printf("rxlen: %d\n", (int)RxLen);
+
 	if (nfc_device_set_property_bool (r.pdi, NP_EASY_FRAMING, true) < 0) {
 		nfc_perror (r.pdi, "nfc_device_set_property_bool");
 		exit (EXIT_FAILURE);
 	}
-	// print_hex(Rx, 4);
+	print_hex(Rx, RxLen);
 	
 	// Save the tag nonce (Nt)
 	Nt = bytes_to_num(Rx, 4);
