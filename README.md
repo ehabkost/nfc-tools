@@ -1,5 +1,5 @@
-A (tentative) Android mfoc port
-===============================
+A useless and broken Android mfoc port
+======================================
 
 This was the result of me trying to port the mfoc tool to Android, by simply running the C code using NDK, under a small wrapper that provides the libc and libnfc calls.
 
